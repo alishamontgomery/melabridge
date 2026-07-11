@@ -54,11 +54,11 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Ecosystem",
     items: [
+      { to: "/events", label: "Your events", icon: Calendar },
       { to: "/concierge", label: "Bridge Concierge™", icon: Sparkles },
       { to: "/dashboard", label: "AI Command Center", icon: LayoutDashboard },
       { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
       { to: "/workspace", label: "Event Workspace", icon: GitBranch },
-      { to: "/onboarding", label: "Onboarding", icon: Rocket },
     ],
   },
   {
