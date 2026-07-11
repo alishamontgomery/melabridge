@@ -22,7 +22,8 @@ import {
   PartyPopper,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
-import heroImage from "@/assets/hero-ai.jpg";
+import { EventDashboardPreview } from "@/components/event-dashboard-preview";
+import { Play } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -264,8 +265,21 @@ function Landing() {
               <Button variant="hero" size="xl" asChild>
                 <Link to="/auth">Start planning free</Link>
               </Button>
-              <Button variant="soft" size="xl" asChild>
-                <a href="#features">Explore features</a>
+              <Button
+                variant="soft"
+                size="xl"
+                className="gap-2"
+                onClick={() => {
+                  const el = document.getElementById("dashboard-preview");
+                  if (!el) return;
+                  el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  el.classList.add("ring-2", "ring-primary/40", "ring-offset-4", "ring-offset-background");
+                  setTimeout(() => {
+                    el.classList.remove("ring-2", "ring-primary/40", "ring-offset-4", "ring-offset-background");
+                  }, 1800);
+                }}
+              >
+                <Play className="h-4 w-4 fill-current" /> Watch demo
               </Button>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-widest text-muted-foreground">
@@ -275,16 +289,26 @@ function Landing() {
             </div>
           </div>
           <div className="relative">
-            <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-br from-primary/20 via-transparent to-gold/20 blur-2xl" />
-            <div className="relative overflow-hidden rounded-[2rem] border border-border shadow-elegant">
-              <img
-                src={heroImage}
-                alt="MelaBridge AI assistant illustration"
-                width={1200}
-                height={1200}
-                className="h-full w-full object-cover"
-              />
-            </div>
+            <EventDashboardPreview />
+          </div>
+        </div>
+      </section>
+
+      {/* PRODUCT SHOWCASE — the real dashboard, with demo data */}
+      <section id="dashboard-preview" className="relative border-y border-border bg-secondary/30 py-20 transition-shadow duration-500 md:py-28">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs uppercase tracking-widest text-primary">The MelaBridge dashboard</p>
+            <h2 className="mt-3 font-display text-4xl md:text-5xl">
+              This is the actual product.
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Every event lives on one calm, intelligent dashboard — budget, guests, tasks, vendors,
+              decisions, and your AI planner, working together in real time.
+            </p>
+          </div>
+          <div className="mt-14">
+            <EventDashboardPreview />
           </div>
         </div>
       </section>
