@@ -51,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/tasks", label: "Tasks", icon: ClipboardList },
       { to: "/timeline", label: "Timeline", icon: Calendar },
       { to: "/decisions", label: "Decision Center™", icon: Lightbulb },
+      { to: "/travel", label: "Travel", icon: Globe2 },
     ],
   },
   {
