@@ -654,6 +654,7 @@ function Dashboard() {
         </footer>
       </main>
     </div>
+    </EcosystemProvider>
   );
 }
 
