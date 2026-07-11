@@ -415,7 +415,7 @@ function Dashboard() {
               <span className="pb-2 text-sm text-muted-foreground">days to go</span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {new Date(event.date).toDateString()} · <MapPin className="inline h-3 w-3" /> {event.location}
+              {fmtFullDate(event.date)} · <MapPin className="inline h-3 w-3" /> {event.location}
             </p>
             <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-accent">
               <div
