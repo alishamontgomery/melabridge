@@ -11,18 +11,30 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as VendorsRouteImport } from './routes/vendors'
+import { Route as VendorPortalRouteImport } from './routes/vendor-portal'
+import { Route as TutorialsRouteImport } from './routes/tutorials'
 import { Route as TravelRouteImport } from './routes/travel'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as TeamRouteImport } from './routes/team'
 import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SubscriptionRouteImport } from './routes/subscription'
+import { Route as ShareRouteImport } from './routes/share'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NewEventRouteImport } from './routes/new-event'
 import { Route as MessagingRouteImport } from './routes/messaging'
+import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as GuestsRouteImport } from './routes/guests'
+import { Route as GuestPortalRouteImport } from './routes/guest-portal'
 import { Route as FundraisingRouteImport } from './routes/fundraising'
 import { Route as FilesRouteImport } from './routes/files'
 import { Route as EcosystemRouteImport } from './routes/ecosystem'
+import { Route as DigitalTwinRouteImport } from './routes/digital-twin'
 import { Route as DecisionsRouteImport } from './routes/decisions'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConciergeRouteImport } from './routes/concierge'
@@ -30,10 +42,15 @@ import { Route as CollaborationRouteImport } from './routes/collaboration'
 import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as BridgeworldRouteImport } from './routes/bridgeworld'
 import { Route as BridgevaultRouteImport } from './routes/bridgevault'
+import { Route as BridgestudioRouteImport } from './routes/bridgestudio'
 import { Route as BridgepilotRouteImport } from './routes/bridgepilot'
+import { Route as BridgepayRouteImport } from './routes/bridgepay'
+import { Route as BridgeliveRouteImport } from './routes/bridgelive'
+import { Route as BridgegraphRouteImport } from './routes/bridgegraph'
 import { Route as BridgednaRouteImport } from './routes/bridgedna'
 import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intelligence'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
@@ -44,6 +61,16 @@ const WorkspaceRoute = WorkspaceRouteImport.update({
 const VendorsRoute = VendorsRouteImport.update({
   id: '/vendors',
   path: '/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendorPortalRoute = VendorPortalRouteImport.update({
+  id: '/vendor-portal',
+  path: '/vendor-portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TutorialsRoute = TutorialsRouteImport.update({
+  id: '/tutorials',
+  path: '/tutorials',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TravelRoute = TravelRouteImport.update({
@@ -61,9 +88,24 @@ const TicketsRoute = TicketsRouteImport.update({
   path: '/tickets',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TeamRoute = TeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscriptionRoute = SubscriptionRouteImport.update({
+  id: '/subscription',
+  path: '/subscription',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -76,6 +118,21 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NewEventRoute = NewEventRouteImport.update({
   id: '/new-event',
   path: '/new-event',
@@ -86,9 +143,24 @@ const MessagingRoute = MessagingRouteImport.update({
   path: '/messaging',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketplaceRoute = MarketplaceRouteImport.update({
+  id: '/marketplace',
+  path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuestsRoute = GuestsRouteImport.update({
   id: '/guests',
   path: '/guests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestPortalRoute = GuestPortalRouteImport.update({
+  id: '/guest-portal',
+  path: '/guest-portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FundraisingRoute = FundraisingRouteImport.update({
@@ -104,6 +176,11 @@ const FilesRoute = FilesRouteImport.update({
 const EcosystemRoute = EcosystemRouteImport.update({
   id: '/ecosystem',
   path: '/ecosystem',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DigitalTwinRoute = DigitalTwinRouteImport.update({
+  id: '/digital-twin',
+  path: '/digital-twin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DecisionsRoute = DecisionsRouteImport.update({
@@ -141,9 +218,29 @@ const BridgevaultRoute = BridgevaultRouteImport.update({
   path: '/bridgevault',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BridgestudioRoute = BridgestudioRouteImport.update({
+  id: '/bridgestudio',
+  path: '/bridgestudio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BridgepilotRoute = BridgepilotRouteImport.update({
   id: '/bridgepilot',
   path: '/bridgepilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgepayRoute = BridgepayRouteImport.update({
+  id: '/bridgepay',
+  path: '/bridgepay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgeliveRoute = BridgeliveRouteImport.update({
+  id: '/bridgelive',
+  path: '/bridgelive',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgegraphRoute = BridgegraphRouteImport.update({
+  id: '/bridgegraph',
+  path: '/bridgegraph',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BridgednaRoute = BridgednaRouteImport.update({
@@ -161,6 +258,11 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -169,10 +271,15 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
+  '/bridgegraph': typeof BridgegraphRoute
+  '/bridgelive': typeof BridgeliveRoute
+  '/bridgepay': typeof BridgepayRoute
   '/bridgepilot': typeof BridgepilotRoute
+  '/bridgestudio': typeof BridgestudioRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
@@ -180,27 +287,44 @@ export interface FileRoutesByFullPath {
   '/concierge': typeof ConciergeRoute
   '/dashboard': typeof DashboardRoute
   '/decisions': typeof DecisionsRoute
+  '/digital-twin': typeof DigitalTwinRoute
   '/ecosystem': typeof EcosystemRoute
   '/files': typeof FilesRoute
   '/fundraising': typeof FundraisingRoute
+  '/guest-portal': typeof GuestPortalRoute
   '/guests': typeof GuestsRoute
+  '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/new-event': typeof NewEventRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
+  '/subscription': typeof SubscriptionRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
+  '/tutorials': typeof TutorialsRoute
+  '/vendor-portal': typeof VendorPortalRoute
   '/vendors': typeof VendorsRoute
   '/workspace': typeof WorkspaceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
+  '/bridgegraph': typeof BridgegraphRoute
+  '/bridgelive': typeof BridgeliveRoute
+  '/bridgepay': typeof BridgepayRoute
   '/bridgepilot': typeof BridgepilotRoute
+  '/bridgestudio': typeof BridgestudioRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
@@ -208,28 +332,45 @@ export interface FileRoutesByTo {
   '/concierge': typeof ConciergeRoute
   '/dashboard': typeof DashboardRoute
   '/decisions': typeof DecisionsRoute
+  '/digital-twin': typeof DigitalTwinRoute
   '/ecosystem': typeof EcosystemRoute
   '/files': typeof FilesRoute
   '/fundraising': typeof FundraisingRoute
+  '/guest-portal': typeof GuestPortalRoute
   '/guests': typeof GuestsRoute
+  '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/new-event': typeof NewEventRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
+  '/subscription': typeof SubscriptionRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
+  '/tutorials': typeof TutorialsRoute
+  '/vendor-portal': typeof VendorPortalRoute
   '/vendors': typeof VendorsRoute
   '/workspace': typeof WorkspaceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
+  '/bridgegraph': typeof BridgegraphRoute
+  '/bridgelive': typeof BridgeliveRoute
+  '/bridgepay': typeof BridgepayRoute
   '/bridgepilot': typeof BridgepilotRoute
+  '/bridgestudio': typeof BridgestudioRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
@@ -237,18 +378,30 @@ export interface FileRoutesById {
   '/concierge': typeof ConciergeRoute
   '/dashboard': typeof DashboardRoute
   '/decisions': typeof DecisionsRoute
+  '/digital-twin': typeof DigitalTwinRoute
   '/ecosystem': typeof EcosystemRoute
   '/files': typeof FilesRoute
   '/fundraising': typeof FundraisingRoute
+  '/guest-portal': typeof GuestPortalRoute
   '/guests': typeof GuestsRoute
+  '/help': typeof HelpRoute
+  '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/new-event': typeof NewEventRoute
+  '/notifications': typeof NotificationsRoute
+  '/onboarding': typeof OnboardingRoute
+  '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
   '/settings': typeof SettingsRoute
+  '/share': typeof ShareRoute
+  '/subscription': typeof SubscriptionRoute
   '/tasks': typeof TasksRoute
+  '/team': typeof TeamRoute
   '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
+  '/tutorials': typeof TutorialsRoute
+  '/vendor-portal': typeof VendorPortalRoute
   '/vendors': typeof VendorsRoute
   '/workspace': typeof WorkspaceRoute
 }
@@ -256,10 +409,15 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/analytics'
     | '/bridge-intelligence'
     | '/bridgedna'
+    | '/bridgegraph'
+    | '/bridgelive'
+    | '/bridgepay'
     | '/bridgepilot'
+    | '/bridgestudio'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
@@ -267,27 +425,44 @@ export interface FileRouteTypes {
     | '/concierge'
     | '/dashboard'
     | '/decisions'
+    | '/digital-twin'
     | '/ecosystem'
     | '/files'
     | '/fundraising'
+    | '/guest-portal'
     | '/guests'
+    | '/help'
+    | '/marketplace'
     | '/messaging'
     | '/new-event'
+    | '/notifications'
+    | '/onboarding'
+    | '/profile'
     | '/reports'
     | '/settings'
+    | '/share'
+    | '/subscription'
     | '/tasks'
+    | '/team'
     | '/tickets'
     | '/timeline'
     | '/travel'
+    | '/tutorials'
+    | '/vendor-portal'
     | '/vendors'
     | '/workspace'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/analytics'
     | '/bridge-intelligence'
     | '/bridgedna'
+    | '/bridgegraph'
+    | '/bridgelive'
+    | '/bridgepay'
     | '/bridgepilot'
+    | '/bridgestudio'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
@@ -295,27 +470,44 @@ export interface FileRouteTypes {
     | '/concierge'
     | '/dashboard'
     | '/decisions'
+    | '/digital-twin'
     | '/ecosystem'
     | '/files'
     | '/fundraising'
+    | '/guest-portal'
     | '/guests'
+    | '/help'
+    | '/marketplace'
     | '/messaging'
     | '/new-event'
+    | '/notifications'
+    | '/onboarding'
+    | '/profile'
     | '/reports'
     | '/settings'
+    | '/share'
+    | '/subscription'
     | '/tasks'
+    | '/team'
     | '/tickets'
     | '/timeline'
     | '/travel'
+    | '/tutorials'
+    | '/vendor-portal'
     | '/vendors'
     | '/workspace'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/analytics'
     | '/bridge-intelligence'
     | '/bridgedna'
+    | '/bridgegraph'
+    | '/bridgelive'
+    | '/bridgepay'
     | '/bridgepilot'
+    | '/bridgestudio'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
@@ -323,28 +515,45 @@ export interface FileRouteTypes {
     | '/concierge'
     | '/dashboard'
     | '/decisions'
+    | '/digital-twin'
     | '/ecosystem'
     | '/files'
     | '/fundraising'
+    | '/guest-portal'
     | '/guests'
+    | '/help'
+    | '/marketplace'
     | '/messaging'
     | '/new-event'
+    | '/notifications'
+    | '/onboarding'
+    | '/profile'
     | '/reports'
     | '/settings'
+    | '/share'
+    | '/subscription'
     | '/tasks'
+    | '/team'
     | '/tickets'
     | '/timeline'
     | '/travel'
+    | '/tutorials'
+    | '/vendor-portal'
     | '/vendors'
     | '/workspace'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
   BridgeIntelligenceRoute: typeof BridgeIntelligenceRoute
   BridgednaRoute: typeof BridgednaRoute
+  BridgegraphRoute: typeof BridgegraphRoute
+  BridgeliveRoute: typeof BridgeliveRoute
+  BridgepayRoute: typeof BridgepayRoute
   BridgepilotRoute: typeof BridgepilotRoute
+  BridgestudioRoute: typeof BridgestudioRoute
   BridgevaultRoute: typeof BridgevaultRoute
   BridgeworldRoute: typeof BridgeworldRoute
   BudgetRoute: typeof BudgetRoute
@@ -352,18 +561,30 @@ export interface RootRouteChildren {
   ConciergeRoute: typeof ConciergeRoute
   DashboardRoute: typeof DashboardRoute
   DecisionsRoute: typeof DecisionsRoute
+  DigitalTwinRoute: typeof DigitalTwinRoute
   EcosystemRoute: typeof EcosystemRoute
   FilesRoute: typeof FilesRoute
   FundraisingRoute: typeof FundraisingRoute
+  GuestPortalRoute: typeof GuestPortalRoute
   GuestsRoute: typeof GuestsRoute
+  HelpRoute: typeof HelpRoute
+  MarketplaceRoute: typeof MarketplaceRoute
   MessagingRoute: typeof MessagingRoute
   NewEventRoute: typeof NewEventRoute
+  NotificationsRoute: typeof NotificationsRoute
+  OnboardingRoute: typeof OnboardingRoute
+  ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
   SettingsRoute: typeof SettingsRoute
+  ShareRoute: typeof ShareRoute
+  SubscriptionRoute: typeof SubscriptionRoute
   TasksRoute: typeof TasksRoute
+  TeamRoute: typeof TeamRoute
   TicketsRoute: typeof TicketsRoute
   TimelineRoute: typeof TimelineRoute
   TravelRoute: typeof TravelRoute
+  TutorialsRoute: typeof TutorialsRoute
+  VendorPortalRoute: typeof VendorPortalRoute
   VendorsRoute: typeof VendorsRoute
   WorkspaceRoute: typeof WorkspaceRoute
 }
@@ -382,6 +603,20 @@ declare module '@tanstack/react-router' {
       path: '/vendors'
       fullPath: '/vendors'
       preLoaderRoute: typeof VendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendor-portal': {
+      id: '/vendor-portal'
+      path: '/vendor-portal'
+      fullPath: '/vendor-portal'
+      preLoaderRoute: typeof VendorPortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tutorials': {
+      id: '/tutorials'
+      path: '/tutorials'
+      fullPath: '/tutorials'
+      preLoaderRoute: typeof TutorialsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/travel': {
@@ -405,11 +640,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TicketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/team': {
+      id: '/team'
+      path: '/team'
+      fullPath: '/team'
+      preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tasks': {
       id: '/tasks'
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscription': {
+      id: '/subscription'
+      path: '/subscription'
+      fullPath: '/subscription'
+      preLoaderRoute: typeof SubscriptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -426,6 +682,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/new-event': {
       id: '/new-event'
       path: '/new-event'
@@ -440,11 +717,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MessagingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/marketplace': {
+      id: '/marketplace'
+      path: '/marketplace'
+      fullPath: '/marketplace'
+      preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guests': {
       id: '/guests'
       path: '/guests'
       fullPath: '/guests'
       preLoaderRoute: typeof GuestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guest-portal': {
+      id: '/guest-portal'
+      path: '/guest-portal'
+      fullPath: '/guest-portal'
+      preLoaderRoute: typeof GuestPortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fundraising': {
@@ -466,6 +764,13 @@ declare module '@tanstack/react-router' {
       path: '/ecosystem'
       fullPath: '/ecosystem'
       preLoaderRoute: typeof EcosystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/digital-twin': {
+      id: '/digital-twin'
+      path: '/digital-twin'
+      fullPath: '/digital-twin'
+      preLoaderRoute: typeof DigitalTwinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/decisions': {
@@ -517,11 +822,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BridgevaultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bridgestudio': {
+      id: '/bridgestudio'
+      path: '/bridgestudio'
+      fullPath: '/bridgestudio'
+      preLoaderRoute: typeof BridgestudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bridgepilot': {
       id: '/bridgepilot'
       path: '/bridgepilot'
       fullPath: '/bridgepilot'
       preLoaderRoute: typeof BridgepilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridgepay': {
+      id: '/bridgepay'
+      path: '/bridgepay'
+      fullPath: '/bridgepay'
+      preLoaderRoute: typeof BridgepayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridgelive': {
+      id: '/bridgelive'
+      path: '/bridgelive'
+      fullPath: '/bridgelive'
+      preLoaderRoute: typeof BridgeliveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridgegraph': {
+      id: '/bridgegraph'
+      path: '/bridgegraph'
+      fullPath: '/bridgegraph'
+      preLoaderRoute: typeof BridgegraphRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bridgedna': {
@@ -545,6 +878,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -557,10 +897,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
   BridgeIntelligenceRoute: BridgeIntelligenceRoute,
   BridgednaRoute: BridgednaRoute,
+  BridgegraphRoute: BridgegraphRoute,
+  BridgeliveRoute: BridgeliveRoute,
+  BridgepayRoute: BridgepayRoute,
   BridgepilotRoute: BridgepilotRoute,
+  BridgestudioRoute: BridgestudioRoute,
   BridgevaultRoute: BridgevaultRoute,
   BridgeworldRoute: BridgeworldRoute,
   BudgetRoute: BudgetRoute,
@@ -568,18 +913,30 @@ const rootRouteChildren: RootRouteChildren = {
   ConciergeRoute: ConciergeRoute,
   DashboardRoute: DashboardRoute,
   DecisionsRoute: DecisionsRoute,
+  DigitalTwinRoute: DigitalTwinRoute,
   EcosystemRoute: EcosystemRoute,
   FilesRoute: FilesRoute,
   FundraisingRoute: FundraisingRoute,
+  GuestPortalRoute: GuestPortalRoute,
   GuestsRoute: GuestsRoute,
+  HelpRoute: HelpRoute,
+  MarketplaceRoute: MarketplaceRoute,
   MessagingRoute: MessagingRoute,
   NewEventRoute: NewEventRoute,
+  NotificationsRoute: NotificationsRoute,
+  OnboardingRoute: OnboardingRoute,
+  ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
   SettingsRoute: SettingsRoute,
+  ShareRoute: ShareRoute,
+  SubscriptionRoute: SubscriptionRoute,
   TasksRoute: TasksRoute,
+  TeamRoute: TeamRoute,
   TicketsRoute: TicketsRoute,
   TimelineRoute: TimelineRoute,
   TravelRoute: TravelRoute,
+  TutorialsRoute: TutorialsRoute,
+  VendorPortalRoute: VendorPortalRoute,
   VendorsRoute: VendorsRoute,
   WorkspaceRoute: WorkspaceRoute,
 }
