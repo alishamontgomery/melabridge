@@ -222,11 +222,11 @@ function Landing() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Logo />
           <nav className="hidden items-center gap-8 md:flex">
+            <a href="#how" className="text-sm text-muted-foreground hover:text-foreground">
+              How it works
+            </a>
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">
               Features
-            </a>
-            <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground">
-              Loved by
             </a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">
               Pricing
@@ -257,18 +257,19 @@ function Landing() {
             <h1 className="font-display text-5xl leading-[1.02] tracking-tight md:text-7xl">
               Plan Every Moment.
               <br />
-              <span className="text-gradient">All In One Place.</span>
+              <span className="text-gradient">Together.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-muted-foreground">
-              MelaBridge is your AI event concierge — from intimate birthdays to
-              300-guest weddings and everything in between.
+              MelaBridge is the AI-powered platform for weddings, birthdays, baby
+              showers, reunions, funerals, corporate events, conferences,
+              vacations, nonprofit and school events — all in one place.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button variant="hero" size="xl">
-                Get started free
+                Start planning
               </Button>
-              <Button variant="soft" size="xl">
-                Watch demo
+              <Button variant="soft" size="xl" asChild>
+                <a href="#features">Explore features</a>
               </Button>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-widest text-muted-foreground">
@@ -289,6 +290,35 @@ function Landing() {
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how" className="mx-auto max-w-7xl px-6 py-28">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs uppercase tracking-widest text-primary">How it works</p>
+          <h2 className="mt-3 font-display text-4xl md:text-5xl">
+            From idea to unforgettable, in three steps.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            MelaBridge is the bridge between a spark of inspiration and a moment
+            people will talk about for years.
+          </p>
+        </div>
+        <div className="mt-16 grid gap-6 md:grid-cols-3">
+          {howItWorks.map((s) => (
+            <div
+              key={s.step}
+              className="relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-soft"
+            >
+              <div className="font-display text-6xl text-primary/10">{s.step}</div>
+              <div className="mt-2 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+                <s.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-5 text-xl font-semibold">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
