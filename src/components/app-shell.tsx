@@ -74,6 +74,10 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: "For vendors",
+    items: [{ to: "/bridgepilot", label: "BridgePilot™", icon: Briefcase }],
+  },
+  {
     label: "Account",
     items: [{ to: "/settings", label: "Settings", icon: SettingsIcon }],
   },
