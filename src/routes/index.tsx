@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -235,11 +235,11 @@ function Landing() {
             </a>
           </nav>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="rounded-full">
-              Log in
+            <Button variant="ghost" size="sm" className="rounded-full" asChild>
+              <Link to="/dashboard">Log in</Link>
             </Button>
-            <Button variant="hero" size="sm" className="rounded-full">
-              Sign up
+            <Button variant="hero" size="sm" className="rounded-full" asChild>
+              <Link to="/dashboard">Sign up</Link>
             </Button>
           </div>
         </div>
@@ -264,8 +264,8 @@ function Landing() {
               vacations, nonprofit and school events — all in one place.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button variant="hero" size="xl">
-                Start planning
+              <Button variant="hero" size="xl" asChild>
+                <Link to="/dashboard">Open AI Command Center</Link>
               </Button>
               <Button variant="soft" size="xl" asChild>
                 <a href="#features">Explore features</a>
