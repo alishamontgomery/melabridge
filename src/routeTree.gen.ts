@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as VendorsRouteImport } from './routes/vendors'
+import { Route as TravelRouteImport } from './routes/travel'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -31,6 +32,7 @@ import { Route as BridgevaultRouteImport } from './routes/bridgevault'
 import { Route as BridgepilotRouteImport } from './routes/bridgepilot'
 import { Route as BridgednaRouteImport } from './routes/bridgedna'
 import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intelligence'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
@@ -41,6 +43,11 @@ const WorkspaceRoute = WorkspaceRouteImport.update({
 const VendorsRoute = VendorsRouteImport.update({
   id: '/vendors',
   path: '/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelRoute = TravelRouteImport.update({
+  id: '/travel',
+  path: '/travel',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TimelineRoute = TimelineRouteImport.update({
@@ -143,6 +150,11 @@ const BridgeIntelligenceRoute = BridgeIntelligenceRouteImport.update({
   path: '/bridge-intelligence',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -151,6 +163,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgepilot': typeof BridgepilotRoute
@@ -171,11 +184,13 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
+  '/travel': typeof TravelRoute
   '/vendors': typeof VendorsRoute
   '/workspace': typeof WorkspaceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgepilot': typeof BridgepilotRoute
@@ -196,12 +211,14 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
+  '/travel': typeof TravelRoute
   '/vendors': typeof VendorsRoute
   '/workspace': typeof WorkspaceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analytics': typeof AnalyticsRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgepilot': typeof BridgepilotRoute
@@ -222,6 +239,7 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/tickets': typeof TicketsRoute
   '/timeline': typeof TimelineRoute
+  '/travel': typeof TravelRoute
   '/vendors': typeof VendorsRoute
   '/workspace': typeof WorkspaceRoute
 }
@@ -229,6 +247,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/bridge-intelligence'
     | '/bridgedna'
     | '/bridgepilot'
@@ -249,11 +268,13 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/tickets'
     | '/timeline'
+    | '/travel'
     | '/vendors'
     | '/workspace'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analytics'
     | '/bridge-intelligence'
     | '/bridgedna'
     | '/bridgepilot'
@@ -274,11 +295,13 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/tickets'
     | '/timeline'
+    | '/travel'
     | '/vendors'
     | '/workspace'
   id:
     | '__root__'
     | '/'
+    | '/analytics'
     | '/bridge-intelligence'
     | '/bridgedna'
     | '/bridgepilot'
@@ -299,12 +322,14 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/tickets'
     | '/timeline'
+    | '/travel'
     | '/vendors'
     | '/workspace'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalyticsRoute: typeof AnalyticsRoute
   BridgeIntelligenceRoute: typeof BridgeIntelligenceRoute
   BridgednaRoute: typeof BridgednaRoute
   BridgepilotRoute: typeof BridgepilotRoute
@@ -325,6 +350,7 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   TicketsRoute: typeof TicketsRoute
   TimelineRoute: typeof TimelineRoute
+  TravelRoute: typeof TravelRoute
   VendorsRoute: typeof VendorsRoute
   WorkspaceRoute: typeof WorkspaceRoute
 }
@@ -343,6 +369,13 @@ declare module '@tanstack/react-router' {
       path: '/vendors'
       fullPath: '/vendors'
       preLoaderRoute: typeof VendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/travel': {
+      id: '/travel'
+      path: '/travel'
+      fullPath: '/travel'
+      preLoaderRoute: typeof TravelRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/timeline': {
@@ -485,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BridgeIntelligenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -497,6 +537,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalyticsRoute: AnalyticsRoute,
   BridgeIntelligenceRoute: BridgeIntelligenceRoute,
   BridgednaRoute: BridgednaRoute,
   BridgepilotRoute: BridgepilotRoute,
@@ -517,6 +558,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   TicketsRoute: TicketsRoute,
   TimelineRoute: TimelineRoute,
+  TravelRoute: TravelRoute,
   VendorsRoute: VendorsRoute,
   WorkspaceRoute: WorkspaceRoute,
 }

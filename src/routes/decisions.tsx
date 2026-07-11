@@ -1,90 +1,133 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { RippleFeed } from "@/components/ripple-feed";
-import { Lightbulb, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Lightbulb, Sparkles, Check, ThumbsUp, Plus, Vote, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/decisions")({
-  head: () => ({
-    meta: [
-      { title: "Decision Center™ — MelaBridge" },
-      { name: "description", content: "Weigh options with AI: cost, style, guest impact, and Event Health Score™ delta." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () => ({ meta: [
+    { title: "Decision Center™ — MelaBridge" },
+    { name: "description", content: "Polls, vendor comparisons, and approvals with AI-summarized recommendations." },
+    { name: "robots", content: "noindex" },
+  ]}),
   component: DecisionsPage,
 });
 
-const DECISIONS = [
-  {
-    q: "Ceremony music — string quartet or solo violin?",
+type Poll = { id:string; title:string; options: { id:string; label:string; votes:number; note?:string }[]; recommendation:string; status:"Open"|"Decided"; };
+
+const INITIAL: Poll[] = [
+  { id:"p1", title:"Ceremony start time", status:"Open", recommendation:"5:00 PM balances golden-hour photos with dinner service.", options: [
+    { id:"a", label:"4:00 PM", votes:2 },
+    { id:"b", label:"5:00 PM", votes:6, note:"AI pick" },
+    { id:"c", label:"6:00 PM", votes:3 },
+  ]},
+  { id:"p2", title:"Vendor: Photographer", status:"Open", recommendation:"Studio Nero — 98 DNA match, portfolio aligns with your BridgeDNA™.",
     options: [
-      { name: "String quartet", cost: 2400, style: 96, guests: 88, delta: 3 },
-      { name: "Solo violin", cost: 900, style: 82, guests: 74, delta: 1 },
-    ],
-    ai: "Your BridgeDNA™ favors ensembles at intimate ceremonies. Quartet also raises Health Score by +3 based on venue acoustics.",
-  },
-  {
-    q: "Late-night snack — pizza truck or suya station?",
+      { id:"a", label:"Studio Nero · $6,200", votes:5, note:"Recommended" },
+      { id:"b", label:"Lumen Collective · $5,400", votes:2 },
+      { id:"c", label:"North Light Co · $7,800", votes:1 },
+    ]},
+  { id:"p3", title:"First course", status:"Decided", recommendation:"Heirloom tomato tartlet chosen — vegan-friendly with modification.",
     options: [
-      { name: "Pizza truck", cost: 1400, style: 71, guests: 90, delta: 2 },
-      { name: "Suya station", cost: 1600, style: 93, guests: 92, delta: 4 },
-      { name: "Both", cost: 2900, style: 88, guests: 96, delta: 3 },
-    ],
-    ai: "Community data shows late-night food increases guest satisfaction 26%. Suya station aligns with your West-African + Italian fusion identity.",
-  },
+      { id:"a", label:"Heirloom tomato tartlet", votes:9 },
+      { id:"b", label:"Butternut bisque", votes:4 },
+      { id:"c", label:"Caesar wedge", votes:2 },
+    ]},
 ];
 
 function DecisionsPage() {
+  const [polls, setPolls] = useState(INITIAL);
+  const vote = (pid:string, oid:string) => setPolls(prev=>prev.map(p=>p.id===pid?{...p, options:p.options.map(o=>o.id===oid?{...o,votes:o.votes+1}:o)}:p));
+  const decide = (pid:string) => setPolls(prev=>prev.map(p=>p.id===pid?{...p,status:"Decided"}:p));
+
   return (
     <AppShell active="/decisions">
       <PageHeader
         eyebrow="Decision Center™"
         icon={Lightbulb}
-        title={<>Every decision, <span className="text-gradient">weighed intelligently</span>.</>}
-        description="AI compares cost, style fit, guest impact, and Event Health Score™ delta — so you decide with full context."
+        title={<>Big calls, <span className="text-gradient">made together</span>.</>}
+        description="Create polls, compare vendors, vote on menus and dates. BridgeMind summarizes results and recommends the strongest option."
+        actions={<>
+          <Button variant="outline"><Sparkles className="mr-2 h-4 w-4"/>Ask BridgeMind</Button>
+          <Button variant="hero"><Plus className="mr-2 h-4 w-4"/>New decision</Button>
+        </>}
       />
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          {DECISIONS.map((d) => (
-            <div key={d.q} className="rounded-3xl border border-border bg-card p-6">
-              <h3 className="font-display text-lg font-semibold">{d.q}</h3>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {d.options.map((o) => (
-                  <div key={o.name} className="rounded-2xl border border-border p-4">
-                    <p className="font-medium">{o.name}</p>
-                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <li>Cost · ${o.cost.toLocaleString()}</li>
-                      <li>Style fit · {o.style}</li>
-                      <li>Guest impact · {o.guests}</li>
-                      <li>Health delta · {o.delta > 0 ? `+${o.delta}` : o.delta}</li>
-                    </ul>
-                    <Button size="sm" variant="soft" className="mt-3 w-full">Choose</Button>
+
+      <Tabs defaultValue="open" className="mt-8">
+        <TabsList>
+          <TabsTrigger value="open">Open ({polls.filter(p=>p.status==="Open").length})</TabsTrigger>
+          <TabsTrigger value="decided">Decided ({polls.filter(p=>p.status==="Decided").length})</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="open" className="mt-4 space-y-4">
+          {polls.filter(p=>p.status==="Open").map(p=>{
+            const total = p.options.reduce((s,o)=>s+o.votes,0);
+            return (
+              <div key={p.id} className="rounded-3xl border border-border bg-card p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2"><Vote className="h-4 w-4 text-primary"/><h3 className="font-display text-lg font-semibold">{p.title}</h3></div>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-primary"><Sparkles className="h-3 w-3"/>{p.recommendation}</p>
                   </div>
-                ))}
+                  <Button size="sm" variant="outline" onClick={()=>decide(p.id)}><Check className="mr-1.5 h-4 w-4"/>Mark decided</Button>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {p.options.map(o=>{
+                    const pct = total?Math.round((o.votes/total)*100):0;
+                    return (
+                      <div key={o.id}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{o.label}</span>
+                            {o.note && <Badge className="bg-primary/10 text-primary">{o.note}</Badge>}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">{o.votes} votes · {pct}%</span>
+                            <Button size="sm" variant="ghost" onClick={()=>vote(p.id,o.id)}><ThumbsUp className="mr-1 h-3.5 w-3.5"/>Vote</Button>
+                          </div>
+                        </div>
+                        <Progress value={pct} className="mt-1.5"/>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="mt-4 flex items-start gap-2 rounded-2xl bg-hero-radial p-4 text-sm">
-                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <p>{d.ai}</p>
+            );
+          })}
+        </TabsContent>
+
+        <TabsContent value="decided" className="mt-4 space-y-3">
+          {polls.filter(p=>p.status==="Decided").map(p=>(
+            <div key={p.id} className="rounded-2xl border border-emerald-300 bg-emerald-50/40 p-4">
+              <div className="flex items-center justify-between">
+                <p className="font-medium">{p.title}</p>
+                <Badge className="bg-emerald-500/10 text-emerald-700 gap-1"><Check className="h-3 w-3"/>Decided</Badge>
               </div>
+              <p className="mt-1 text-sm text-muted-foreground">{p.recommendation}</p>
             </div>
           ))}
-          <div className="rounded-3xl border border-border bg-hero-radial p-6">
-            <div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><Badge className="bg-primary/10 text-primary">BridgeMind™</Badge></div>
-            <p className="mt-3 text-lg">Ask anything: "What's the risk of moving the ceremony outdoors given a 40% rain chance?"</p>
-            <div className="mt-4 flex gap-2">
-              <input
-                readOnly
-                value="Ask BridgeMind™ (demo)…"
-                className="flex-1 rounded-full border border-border bg-background/60 px-4 py-2 text-sm text-muted-foreground"
-              />
-              <Button variant="hero">Ask</Button>
+        </TabsContent>
+
+        <TabsContent value="approvals" className="mt-4 space-y-3">
+          {[
+            { title:"Approve Onyema Catering deposit · $4,200", by:"Julien", tone:"warn" as const },
+            { title:"Approve florist upgrade · +$800", by:"Amara", tone:"info" as const },
+            { title:"Approve guest addition (4 new)", by:"Amara", tone:"info" as const },
+          ].map(a=>(
+            <div key={a.title} className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className={`h-5 w-5 ${a.tone==="warn"?"text-amber-600":"text-primary"}`}/>
+                <div><p className="font-medium">{a.title}</p><p className="text-xs text-muted-foreground">Requested by {a.by}</p></div>
+              </div>
+              <div className="flex gap-2"><Button size="sm" variant="outline">Deny</Button><Button size="sm" variant="hero">Approve</Button></div>
             </div>
-          </div>
-        </div>
-        <RippleFeed />
-      </div>
+          ))}
+        </TabsContent>
+      </Tabs>
     </AppShell>
   );
 }
