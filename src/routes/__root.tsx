@@ -77,13 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MelaCircle — Plan Every Moment. All In One Place." },
+      { title: "MelaBridge — Plan Every Moment. All In One Place." },
       {
         name: "description",
         content:
           "AI-powered event planning for weddings, birthdays, reunions, corporate events and more — all in one beautiful place.",
       },
-      { property: "og:title", content: "MelaCircle — AI Event Planning" },
+      { property: "og:title", content: "MelaBridge — AI Event Planning" },
       {
         property: "og:description",
         content:

@@ -39,7 +39,7 @@ const features = [
   {
     icon: Sparkles,
     title: "AI Co-Planner",
-    desc: "Describe your vision. MelaCircle drafts the timeline, guest list, and vendor shortlist in seconds.",
+    desc: "Describe your vision. MelaBridge drafts the timeline, guest list, and vendor shortlist in seconds.",
   },
   {
     icon: Calendar,
@@ -59,7 +59,7 @@ const features = [
   {
     icon: MessageSquareHeart,
     title: "Vendor Concierge",
-    desc: "Chat with florists, venues, and caterers in one inbox — MelaCircle drafts the messages.",
+    desc: "Chat with florists, venues, and caterers in one inbox — MelaBridge drafts the messages.",
   },
   {
     icon: ClipboardList,
@@ -71,13 +71,13 @@ const features = [
 const testimonials = [
   {
     quote:
-      "MelaCircle planned our 300-guest wedding better than the coordinator we almost hired. The AI suggestions were uncanny.",
+      "MelaBridge planned our 300-guest wedding better than the coordinator we almost hired. The AI suggestions were uncanny.",
     name: "Amara Okonkwo",
     role: "Bride, Lagos",
   },
   {
     quote:
-      "We run 40+ corporate events a year. MelaCircle replaced four tools and cut planning time in half.",
+      "We run 40+ corporate events a year. MelaBridge replaced four tools and cut planning time in half.",
     name: "David Chen",
     role: "Head of Events, Northwind",
   },
@@ -134,7 +134,7 @@ const plans = [
 const faqs = [
   {
     q: "What kinds of events can I plan?",
-    a: "Anything — weddings, birthdays, funerals, corporate offsites, conferences, vacations, graduations, nonprofit galas, family reunions. MelaCircle adapts its playbook to the occasion.",
+    a: "Anything — weddings, birthdays, funerals, corporate offsites, conferences, vacations, graduations, nonprofit galas, family reunions. MelaBridge adapts its playbook to the occasion.",
   },
   {
     q: "How does the AI actually help?",
@@ -162,7 +162,7 @@ function Logo() {
         <div className="absolute inset-1 rounded-full border border-gold/70" />
         <div className="absolute inset-2.5 rounded-full bg-gold" />
       </div>
-      <span className="font-display text-xl font-semibold tracking-tight">MelaCircle</span>
+      <span className="font-display text-xl font-semibold tracking-tight">MelaBridge</span>
     </div>
   );
 }
@@ -213,7 +213,7 @@ function Landing() {
               <span className="text-gradient">All In One Place.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-muted-foreground">
-              MelaCircle is your AI event concierge — from intimate birthdays to
+              MelaBridge is your AI event concierge — from intimate birthdays to
               300-guest weddings and everything in between.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -235,7 +235,7 @@ function Landing() {
             <div className="relative overflow-hidden rounded-[2rem] border border-border shadow-elegant">
               <img
                 src={heroImage}
-                alt="MelaCircle AI assistant illustration"
+                alt="MelaBridge AI assistant illustration"
                 width={1200}
                 height={1200}
                 className="h-full w-full object-cover"
@@ -267,7 +267,7 @@ function Landing() {
             Every planning tool, quietly intelligent.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            MelaCircle handles the invisible work so you can be present for the moment.
+            MelaBridge handles the invisible work so you can be present for the moment.
           </p>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -430,7 +430,7 @@ function Landing() {
           <div className="md:col-span-2">
             <Logo />
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-              MelaCircle is the AI event planning platform for every moment that matters.
+              MelaBridge is the AI event planning platform for every moment that matters.
             </p>
           </div>
           <div>
@@ -452,7 +452,7 @@ function Landing() {
         </div>
         <div className="border-t border-border">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground md:flex-row">
-            <div>© {new Date().getFullYear()} MelaCircle. Every moment, gathered.</div>
+            <div>© {new Date().getFullYear()} MelaBridge. Every moment, gathered.</div>
             <div className="flex gap-6">
               <a href="#" className="hover:text-foreground">Privacy</a>
               <a href="#" className="hover:text-foreground">Terms</a>
