@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
 import { EventDashboardPreview } from "@/components/event-dashboard-preview";
+import { getPlansFor, formatPrice } from "@/lib/billing-config";
 
 export const Route = createFileRoute("/")({
   head: () => ({
