@@ -67,6 +67,13 @@ function friendlyAuthError(error: unknown) {
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+function safeNextPath() {
+  const stored = window.sessionStorage.getItem("melabridge.auth.next");
+  window.sessionStorage.removeItem("melabridge.auth.next");
+  if (!stored || !stored.startsWith("/") || stored.startsWith("//")) return "/events";
+  return stored;
+}
+
 async function waitForAuthenticatedUser(maxMs = 4500) {
   const start = Date.now();
   let lastError: unknown;
@@ -115,6 +122,7 @@ function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const timedOutRef = useRef(false);
+  const callbackHandledRef = useRef(false);
 
   const busy = activeOperation !== null;
 
@@ -129,13 +137,6 @@ function AuthPage() {
   useEffect(() => {
     if (!loading && user) navigate({ to: "/events" });
   }, [loading, user, navigate]);
-
-  useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-    const searchParams = new URLSearchParams(window.location.search);
-    const errorDescription = hashParams.get("error_description") || searchParams.get("error_description");
-    if (errorDescription) setAuthError(friendlyAuthError(new Error(errorDescription)));
-  }, []);
 
   async function runAuthOperation(operation: AuthOperation, message: string, action: () => Promise<void>) {
     if (busy) return;
@@ -170,6 +171,28 @@ function AuthPage() {
       }
     }
   }
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const searchParams = new URLSearchParams(window.location.search);
+    const errorDescription = hashParams.get("error_description") || searchParams.get("error_description");
+    const isCallback = window.location.pathname === "/auth/callback";
+    if (errorDescription) {
+      setAuthError(friendlyAuthError(new Error(errorDescription)));
+      return;
+    }
+    if (!isCallback || callbackHandledRef.current) return;
+    callbackHandledRef.current = true;
+    void runAuthOperation("google", "Finalizing your secure sign-in...", async () => {
+      const signedInUser = await waitForAuthenticatedUser(9000);
+      setStatusMessage("Setting up your workspace...");
+      await ensureProfile(signedInUser);
+      toast.success("Signed in successfully");
+      navigate({ to: safeNextPath() as "/events", replace: true });
+    });
+    // Run once on mount so OAuth callbacks cannot loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function submitSignIn() {
     setTouched((current) => ({ ...current, signinEmail: true, signinPassword: true }));
