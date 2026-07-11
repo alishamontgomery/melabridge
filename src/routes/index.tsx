@@ -502,16 +502,30 @@ function Landing() {
 
       {/* FOOTER */}
       <footer className="border-t border-border">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-5">
           <div className="md:col-span-2">
             <Logo />
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-              MelaBridge is the AI event planning platform for every moment that matters.
+              MelaBridge is the bridge between an idea and an unforgettable event —
+              AI planning, guests, vendors, tickets and fundraising in one place.
             </p>
+            <div className="mt-6 flex gap-3">
+              {[Twitter, Instagram, Linkedin, Youtube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  aria-label="Social link"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
           </div>
           <div>
             <div className="text-sm font-semibold">Product</div>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><a href="#how" className="hover:text-foreground">How it works</a></li>
               <li><a href="#features" className="hover:text-foreground">Features</a></li>
               <li><a href="#pricing" className="hover:text-foreground">Pricing</a></li>
               <li><a href="#faq" className="hover:text-foreground">FAQ</a></li>
@@ -522,7 +536,16 @@ function Landing() {
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li><a href="#" className="hover:text-foreground">About</a></li>
               <li><a href="#" className="hover:text-foreground">Careers</a></li>
+              <li><a href="#" className="hover:text-foreground">Press</a></li>
               <li><a href="#" className="hover:text-foreground">Contact</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Resources</div>
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="hover:text-foreground">Blog</a></li>
+              <li><a href="#" className="hover:text-foreground">Guides</a></li>
+              <li><a href="#" className="hover:text-foreground">Help center</a></li>
             </ul>
           </div>
         </div>
