@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
@@ -20,13 +20,19 @@ export const Route = createFileRoute("/auth")({
       { name: "description", content: "Sign in or create your MelaBridge account." },
     ],
   }),
-  component: AuthPage,
+  component: AuthRoute,
 });
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
 const passwordSchema = z.string().min(8, "At least 8 characters").max(128);
 const nameSchema = z.string().trim().min(1, "Enter your name").max(80);
 type AuthOperation = "signin" | "signup" | "google" | "reset";
+
+function AuthRoute() {
+  const location = useLocation();
+  if (location.pathname === "/auth/callback") return <Outlet />;
+  return <AuthPage />;
+}
 
 function getPasswordStrength(password: string) {
   const checks = [
