@@ -5,7 +5,6 @@ import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, Sparkles } from "lucid
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
@@ -304,13 +303,33 @@ function AuthPage() {
             </div>
           )}
 
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "signin" | "signup")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign in</TabsTrigger>
-              <TabsTrigger value="signup">Create account</TabsTrigger>
-            </TabsList>
+          <div className="grid w-full grid-cols-2 rounded-lg bg-muted p-1" role="tablist" aria-label="Authentication options">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "signin"}
+              onClick={() => setTab("signin")}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                tab === "signin" ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "signup"}
+              onClick={() => setTab("signup")}
+              className={`rounded-md px-3 py-1 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${
+                tab === "signup" ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Create account
+            </button>
+          </div>
 
-            <TabsContent value="signin" className="mt-6">
+          {tab === "signin" ? (
+            <div className="mt-6" role="tabpanel" aria-label="Sign in">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="signin-email">Email</Label>
@@ -351,9 +370,9 @@ function AuthPage() {
                   {activeOperation === "signin" ? "Signing in…" : "Sign in"}
                 </Button>
               </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="mt-6">
+            </div>
+          ) : (
+            <div className="mt-6" role="tabpanel" aria-label="Create account">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-name">Your name</Label>
@@ -418,8 +437,8 @@ function AuthPage() {
                   {activeOperation === "signup" ? "Creating account…" : "Create account"}
                 </Button>
               </form>
-            </TabsContent>
-          </Tabs>
+            </div>
+          )}
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
