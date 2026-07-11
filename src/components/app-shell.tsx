@@ -37,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Ecosystem",
     items: [
+      { to: "/concierge", label: "Bridge Concierge™", icon: Sparkles },
       { to: "/dashboard", label: "AI Command Center", icon: LayoutDashboard },
       { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
       { to: "/workspace", label: "Event Workspace", icon: GitBranch },
