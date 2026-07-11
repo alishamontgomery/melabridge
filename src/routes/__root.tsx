@@ -79,20 +79,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MelaBridge — Plan Every Moment. All In One Place." },
+      { title: "MelaBridge — The AI-Powered Event Planning Platform" },
       {
         name: "description",
         content:
-          "AI-powered event planning for weddings, birthdays, reunions, corporate events and more — all in one beautiful place.",
+          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
       },
-      { property: "og:title", content: "MelaBridge — AI Event Planning" },
+      { property: "og:title", content: "MelaBridge — The AI-Powered Event Planning Platform" },
       {
         property: "og:description",
         content:
-          "Plan every type of event with an intelligent assistant that handles guests, budgets, timelines and vendors.",
+          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "MelaBridge — The AI-Powered Event Planning Platform" },
+      { name: "twitter:description", content: "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/efd3c2e3-99bd-445c-9599-c65ced2cb8d9/id-preview-15e5f94f--e4d706de-6d99-4798-9f73-89f91b1a4b9f.lovable.app-1783799932581.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/efd3c2e3-99bd-445c-9599-c65ced2cb8d9/id-preview-15e5f94f--e4d706de-6d99-4798-9f73-89f91b1a4b9f.lovable.app-1783799932581.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

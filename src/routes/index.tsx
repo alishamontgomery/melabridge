@@ -40,11 +40,11 @@ export const Route = createFileRoute("/")({
         content:
           "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
       },
-      { property: "og:title", content: "MelaBridge — Where Every Event Comes Together" },
+      { property: "og:title", content: "MelaBridge — The AI-Powered Event Planning Platform" },
       {
         property: "og:description",
         content:
-          "Replace the ten apps you use to plan an event with one AI-native platform for planners, vendors, venues and guests.",
+          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
