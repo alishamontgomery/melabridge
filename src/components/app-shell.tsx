@@ -129,6 +129,50 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+function UserMenu() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) {
+    return (
+      <Button asChild size="sm" variant="hero" className="rounded-full">
+        <Link to="/auth">Sign in</Link>
+      </Button>
+    );
+  }
+
+  const initial = (user.user_metadata?.display_name || user.email || "U").toString().charAt(0).toUpperCase();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate({ to: "/" });
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          aria-label="Account menu"
+          className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary to-gold text-sm font-semibold text-primary-foreground"
+        >
+          {initial}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate({ to: "/events" })}>Your events</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+          <LogOut className="mr-2 h-4 w-4" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function NavList({ active, onNavigate }: { active: string; onNavigate?: () => void }) {
   return (
     <nav className="space-y-6">
