@@ -70,6 +70,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/bridgedna", label: "BridgeDNA™", icon: Dna },
       { to: "/bridgevault", label: "BridgeVault™", icon: Vault },
       { to: "/bridge-intelligence", label: "Bridge Intelligence™", icon: BarChart3 },
+      { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/reports", label: "Reports", icon: FileBarChart },
       { to: "/files", label: "Files", icon: FolderOpen },
     ],
