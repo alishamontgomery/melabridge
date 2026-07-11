@@ -299,7 +299,7 @@ function Dashboard() {
               </h1>
               <p className="mt-3 max-w-2xl text-muted-foreground">
                 I've built a {Math.ceil(countdown / 7)}-week roadmap from today until{" "}
-                {new Date(event.date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}, drafted your
+                {fmtMonthDay(event.date)}, drafted your
                 guest communications, matched {vendors.length} vendors, and flagged 3 things that need your attention.
               </p>
 
