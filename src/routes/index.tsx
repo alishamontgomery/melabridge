@@ -143,47 +143,6 @@ const testimonials = [
   },
 ];
 
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    tagline: "For a single moment.",
-    features: ["1 active event", "Up to 25 guests", "AI planning assistant", "Basic invitations"],
-    cta: "Start free",
-    variant: "soft" as const,
-  },
-  {
-    name: "Pro",
-    price: "$18",
-    period: "/month",
-    tagline: "For life's memorable moments.",
-    features: [
-      "Unlimited events",
-      "Up to 500 guests per event",
-      "Full AI concierge",
-      "Vendor inbox & budgets",
-      "Ticket sales & fundraising",
-    ],
-    cta: "Start 14-day trial",
-    variant: "hero" as const,
-    featured: true,
-  },
-  {
-    name: "Business",
-    price: "$79",
-    period: "/month",
-    tagline: "For planners & teams.",
-    features: [
-      "Everything in Pro",
-      "Team collaboration",
-      "Client portals",
-      "White-label invitations",
-      "Priority support",
-    ],
-    cta: "Talk to sales",
-    variant: "gold" as const,
-  },
-];
 
 const faqs = [
   {
