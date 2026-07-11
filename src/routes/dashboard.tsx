@@ -268,8 +268,8 @@ function Dashboard() {
               {e.name}
             </button>
           ))}
-          <Button variant="ghost" size="sm" className="ml-1 gap-1 text-primary">
-            <Plus className="h-4 w-4" /> New event
+          <Button variant="ghost" size="sm" className="ml-1 gap-1 text-primary" asChild>
+            <Link to="/new-event"><Plus className="h-4 w-4" /> New event</Link>
           </Button>
         </div>
 
