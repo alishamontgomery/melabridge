@@ -19,7 +19,6 @@ import {
   HeartHandshake,
   Handshake,
   Lightbulb,
-  Rocket,
   PartyPopper,
   Twitter,
   Instagram,
