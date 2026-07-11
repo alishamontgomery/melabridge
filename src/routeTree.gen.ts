@@ -25,6 +25,7 @@ import { Route as FilesRouteImport } from './routes/files'
 import { Route as EcosystemRouteImport } from './routes/ecosystem'
 import { Route as DecisionsRouteImport } from './routes/decisions'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ConciergeRouteImport } from './routes/concierge'
 import { Route as CollaborationRouteImport } from './routes/collaboration'
 import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as BridgeworldRouteImport } from './routes/bridgeworld'
@@ -115,6 +116,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConciergeRoute = ConciergeRouteImport.update({
+  id: '/concierge',
+  path: '/concierge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollaborationRoute = CollaborationRouteImport.update({
   id: '/collaboration',
   path: '/collaboration',
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
   '/collaboration': typeof CollaborationRoute
+  '/concierge': typeof ConciergeRoute
   '/dashboard': typeof DashboardRoute
   '/decisions': typeof DecisionsRoute
   '/ecosystem': typeof EcosystemRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
   '/collaboration': typeof CollaborationRoute
+  '/concierge': typeof ConciergeRoute
   '/dashboard': typeof DashboardRoute
   '/decisions': typeof DecisionsRoute
   '/ecosystem': typeof EcosystemRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
   '/collaboration': typeof CollaborationRoute
+  '/concierge': typeof ConciergeRoute
   '/dashboard': typeof DashboardRoute
   '/decisions': typeof DecisionsRoute
   '/ecosystem': typeof EcosystemRoute
@@ -255,6 +264,7 @@ export interface FileRouteTypes {
     | '/bridgeworld'
     | '/budget'
     | '/collaboration'
+    | '/concierge'
     | '/dashboard'
     | '/decisions'
     | '/ecosystem'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/bridgeworld'
     | '/budget'
     | '/collaboration'
+    | '/concierge'
     | '/dashboard'
     | '/decisions'
     | '/ecosystem'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/bridgeworld'
     | '/budget'
     | '/collaboration'
+    | '/concierge'
     | '/dashboard'
     | '/decisions'
     | '/ecosystem'
@@ -337,6 +349,7 @@ export interface RootRouteChildren {
   BridgeworldRoute: typeof BridgeworldRoute
   BudgetRoute: typeof BudgetRoute
   CollaborationRoute: typeof CollaborationRoute
+  ConciergeRoute: typeof ConciergeRoute
   DashboardRoute: typeof DashboardRoute
   DecisionsRoute: typeof DecisionsRoute
   EcosystemRoute: typeof EcosystemRoute
@@ -469,6 +482,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/concierge': {
+      id: '/concierge'
+      path: '/concierge'
+      fullPath: '/concierge'
+      preLoaderRoute: typeof ConciergeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collaboration': {
       id: '/collaboration'
       path: '/collaboration'
@@ -545,6 +565,7 @@ const rootRouteChildren: RootRouteChildren = {
   BridgeworldRoute: BridgeworldRoute,
   BudgetRoute: BudgetRoute,
   CollaborationRoute: CollaborationRoute,
+  ConciergeRoute: ConciergeRoute,
   DashboardRoute: DashboardRoute,
   DecisionsRoute: DecisionsRoute,
   EcosystemRoute: EcosystemRoute,
