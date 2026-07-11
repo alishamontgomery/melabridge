@@ -15,6 +15,15 @@ import {
   ClipboardList,
   Check,
   Star,
+  Ticket,
+  HeartHandshake,
+  Handshake,
+  Lightbulb,
+  PartyPopper,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
 } from "lucide-react";
 import heroImage from "@/assets/hero-ai.jpg";
 
@@ -25,59 +34,96 @@ export const Route = createFileRoute("/")({
 const eventTypes = [
   "Weddings",
   "Birthdays",
-  "Reunions",
   "Baby Showers",
+  "Reunions",
   "Funerals",
   "Corporate",
   "Conferences",
   "Vacations",
-  "Graduations",
   "Nonprofits",
+  "School Events",
+];
+
+const howItWorks = [
+  {
+    icon: Lightbulb,
+    step: "01",
+    title: "Share the idea",
+    desc: "Tell MelaBridge what you're planning. A backyard birthday or a 500-guest gala — start with a sentence.",
+  },
+  {
+    icon: Sparkles,
+    step: "02",
+    title: "Let AI build the plan",
+    desc: "Timelines, budgets, vendor shortlists, guest lists and messaging drafts appear in seconds.",
+  },
+  {
+    icon: PartyPopper,
+    step: "03",
+    title: "Bring everyone together",
+    desc: "Invite co-planners, sell tickets, collect RSVPs, raise funds, and run the day from one dashboard.",
+  },
 ];
 
 const features = [
   {
     icon: Sparkles,
-    title: "AI Co-Planner",
-    desc: "Describe your vision. MelaCircle drafts the timeline, guest list, and vendor shortlist in seconds.",
-  },
-  {
-    icon: Calendar,
-    title: "Unified Timeline",
-    desc: "Every task, RSVP, and milestone across all your events, on one calm timeline.",
-  },
-  {
-    icon: Users,
-    title: "Guest Intelligence",
-    desc: "Smart RSVPs, dietary tracking, seating suggestions — your guests feel seen.",
+    title: "AI Planning",
+    desc: "Describe your vision. MelaBridge drafts the timeline, guest list, and vendor shortlist in seconds.",
   },
   {
     icon: Wallet,
-    title: "Budget Autopilot",
+    title: "Budgets",
     desc: "Live budget tracking with vendor comparisons and gentle nudges when things drift.",
   },
   {
+    icon: Users,
+    title: "Guests",
+    desc: "Smart RSVPs, dietary tracking, and seating suggestions — your guests feel seen.",
+  },
+  {
+    icon: Handshake,
+    title: "Vendors",
+    desc: "Discover, compare, and book florists, venues, and caterers in one concierge inbox.",
+  },
+  {
+    icon: Calendar,
+    title: "Timelines",
+    desc: "Every task and milestone across every event, on one calm shared timeline.",
+  },
+  {
+    icon: Ticket,
+    title: "Ticket Sales",
+    desc: "Sell tickets in minutes with tiered pricing, promo codes, and instant payouts.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Fundraising",
+    desc: "Run donation campaigns and silent auctions alongside your event, natively.",
+  },
+  {
     icon: MessageSquareHeart,
-    title: "Vendor Concierge",
-    desc: "Chat with florists, venues, and caterers in one inbox — MelaCircle drafts the messages.",
+    title: "Messaging",
+    desc: "Email, SMS and in-app messages — personalized and sent at the right moment.",
   },
   {
     icon: ClipboardList,
-    title: "Beautiful Invitations",
-    desc: "Designer-crafted invites that adapt to your event, brand, and audience automatically.",
+    title: "Collaboration",
+    desc: "Invite family, friends, or teammates with granular permissions and live edits.",
   },
 ];
+
 
 const testimonials = [
   {
     quote:
-      "MelaCircle planned our 300-guest wedding better than the coordinator we almost hired. The AI suggestions were uncanny.",
+      "MelaBridge planned our 300-guest wedding better than the coordinator we almost hired. The AI suggestions were uncanny.",
     name: "Amara Okonkwo",
     role: "Bride, Lagos",
   },
   {
     quote:
-      "We run 40+ corporate events a year. MelaCircle replaced four tools and cut planning time in half.",
+      "We run 40+ corporate events a year. MelaBridge replaced four tools and cut planning time in half.",
     name: "David Chen",
     role: "Head of Events, Northwind",
   },
@@ -91,15 +137,15 @@ const testimonials = [
 
 const plans = [
   {
-    name: "Personal",
-    price: "Free",
+    name: "Free",
+    price: "$0",
     tagline: "For a single moment.",
     features: ["1 active event", "Up to 25 guests", "AI planning assistant", "Basic invitations"],
     cta: "Start free",
     variant: "soft" as const,
   },
   {
-    name: "Circle",
+    name: "Pro",
     price: "$18",
     period: "/month",
     tagline: "For life's memorable moments.",
@@ -108,19 +154,19 @@ const plans = [
       "Up to 500 guests per event",
       "Full AI concierge",
       "Vendor inbox & budgets",
-      "Custom invitation studio",
+      "Ticket sales & fundraising",
     ],
     cta: "Start 14-day trial",
     variant: "hero" as const,
     featured: true,
   },
   {
-    name: "Studio",
+    name: "Business",
     price: "$79",
     period: "/month",
     tagline: "For planners & teams.",
     features: [
-      "Everything in Circle",
+      "Everything in Pro",
       "Team collaboration",
       "Client portals",
       "White-label invitations",
@@ -134,7 +180,7 @@ const plans = [
 const faqs = [
   {
     q: "What kinds of events can I plan?",
-    a: "Anything — weddings, birthdays, funerals, corporate offsites, conferences, vacations, graduations, nonprofit galas, family reunions. MelaCircle adapts its playbook to the occasion.",
+    a: "Anything — weddings, birthdays, funerals, corporate offsites, conferences, vacations, graduations, nonprofit galas, family reunions. MelaBridge adapts its playbook to the occasion.",
   },
   {
     q: "How does the AI actually help?",
@@ -142,7 +188,7 @@ const faqs = [
   },
   {
     q: "Can I collaborate with family or a team?",
-    a: "Yes. Invite co-planners with granular permissions on Circle and Studio plans. Everyone stays on the same timeline.",
+    a: "Yes. Invite co-planners with granular permissions on Pro and Business plans. Everyone stays on the same timeline.",
   },
   {
     q: "Is my guest data private?",
@@ -162,7 +208,7 @@ function Logo() {
         <div className="absolute inset-1 rounded-full border border-gold/70" />
         <div className="absolute inset-2.5 rounded-full bg-gold" />
       </div>
-      <span className="font-display text-xl font-semibold tracking-tight">MelaCircle</span>
+      <span className="font-display text-xl font-semibold tracking-tight">MelaBridge</span>
     </div>
   );
 }
@@ -175,11 +221,11 @@ function Landing() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <Logo />
           <nav className="hidden items-center gap-8 md:flex">
+            <a href="#how" className="text-sm text-muted-foreground hover:text-foreground">
+              How it works
+            </a>
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground">
               Features
-            </a>
-            <a href="#testimonials" className="text-sm text-muted-foreground hover:text-foreground">
-              Loved by
             </a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">
               Pricing
@@ -210,18 +256,19 @@ function Landing() {
             <h1 className="font-display text-5xl leading-[1.02] tracking-tight md:text-7xl">
               Plan Every Moment.
               <br />
-              <span className="text-gradient">All In One Place.</span>
+              <span className="text-gradient">Together.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg text-muted-foreground">
-              MelaCircle is your AI event concierge — from intimate birthdays to
-              300-guest weddings and everything in between.
+              MelaBridge is the AI-powered platform for weddings, birthdays, baby
+              showers, reunions, funerals, corporate events, conferences,
+              vacations, nonprofit and school events — all in one place.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button variant="hero" size="xl">
-                Get started free
+                Start planning
               </Button>
-              <Button variant="soft" size="xl">
-                Watch demo
+              <Button variant="soft" size="xl" asChild>
+                <a href="#features">Explore features</a>
               </Button>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-widest text-muted-foreground">
@@ -235,13 +282,42 @@ function Landing() {
             <div className="relative overflow-hidden rounded-[2rem] border border-border shadow-elegant">
               <img
                 src={heroImage}
-                alt="MelaCircle AI assistant illustration"
+                alt="MelaBridge AI assistant illustration"
                 width={1200}
                 height={1200}
                 className="h-full w-full object-cover"
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how" className="mx-auto max-w-7xl px-6 py-28">
+        <div className="mx-auto max-w-2xl text-center">
+          <p className="text-xs uppercase tracking-widest text-primary">How it works</p>
+          <h2 className="mt-3 font-display text-4xl md:text-5xl">
+            From idea to unforgettable, in three steps.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            MelaBridge is the bridge between a spark of inspiration and a moment
+            people will talk about for years.
+          </p>
+        </div>
+        <div className="mt-16 grid gap-6 md:grid-cols-3">
+          {howItWorks.map((s) => (
+            <div
+              key={s.step}
+              className="relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-soft"
+            >
+              <div className="font-display text-6xl text-primary/10">{s.step}</div>
+              <div className="mt-2 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+                <s.icon className="h-5 w-5" />
+              </div>
+              <h3 className="mt-5 text-xl font-semibold">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -267,7 +343,7 @@ function Landing() {
             Every planning tool, quietly intelligent.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            MelaCircle handles the invisible work so you can be present for the moment.
+            MelaBridge handles the invisible work so you can be present for the moment.
           </p>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -426,16 +502,30 @@ function Landing() {
 
       {/* FOOTER */}
       <footer className="border-t border-border">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-4">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-5">
           <div className="md:col-span-2">
             <Logo />
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
-              MelaCircle is the AI event planning platform for every moment that matters.
+              MelaBridge is the bridge between an idea and an unforgettable event —
+              AI planning, guests, vendors, tickets and fundraising in one place.
             </p>
+            <div className="mt-6 flex gap-3">
+              {[Twitter, Instagram, Linkedin, Youtube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  aria-label="Social link"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
           </div>
           <div>
             <div className="text-sm font-semibold">Product</div>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><a href="#how" className="hover:text-foreground">How it works</a></li>
               <li><a href="#features" className="hover:text-foreground">Features</a></li>
               <li><a href="#pricing" className="hover:text-foreground">Pricing</a></li>
               <li><a href="#faq" className="hover:text-foreground">FAQ</a></li>
@@ -446,13 +536,22 @@ function Landing() {
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li><a href="#" className="hover:text-foreground">About</a></li>
               <li><a href="#" className="hover:text-foreground">Careers</a></li>
+              <li><a href="#" className="hover:text-foreground">Press</a></li>
               <li><a href="#" className="hover:text-foreground">Contact</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="text-sm font-semibold">Resources</div>
+            <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="hover:text-foreground">Blog</a></li>
+              <li><a href="#" className="hover:text-foreground">Guides</a></li>
+              <li><a href="#" className="hover:text-foreground">Help center</a></li>
             </ul>
           </div>
         </div>
         <div className="border-t border-border">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 py-6 text-xs text-muted-foreground md:flex-row">
-            <div>© {new Date().getFullYear()} MelaCircle. Every moment, gathered.</div>
+            <div>© {new Date().getFullYear()} MelaBridge. Every moment, gathered.</div>
             <div className="flex gap-6">
               <a href="#" className="hover:text-foreground">Privacy</a>
               <a href="#" className="hover:text-foreground">Terms</a>
