@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { EcosystemProvider } from "@/lib/ecosystem-store";
+import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -227,7 +229,9 @@ function Dashboard() {
   const countdown = daysUntil(event.date);
 
   return (
+    <EcosystemProvider>
     <div className="min-h-screen bg-background">
+      <CommandPalette />
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3">
@@ -248,6 +252,7 @@ function Dashboard() {
             <Link to="/bridge-intelligence" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">Intelligence</Link>
           </nav>
           <div className="flex items-center gap-2">
+            <div className="hidden md:block"><CommandTrigger /></div>
             <Button variant="ghost" size="sm" className="gap-2">
               <Bell className="h-4 w-4" /> <span className="hidden sm:inline">3</span>
             </Button>
@@ -650,6 +655,7 @@ function Dashboard() {
         </footer>
       </main>
     </div>
+    </EcosystemProvider>
   );
 }
 

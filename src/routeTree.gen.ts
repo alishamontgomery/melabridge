@@ -9,22 +9,112 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WorkspaceRouteImport } from './routes/workspace'
+import { Route as VendorsRouteImport } from './routes/vendors'
+import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as NewEventRouteImport } from './routes/new-event'
+import { Route as MessagingRouteImport } from './routes/messaging'
+import { Route as GuestsRouteImport } from './routes/guests'
+import { Route as FundraisingRouteImport } from './routes/fundraising'
+import { Route as FilesRouteImport } from './routes/files'
+import { Route as EcosystemRouteImport } from './routes/ecosystem'
+import { Route as DecisionsRouteImport } from './routes/decisions'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as CollaborationRouteImport } from './routes/collaboration'
+import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as BridgeworldRouteImport } from './routes/bridgeworld'
 import { Route as BridgevaultRouteImport } from './routes/bridgevault'
 import { Route as BridgednaRouteImport } from './routes/bridgedna'
 import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intelligence'
 import { Route as IndexRouteImport } from './routes/index'
 
+const WorkspaceRoute = WorkspaceRouteImport.update({
+  id: '/workspace',
+  path: '/workspace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendorsRoute = VendorsRouteImport.update({
+  id: '/vendors',
+  path: '/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NewEventRoute = NewEventRouteImport.update({
   id: '/new-event',
   path: '/new-event',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MessagingRoute = MessagingRouteImport.update({
+  id: '/messaging',
+  path: '/messaging',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestsRoute = GuestsRouteImport.update({
+  id: '/guests',
+  path: '/guests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundraisingRoute = FundraisingRouteImport.update({
+  id: '/fundraising',
+  path: '/fundraising',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilesRoute = FilesRouteImport.update({
+  id: '/files',
+  path: '/files',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EcosystemRoute = EcosystemRouteImport.update({
+  id: '/ecosystem',
+  path: '/ecosystem',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecisionsRoute = DecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollaborationRoute = CollaborationRouteImport.update({
+  id: '/collaboration',
+  path: '/collaboration',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BridgeworldRoute = BridgeworldRouteImport.update({
@@ -59,8 +149,23 @@ export interface FileRoutesByFullPath {
   '/bridgedna': typeof BridgednaRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
+  '/budget': typeof BudgetRoute
+  '/collaboration': typeof CollaborationRoute
   '/dashboard': typeof DashboardRoute
+  '/decisions': typeof DecisionsRoute
+  '/ecosystem': typeof EcosystemRoute
+  '/files': typeof FilesRoute
+  '/fundraising': typeof FundraisingRoute
+  '/guests': typeof GuestsRoute
+  '/messaging': typeof MessagingRoute
   '/new-event': typeof NewEventRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
+  '/tickets': typeof TicketsRoute
+  '/timeline': typeof TimelineRoute
+  '/vendors': typeof VendorsRoute
+  '/workspace': typeof WorkspaceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,8 +173,23 @@ export interface FileRoutesByTo {
   '/bridgedna': typeof BridgednaRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
+  '/budget': typeof BudgetRoute
+  '/collaboration': typeof CollaborationRoute
   '/dashboard': typeof DashboardRoute
+  '/decisions': typeof DecisionsRoute
+  '/ecosystem': typeof EcosystemRoute
+  '/files': typeof FilesRoute
+  '/fundraising': typeof FundraisingRoute
+  '/guests': typeof GuestsRoute
+  '/messaging': typeof MessagingRoute
   '/new-event': typeof NewEventRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
+  '/tickets': typeof TicketsRoute
+  '/timeline': typeof TimelineRoute
+  '/vendors': typeof VendorsRoute
+  '/workspace': typeof WorkspaceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,8 +198,23 @@ export interface FileRoutesById {
   '/bridgedna': typeof BridgednaRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
+  '/budget': typeof BudgetRoute
+  '/collaboration': typeof CollaborationRoute
   '/dashboard': typeof DashboardRoute
+  '/decisions': typeof DecisionsRoute
+  '/ecosystem': typeof EcosystemRoute
+  '/files': typeof FilesRoute
+  '/fundraising': typeof FundraisingRoute
+  '/guests': typeof GuestsRoute
+  '/messaging': typeof MessagingRoute
   '/new-event': typeof NewEventRoute
+  '/reports': typeof ReportsRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
+  '/tickets': typeof TicketsRoute
+  '/timeline': typeof TimelineRoute
+  '/vendors': typeof VendorsRoute
+  '/workspace': typeof WorkspaceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -89,8 +224,23 @@ export interface FileRouteTypes {
     | '/bridgedna'
     | '/bridgevault'
     | '/bridgeworld'
+    | '/budget'
+    | '/collaboration'
     | '/dashboard'
+    | '/decisions'
+    | '/ecosystem'
+    | '/files'
+    | '/fundraising'
+    | '/guests'
+    | '/messaging'
     | '/new-event'
+    | '/reports'
+    | '/settings'
+    | '/tasks'
+    | '/tickets'
+    | '/timeline'
+    | '/vendors'
+    | '/workspace'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,8 +248,23 @@ export interface FileRouteTypes {
     | '/bridgedna'
     | '/bridgevault'
     | '/bridgeworld'
+    | '/budget'
+    | '/collaboration'
     | '/dashboard'
+    | '/decisions'
+    | '/ecosystem'
+    | '/files'
+    | '/fundraising'
+    | '/guests'
+    | '/messaging'
     | '/new-event'
+    | '/reports'
+    | '/settings'
+    | '/tasks'
+    | '/tickets'
+    | '/timeline'
+    | '/vendors'
+    | '/workspace'
   id:
     | '__root__'
     | '/'
@@ -107,8 +272,23 @@ export interface FileRouteTypes {
     | '/bridgedna'
     | '/bridgevault'
     | '/bridgeworld'
+    | '/budget'
+    | '/collaboration'
     | '/dashboard'
+    | '/decisions'
+    | '/ecosystem'
+    | '/files'
+    | '/fundraising'
+    | '/guests'
+    | '/messaging'
     | '/new-event'
+    | '/reports'
+    | '/settings'
+    | '/tasks'
+    | '/tickets'
+    | '/timeline'
+    | '/vendors'
+    | '/workspace'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,12 +297,76 @@ export interface RootRouteChildren {
   BridgednaRoute: typeof BridgednaRoute
   BridgevaultRoute: typeof BridgevaultRoute
   BridgeworldRoute: typeof BridgeworldRoute
+  BudgetRoute: typeof BudgetRoute
+  CollaborationRoute: typeof CollaborationRoute
   DashboardRoute: typeof DashboardRoute
+  DecisionsRoute: typeof DecisionsRoute
+  EcosystemRoute: typeof EcosystemRoute
+  FilesRoute: typeof FilesRoute
+  FundraisingRoute: typeof FundraisingRoute
+  GuestsRoute: typeof GuestsRoute
+  MessagingRoute: typeof MessagingRoute
   NewEventRoute: typeof NewEventRoute
+  ReportsRoute: typeof ReportsRoute
+  SettingsRoute: typeof SettingsRoute
+  TasksRoute: typeof TasksRoute
+  TicketsRoute: typeof TicketsRoute
+  TimelineRoute: typeof TimelineRoute
+  VendorsRoute: typeof VendorsRoute
+  WorkspaceRoute: typeof WorkspaceRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/workspace': {
+      id: '/workspace'
+      path: '/workspace'
+      fullPath: '/workspace'
+      preLoaderRoute: typeof WorkspaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendors': {
+      id: '/vendors'
+      path: '/vendors'
+      fullPath: '/vendors'
+      preLoaderRoute: typeof VendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/new-event': {
       id: '/new-event'
       path: '/new-event'
@@ -130,11 +374,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NewEventRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/messaging': {
+      id: '/messaging'
+      path: '/messaging'
+      fullPath: '/messaging'
+      preLoaderRoute: typeof MessagingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guests': {
+      id: '/guests'
+      path: '/guests'
+      fullPath: '/guests'
+      preLoaderRoute: typeof GuestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fundraising': {
+      id: '/fundraising'
+      path: '/fundraising'
+      fullPath: '/fundraising'
+      preLoaderRoute: typeof FundraisingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/files': {
+      id: '/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof FilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ecosystem': {
+      id: '/ecosystem'
+      path: '/ecosystem'
+      fullPath: '/ecosystem'
+      preLoaderRoute: typeof EcosystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decisions': {
+      id: '/decisions'
+      path: '/decisions'
+      fullPath: '/decisions'
+      preLoaderRoute: typeof DecisionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collaboration': {
+      id: '/collaboration'
+      path: '/collaboration'
+      fullPath: '/collaboration'
+      preLoaderRoute: typeof CollaborationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bridgeworld': {
@@ -181,8 +481,23 @@ const rootRouteChildren: RootRouteChildren = {
   BridgednaRoute: BridgednaRoute,
   BridgevaultRoute: BridgevaultRoute,
   BridgeworldRoute: BridgeworldRoute,
+  BudgetRoute: BudgetRoute,
+  CollaborationRoute: CollaborationRoute,
   DashboardRoute: DashboardRoute,
+  DecisionsRoute: DecisionsRoute,
+  EcosystemRoute: EcosystemRoute,
+  FilesRoute: FilesRoute,
+  FundraisingRoute: FundraisingRoute,
+  GuestsRoute: GuestsRoute,
+  MessagingRoute: MessagingRoute,
   NewEventRoute: NewEventRoute,
+  ReportsRoute: ReportsRoute,
+  SettingsRoute: SettingsRoute,
+  TasksRoute: TasksRoute,
+  TicketsRoute: TicketsRoute,
+  TimelineRoute: TimelineRoute,
+  VendorsRoute: VendorsRoute,
+  WorkspaceRoute: WorkspaceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
