@@ -22,6 +22,7 @@ import {
   FileBarChart,
   Settings as SettingsIcon,
   Network,
+  Briefcase,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,10 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/reports", label: "Reports", icon: FileBarChart },
       { to: "/files", label: "Files", icon: FolderOpen },
     ],
+  },
+  {
+    label: "For vendors",
+    items: [{ to: "/bridgepilot", label: "BridgePilot™", icon: Briefcase }],
   },
   {
     label: "Account",

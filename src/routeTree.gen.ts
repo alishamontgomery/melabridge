@@ -28,6 +28,7 @@ import { Route as CollaborationRouteImport } from './routes/collaboration'
 import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as BridgeworldRouteImport } from './routes/bridgeworld'
 import { Route as BridgevaultRouteImport } from './routes/bridgevault'
+import { Route as BridgepilotRouteImport } from './routes/bridgepilot'
 import { Route as BridgednaRouteImport } from './routes/bridgedna'
 import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intelligence'
 import { Route as IndexRouteImport } from './routes/index'
@@ -127,6 +128,11 @@ const BridgevaultRoute = BridgevaultRouteImport.update({
   path: '/bridgevault',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BridgepilotRoute = BridgepilotRouteImport.update({
+  id: '/bridgepilot',
+  path: '/bridgepilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BridgednaRoute = BridgednaRouteImport.update({
   id: '/bridgedna',
   path: '/bridgedna',
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
+  '/bridgepilot': typeof BridgepilotRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
+  '/bridgepilot': typeof BridgepilotRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
+  '/bridgepilot': typeof BridgepilotRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bridge-intelligence'
     | '/bridgedna'
+    | '/bridgepilot'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bridge-intelligence'
     | '/bridgedna'
+    | '/bridgepilot'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bridge-intelligence'
     | '/bridgedna'
+    | '/bridgepilot'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BridgeIntelligenceRoute: typeof BridgeIntelligenceRoute
   BridgednaRoute: typeof BridgednaRoute
+  BridgepilotRoute: typeof BridgepilotRoute
   BridgevaultRoute: typeof BridgevaultRoute
   BridgeworldRoute: typeof BridgeworldRoute
   BudgetRoute: typeof BudgetRoute
@@ -451,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BridgevaultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bridgepilot': {
+      id: '/bridgepilot'
+      path: '/bridgepilot'
+      fullPath: '/bridgepilot'
+      preLoaderRoute: typeof BridgepilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bridgedna': {
       id: '/bridgedna'
       path: '/bridgedna'
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BridgeIntelligenceRoute: BridgeIntelligenceRoute,
   BridgednaRoute: BridgednaRoute,
+  BridgepilotRoute: BridgepilotRoute,
   BridgevaultRoute: BridgevaultRoute,
   BridgeworldRoute: BridgeworldRoute,
   BudgetRoute: BudgetRoute,
