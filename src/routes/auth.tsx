@@ -47,6 +47,9 @@ function friendlyAuthError(error: unknown) {
   if (message.includes("already registered") || message.includes("already exists")) {
     return "An account already exists with this email. Sign in instead or reset your password.";
   }
+  if (message.includes("weak") || message.includes("easy to guess") || message.includes("password")) {
+    return "Choose a stronger password that is unique to MelaBridge and not commonly used.";
+  }
   if (message.includes("invalid login") || message.includes("invalid credentials")) {
     return "We couldn't sign you in with those details. Check your email and password, then try again.";
   }
