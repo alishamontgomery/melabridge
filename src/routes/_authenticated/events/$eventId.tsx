@@ -104,7 +104,7 @@ function EventDetailPage() {
       .map((item) => ({
         name: item.vendor_name || item.label,
         role: item.category,
-        status: item.status === "paid" ? "confirmed" as const : item.status === "quoted" ? "quoted" as const : "pending" as const,
+        status: Number(item.paid_amount) > 0 ? "confirmed" as const : Number(item.estimated_amount) > 0 ? "quoted" as const : "pending" as const,
       }));
     const timeline = [
       { date: "Start", label: "Event created", done: true },
@@ -144,7 +144,7 @@ function EventDetailPage() {
       timeline,
       decisions: [
         { title: "Planning priorities", options: Math.max(tasks.length, 1), votes: tasks.filter((task) => task.status === "done").length },
-        { title: "Budget choices", options: Math.max(budget.length, 1), votes: budget.filter((item) => item.status === "paid").length },
+        { title: "Budget choices", options: Math.max(budget.length, 1), votes: budget.filter((item) => Number(item.paid_amount) > 0).length },
       ],
     };
   }, [budget, budgetTotals.act, budgetTotals.est, countdown, event, guests.length, rsvpCounts.maybe, rsvpCounts.no, rsvpCounts.pending, rsvpCounts.yes, tasks]);
