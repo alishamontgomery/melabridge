@@ -138,15 +138,15 @@ const testimonials = [
 
 const plans = [
   {
-    name: "Personal",
-    price: "Free",
+    name: "Free",
+    price: "$0",
     tagline: "For a single moment.",
     features: ["1 active event", "Up to 25 guests", "AI planning assistant", "Basic invitations"],
     cta: "Start free",
     variant: "soft" as const,
   },
   {
-    name: "Circle",
+    name: "Pro",
     price: "$18",
     period: "/month",
     tagline: "For life's memorable moments.",
@@ -155,19 +155,19 @@ const plans = [
       "Up to 500 guests per event",
       "Full AI concierge",
       "Vendor inbox & budgets",
-      "Custom invitation studio",
+      "Ticket sales & fundraising",
     ],
     cta: "Start 14-day trial",
     variant: "hero" as const,
     featured: true,
   },
   {
-    name: "Studio",
+    name: "Business",
     price: "$79",
     period: "/month",
     tagline: "For planners & teams.",
     features: [
-      "Everything in Circle",
+      "Everything in Pro",
       "Team collaboration",
       "Client portals",
       "White-label invitations",
@@ -189,7 +189,7 @@ const faqs = [
   },
   {
     q: "Can I collaborate with family or a team?",
-    a: "Yes. Invite co-planners with granular permissions on Circle and Studio plans. Everyone stays on the same timeline.",
+    a: "Yes. Invite co-planners with granular permissions on Pro and Business plans. Everyone stays on the same timeline.",
   },
   {
     q: "Is my guest data private?",
