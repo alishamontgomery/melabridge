@@ -244,31 +244,31 @@ function Landing() {
       </header>
 
       {/* HERO */}
-      <section className="bg-hero-radial relative overflow-hidden">
-        <div className="mx-auto grid max-w-7xl items-center gap-14 px-6 pt-20 pb-24 md:grid-cols-2 md:pt-28 md:pb-32">
-          <div>
+      <section className="bg-hero-radial relative">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-12 px-4 pt-14 pb-20 sm:px-6 md:pt-24 md:pb-28">
+          <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold" />
               AI event planning · now in early access
             </div>
-            <h1 className="font-display text-5xl leading-[1.02] tracking-tight md:text-7xl">
+            <h1 className="font-display text-4xl leading-[1.05] tracking-tight sm:text-5xl md:text-7xl">
               Plan Every Moment.
               <br />
               <span className="text-gradient">Together.</span>
             </h1>
-            <p className="mt-6 max-w-lg text-lg text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
               MelaBridge is the AI-powered platform for weddings, birthdays, baby
               showers, reunions, funerals, corporate events, conferences,
               vacations, nonprofit and school events — all in one place.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Button variant="hero" size="xl" asChild>
+            <div className="mx-auto mt-8 flex w-full max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
+              <Button variant="hero" size="xl" className="w-full sm:w-auto" asChild>
                 <Link to="/auth">Start planning free</Link>
               </Button>
               <Button
                 variant="soft"
                 size="xl"
-                className="gap-2"
+                className="w-full gap-2 sm:w-auto"
                 onClick={() => {
                   const el = document.getElementById("dashboard-preview");
                   if (!el) return;
@@ -282,13 +282,13 @@ function Landing() {
                 <Play className="h-4 w-4 fill-current" /> Watch demo
               </Button>
             </div>
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-xs uppercase tracking-widest text-muted-foreground">
+            <div className="mt-10 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs uppercase tracking-widest text-muted-foreground">
               {eventTypes.slice(0, 6).map((e) => (
                 <span key={e}>{e}</span>
               ))}
             </div>
           </div>
-          <div className="relative">
+          <div className="relative w-full max-w-7xl">
             <EventDashboardPreview />
           </div>
         </div>
@@ -307,7 +307,7 @@ function Landing() {
               decisions, and your AI planner, working together in real time.
             </p>
           </div>
-          <div className="mt-14">
+          <div className="mt-14 w-full">
             <EventDashboardPreview />
           </div>
         </div>

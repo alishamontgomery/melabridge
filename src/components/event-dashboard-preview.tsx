@@ -139,19 +139,19 @@ export function EventDashboardPreview({
         <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/20 via-transparent to-gold/20 blur-2xl" />
       )}
 
-      <div className={chrome ? "overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-elegant" : ""}>
+      <div className={chrome ? "rounded-[1.75rem] border border-border bg-card shadow-elegant" : ""}>
         {chrome && (
-          <div className="flex items-center gap-1.5 border-b border-border/70 bg-secondary/40 px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-1.5 rounded-t-[1.75rem] border-b border-border/70 bg-secondary/40 px-3 py-2.5 sm:px-4">
             <span className="h-2.5 w-2.5 rounded-full bg-destructive/60" />
             <span className="h-2.5 w-2.5 rounded-full bg-gold/70" />
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-            <div className="ml-3 rounded-md bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+            <div className="ml-2 min-w-0 truncate rounded-md bg-background/60 px-2 py-0.5 text-[10px] text-muted-foreground sm:ml-3">
               app.melabridge.com / events / johnson-wedding
             </div>
           </div>
         )}
 
-        <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-12">
+        <div className="grid gap-3 p-3 sm:gap-4 sm:p-5 lg:grid-cols-12 lg:p-6">
           {/* Header */}
           <header className="lg:col-span-12">
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 sm:flex sm:items-center sm:justify-between">
@@ -160,8 +160,8 @@ export function EventDashboardPreview({
                 <h3 className="mt-0.5 truncate font-display text-2xl font-semibold sm:text-3xl">
                   {data.eventName}
                 </h3>
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" /> {data.location}
+                <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{data.location}</span>
                 </p>
               </div>
               <div className="shrink-0 rounded-2xl border border-primary/20 bg-hero-radial px-4 py-2.5 text-right">
@@ -264,9 +264,9 @@ export function EventDashboardPreview({
 
           {/* Timeline / Live Planning Board */}
           <Panel className="lg:col-span-7" icon={GitBranch} title="Live Planning Board™">
-            <ol className="relative flex items-stretch justify-between gap-2 overflow-x-auto">
+            <ol className="relative grid grid-cols-2 items-stretch gap-3 sm:grid-cols-5">
               {data.timeline.map((m, i) => (
-                <li key={i} className="flex min-w-16 flex-1 flex-col items-center text-center">
+                <li key={i} className="flex min-w-0 flex-col items-center text-center">
                   <div
                     className={[
                       "grid h-9 w-9 place-items-center rounded-full border-2 text-xs font-medium transition-all duration-500",
@@ -279,17 +279,19 @@ export function EventDashboardPreview({
                     {m.done ? <Check className="h-4 w-4" /> : i + 1}
                   </div>
                   <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">{m.date}</div>
-                  <div className="text-[11px] font-medium">{m.label}</div>
+                  <div className="max-w-full text-[11px] font-medium leading-tight">{m.label}</div>
                 </li>
               ))}
-              <div className="absolute left-4 right-4 top-[18px] -z-10 h-0.5 bg-border" />
+              <div className="absolute left-4 right-4 top-[18px] -z-10 hidden h-0.5 bg-border sm:block" />
             </ol>
           </Panel>
 
           {/* Recent activity */}
           <Panel className="lg:col-span-5" icon={Activity} title="Recent activity">
             <ul className="space-y-2.5">
-              {data.activity.map((a, i) => (
+                {data.activity.length === 0 ? (
+                  <li className="rounded-lg border border-border/60 bg-background/60 p-3 text-sm text-muted-foreground">No activity yet.</li>
+                ) : data.activity.map((a, i) => (
                 <li
                   key={i}
                   className="flex items-start gap-2.5 text-sm"
@@ -308,7 +310,9 @@ export function EventDashboardPreview({
           {/* Decision Center */}
           <Panel className="lg:col-span-4" icon={Vote} title="Decision Center™">
             <ul className="space-y-2">
-              {data.decisions.map((d) => (
+                {data.decisions.length === 0 ? (
+                  <li className="rounded-lg border border-border/60 bg-background/60 p-3 text-sm text-muted-foreground">No open decisions yet.</li>
+                ) : data.decisions.map((d) => (
                 <li key={d.title} className="rounded-lg border border-border/60 bg-background/60 p-3">
                   <p className="text-sm font-medium">{d.title}</p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
@@ -322,7 +326,9 @@ export function EventDashboardPreview({
           {/* Notifications */}
           <Panel className="lg:col-span-3" icon={Bell} title="Notifications">
             <ul className="space-y-2">
-              {data.notifications.map((n, i) => (
+                {data.notifications.length === 0 ? (
+                  <li className="rounded-lg border border-border/60 bg-background/60 p-3 text-sm text-muted-foreground">No notifications yet.</li>
+                ) : data.notifications.map((n, i) => (
                 <li
                   key={i}
                   className="rounded-lg border border-border/60 bg-background/60 p-3 text-sm"
@@ -363,7 +369,7 @@ function StatCard({
   const iconTone =
     tone === "primary" ? "text-primary" : tone === "gold" ? "text-gold-foreground" : "text-emerald-600";
   return (
-    <div className={`rounded-2xl border border-border bg-card p-4 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elegant ${className ?? ""}`}>
+    <div className={`rounded-2xl border border-border bg-card p-4 shadow-soft transition duration-300 hover:-translate-y-0.5 hover:shadow-elegant ${className ?? ""}`}>
       <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-muted-foreground">
         <Icon className={`h-3.5 w-3.5 ${iconTone}`} /> {label}
       </div>
@@ -382,10 +388,10 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`rounded-2xl border border-border bg-card p-4 shadow-soft ${className ?? ""}`}>
-      <header className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-widest">
-        <Icon className={`h-3.5 w-3.5 ${tone === "primary" ? "text-primary" : "text-muted-foreground"}`} />
-        <span className={tone === "primary" ? "text-primary" : "text-muted-foreground"}>{title}</span>
+    <section className={`rounded-2xl border border-border bg-card p-4 shadow-soft transition duration-300 hover:-translate-y-0.5 hover:shadow-elegant ${className ?? ""}`}>
+      <header className="mb-3 flex min-w-0 items-center gap-2 text-xs font-medium uppercase tracking-widest">
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${tone === "primary" ? "text-primary" : "text-muted-foreground"}`} />
+        <span className={`min-w-0 truncate ${tone === "primary" ? "text-primary" : "text-muted-foreground"}`}>{title}</span>
       </header>
       {children}
     </section>

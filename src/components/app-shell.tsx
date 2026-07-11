@@ -42,6 +42,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { useAuth, signOut } from "@/lib/auth";
@@ -132,6 +133,7 @@ export const NAV_GROUPS: NavGroup[] = [
 function UserMenu() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (!user) {
     return (
@@ -144,8 +146,10 @@ function UserMenu() {
   const initial = (user.user_metadata?.display_name || user.email || "U").toString().charAt(0).toUpperCase();
 
   async function handleSignOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await signOut();
-    navigate({ to: "/" });
+    navigate({ to: "/auth", replace: true });
   }
 
   return (

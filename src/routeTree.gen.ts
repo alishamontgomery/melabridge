@@ -65,6 +65,7 @@ import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
@@ -349,6 +350,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -379,7 +385,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgegraph': typeof BridgegraphRoute
@@ -429,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
@@ -440,7 +447,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgegraph': typeof BridgegraphRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/events': typeof AuthenticatedEventsIndexRoute
@@ -503,7 +511,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgegraph': typeof BridgegraphRoute
@@ -553,6 +561,7 @@ export interface FileRoutesById {
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
@@ -616,6 +625,7 @@ export interface FileRouteTypes {
     | '/vision'
     | '/workspace'
     | '/onboarding'
+    | '/auth/callback'
     | '/events/$eventId'
     | '/events/new'
     | '/events/'
@@ -677,6 +687,7 @@ export interface FileRouteTypes {
     | '/vision'
     | '/workspace'
     | '/onboarding'
+    | '/auth/callback'
     | '/events/$eventId'
     | '/events/new'
     | '/events'
@@ -739,6 +750,7 @@ export interface FileRouteTypes {
     | '/vision'
     | '/workspace'
     | '/_authenticated/onboarding'
+    | '/auth/callback'
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/new'
     | '/_authenticated/events/'
@@ -752,7 +764,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AiPlanningRoute: typeof AiPlanningRoute
   AnalyticsRoute: typeof AnalyticsRoute
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   BridgeIntelligenceRoute: typeof BridgeIntelligenceRoute
   BridgednaRoute: typeof BridgednaRoute
   BridgegraphRoute: typeof BridgegraphRoute
@@ -1197,6 +1209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -1245,6 +1264,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1253,7 +1282,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AiPlanningRoute: AiPlanningRoute,
   AnalyticsRoute: AnalyticsRoute,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   BridgeIntelligenceRoute: BridgeIntelligenceRoute,
   BridgednaRoute: BridgednaRoute,
   BridgegraphRoute: BridgegraphRoute,
