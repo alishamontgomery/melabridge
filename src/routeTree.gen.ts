@@ -23,13 +23,12 @@ import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as SubscriptionRouteImport } from './routes/subscription'
 import { Route as ShareRouteImport } from './routes/share'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
-import { Route as NewEventRouteImport } from './routes/new-event'
 import { Route as MessagingRouteImport } from './routes/messaging'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -58,12 +57,18 @@ import { Route as BridgeliveRouteImport } from './routes/bridgelive'
 import { Route as BridgegraphRouteImport } from './routes/bridgegraph'
 import { Route as BridgednaRouteImport } from './routes/bridgedna'
 import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intelligence'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AiPlanningRouteImport } from './routes/ai-planning'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
+import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
+import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
   id: '/workspace',
@@ -135,6 +140,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -155,19 +165,9 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OnboardingRoute = OnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NewEventRoute = NewEventRouteImport.update({
-  id: '/new-event',
-  path: '/new-event',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MessagingRoute = MessagingRouteImport.update({
@@ -310,6 +310,11 @@ const BridgeIntelligenceRoute = BridgeIntelligenceRouteImport.update({
   path: '/bridge-intelligence',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -335,11 +340,37 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventsIndexRoute =
+  AuthenticatedEventsIndexRouteImport.update({
+    id: '/events/',
+    path: '/events/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEventsNewRoute = AuthenticatedEventsNewRouteImport.update({
+  id: '/events/new',
+  path: '/events/new',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventsEventIdRoute =
+  AuthenticatedEventsEventIdRouteImport.update({
+    id: '/events/$eventId',
+    path: '/events/$eventId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -348,6 +379,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgegraph': typeof BridgegraphRoute
@@ -376,13 +408,12 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
-  '/new-event': typeof NewEventRoute
   '/notifications': typeof NotificationsRoute
-  '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/share': typeof ShareRoute
   '/subscription': typeof SubscriptionRoute
@@ -397,6 +428,10 @@ export interface FileRoutesByFullPath {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
+  '/events/new': typeof AuthenticatedEventsNewRoute
+  '/events/': typeof AuthenticatedEventsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -405,6 +440,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgegraph': typeof BridgegraphRoute
@@ -433,13 +469,12 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
-  '/new-event': typeof NewEventRoute
   '/notifications': typeof NotificationsRoute
-  '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/share': typeof ShareRoute
   '/subscription': typeof SubscriptionRoute
@@ -454,15 +489,21 @@ export interface FileRoutesByTo {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
+  '/events/new': typeof AuthenticatedEventsNewRoute
+  '/events': typeof AuthenticatedEventsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/admin': typeof AdminRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
+  '/auth': typeof AuthRoute
   '/bridge-intelligence': typeof BridgeIntelligenceRoute
   '/bridgedna': typeof BridgednaRoute
   '/bridgegraph': typeof BridgegraphRoute
@@ -491,13 +532,12 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
-  '/new-event': typeof NewEventRoute
   '/notifications': typeof NotificationsRoute
-  '/onboarding': typeof OnboardingRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reports': typeof ReportsRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/share': typeof ShareRoute
   '/subscription': typeof SubscriptionRoute
@@ -512,6 +552,10 @@ export interface FileRoutesById {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
+  '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
+  '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -522,6 +566,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai-planning'
     | '/analytics'
+    | '/auth'
     | '/bridge-intelligence'
     | '/bridgedna'
     | '/bridgegraph'
@@ -550,13 +595,12 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/marketplace'
     | '/messaging'
-    | '/new-event'
     | '/notifications'
-    | '/onboarding'
     | '/pricing'
     | '/privacy'
     | '/profile'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/share'
     | '/subscription'
@@ -571,6 +615,10 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/onboarding'
+    | '/events/$eventId'
+    | '/events/new'
+    | '/events/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -579,6 +627,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/ai-planning'
     | '/analytics'
+    | '/auth'
     | '/bridge-intelligence'
     | '/bridgedna'
     | '/bridgegraph'
@@ -607,13 +656,12 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/marketplace'
     | '/messaging'
-    | '/new-event'
     | '/notifications'
-    | '/onboarding'
     | '/pricing'
     | '/privacy'
     | '/profile'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/share'
     | '/subscription'
@@ -628,14 +676,20 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/onboarding'
+    | '/events/$eventId'
+    | '/events/new'
+    | '/events'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/about'
     | '/accessibility'
     | '/admin'
     | '/ai-planning'
     | '/analytics'
+    | '/auth'
     | '/bridge-intelligence'
     | '/bridgedna'
     | '/bridgegraph'
@@ -664,13 +718,12 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/marketplace'
     | '/messaging'
-    | '/new-event'
     | '/notifications'
-    | '/onboarding'
     | '/pricing'
     | '/privacy'
     | '/profile'
     | '/reports'
+    | '/reset-password'
     | '/settings'
     | '/share'
     | '/subscription'
@@ -685,15 +738,21 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/events/$eventId'
+    | '/_authenticated/events/new'
+    | '/_authenticated/events/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AccessibilityRoute: typeof AccessibilityRoute
   AdminRoute: typeof AdminRoute
   AiPlanningRoute: typeof AiPlanningRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  AuthRoute: typeof AuthRoute
   BridgeIntelligenceRoute: typeof BridgeIntelligenceRoute
   BridgednaRoute: typeof BridgednaRoute
   BridgegraphRoute: typeof BridgegraphRoute
@@ -722,13 +781,12 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MessagingRoute: typeof MessagingRoute
-  NewEventRoute: typeof NewEventRoute
   NotificationsRoute: typeof NotificationsRoute
-  OnboardingRoute: typeof OnboardingRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ReportsRoute: typeof ReportsRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   ShareRoute: typeof ShareRoute
   SubscriptionRoute: typeof SubscriptionRoute
@@ -845,6 +903,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
@@ -873,25 +938,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/onboarding': {
-      id: '/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof OnboardingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/notifications': {
       id: '/notifications'
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/new-event': {
-      id: '/new-event'
-      path: '/new-event'
-      fullPath: '/new-event'
-      preLoaderRoute: typeof NewEventRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/messaging': {
@@ -1090,6 +1141,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BridgeIntelligenceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
@@ -1125,6 +1183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -1132,16 +1197,63 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/events/': {
+      id: '/_authenticated/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof AuthenticatedEventsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/events/new': {
+      id: '/_authenticated/events/new'
+      path: '/events/new'
+      fullPath: '/events/new'
+      preLoaderRoute: typeof AuthenticatedEventsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/events/$eventId': {
+      id: '/_authenticated/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof AuthenticatedEventsEventIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
+  AuthenticatedEventsNewRoute: typeof AuthenticatedEventsNewRoute
+  AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
+  AuthenticatedEventsNewRoute: AuthenticatedEventsNewRoute,
+  AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AccessibilityRoute: AccessibilityRoute,
   AdminRoute: AdminRoute,
   AiPlanningRoute: AiPlanningRoute,
   AnalyticsRoute: AnalyticsRoute,
+  AuthRoute: AuthRoute,
   BridgeIntelligenceRoute: BridgeIntelligenceRoute,
   BridgednaRoute: BridgednaRoute,
   BridgegraphRoute: BridgegraphRoute,
@@ -1170,13 +1282,12 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   MarketplaceRoute: MarketplaceRoute,
   MessagingRoute: MessagingRoute,
-  NewEventRoute: NewEventRoute,
   NotificationsRoute: NotificationsRoute,
-  OnboardingRoute: OnboardingRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ReportsRoute: ReportsRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   ShareRoute: ShareRoute,
   SubscriptionRoute: SubscriptionRoute,

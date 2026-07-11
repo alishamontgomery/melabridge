@@ -39,9 +39,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
+import { useAuth, signOut } from "@/lib/auth";
+import { LogOut } from "lucide-react";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type NavGroup = { label: string; items: NavItem[] };
@@ -50,11 +54,11 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Ecosystem",
     items: [
+      { to: "/events", label: "Your events", icon: Calendar },
       { to: "/concierge", label: "Bridge Concierge™", icon: Sparkles },
       { to: "/dashboard", label: "AI Command Center", icon: LayoutDashboard },
       { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
       { to: "/workspace", label: "Event Workspace", icon: GitBranch },
-      { to: "/onboarding", label: "Onboarding", icon: Rocket },
     ],
   },
   {
@@ -124,6 +128,50 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
 ];
+
+function UserMenu() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) {
+    return (
+      <Button asChild size="sm" variant="hero" className="rounded-full">
+        <Link to="/auth">Sign in</Link>
+      </Button>
+    );
+  }
+
+  const initial = (user.user_metadata?.display_name || user.email || "U").toString().charAt(0).toUpperCase();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate({ to: "/" });
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          aria-label="Account menu"
+          className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary to-gold text-sm font-semibold text-primary-foreground"
+        >
+          {initial}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate({ to: "/events" })}>Your events</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+          <LogOut className="mr-2 h-4 w-4" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function NavList({ active, onNavigate }: { active: string; onNavigate?: () => void }) {
   return (
@@ -213,13 +261,7 @@ export function AppShell({ active, children }: { active: string; children: React
               >
                 <Bell className="h-4 w-4" />
               </Link>
-              <Link
-                to="/profile"
-                aria-label="Your profile"
-                className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary to-gold text-sm font-semibold text-primary-foreground"
-              >
-                A
-              </Link>
+              <UserMenu />
             </div>
           </div>
           <div className="mx-auto flex max-w-[1500px] px-3 pb-3 md:hidden">
