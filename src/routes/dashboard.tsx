@@ -252,6 +252,7 @@ function Dashboard() {
             <Link to="/bridge-intelligence" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">Intelligence</Link>
           </nav>
           <div className="flex items-center gap-2">
+            <div className="hidden md:block"><CommandTrigger /></div>
             <Button variant="ghost" size="sm" className="gap-2">
               <Bell className="h-4 w-4" /> <span className="hidden sm:inline">3</span>
             </Button>
