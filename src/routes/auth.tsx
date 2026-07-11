@@ -63,7 +63,7 @@ function AuthPage() {
       const em = emailSchema.parse(email);
       const pw = passwordSchema.parse(password);
       const nm = nameSchema.parse(name);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: em,
         password: pw,
         options: {
@@ -72,6 +72,18 @@ function AuthPage() {
         },
       });
       if (error) throw error;
+      if (!data.session) {
+        // Email confirmation still required — try password sign-in as fallback
+        const { data: signIn, error: siErr } = await supabase.auth.signInWithPassword({
+          email: em,
+          password: pw,
+        });
+        if (siErr || !signIn.session) {
+          toast.success("Check your email to confirm your account before signing in.");
+          setTab("signin");
+          return;
+        }
+      }
       toast.success("Account created — welcome to MelaBridge");
       navigate({ to: "/onboarding" });
     } catch (err) {
