@@ -39,9 +39,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
+import { useAuth, signOut } from "@/lib/auth";
+import { LogOut } from "lucide-react";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type NavGroup = { label: string; items: NavItem[] };
@@ -213,13 +217,7 @@ export function AppShell({ active, children }: { active: string; children: React
               >
                 <Bell className="h-4 w-4" />
               </Link>
-              <Link
-                to="/profile"
-                aria-label="Your profile"
-                className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-primary to-gold text-sm font-semibold text-primary-foreground"
-              >
-                A
-              </Link>
+              <UserMenu />
             </div>
           </div>
           <div className="mx-auto flex max-w-[1500px] px-3 pb-3 md:hidden">

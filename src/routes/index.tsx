@@ -233,10 +233,10 @@ function Landing() {
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="rounded-full" asChild>
-              <Link to="/dashboard">Log in</Link>
+              <Link to="/auth">Log in</Link>
             </Button>
             <Button variant="hero" size="sm" className="rounded-full" asChild>
-              <Link to="/dashboard">Sign up</Link>
+              <Link to="/auth">Sign up</Link>
             </Button>
           </div>
         </div>
@@ -262,7 +262,7 @@ function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Button variant="hero" size="xl" asChild>
-                <Link to="/dashboard">Open AI Command Center</Link>
+                <Link to="/auth">Start planning free</Link>
               </Button>
               <Button variant="soft" size="xl" asChild>
                 <a href="#features">Explore features</a>
@@ -483,15 +483,16 @@ function Landing() {
             between — with a little help from AI.
           </p>
           <div className="relative mt-8 flex flex-wrap justify-center gap-3">
-            <Button variant="gold" size="xl">
-              Start planning free
+            <Button variant="gold" size="xl" asChild>
+              <Link to="/auth">Start planning free</Link>
             </Button>
             <Button
               variant="soft"
               size="xl"
               className="bg-white/10 text-primary-foreground border-white/20 hover:bg-white/20"
+              asChild
             >
-              Log in
+              <Link to="/auth">Log in</Link>
             </Button>
           </div>
         </div>
