@@ -192,9 +192,21 @@ const integrations = [
 
 // ---------------- Helpers ----------------
 
+// Deterministic (UTC) formatters so SSR and client render identical strings.
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function fmtMonthDay(iso: string) {
+  const d = new Date(iso + "T12:00:00Z");
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+}
+function fmtFullDate(iso: string) {
+  const d = new Date(iso + "T12:00:00Z");
+  return `${DAYS[d.getUTCDay()]} ${MONTHS[d.getUTCMonth()].slice(0,3)} ${d.getUTCDate()} ${d.getUTCFullYear()}`;
+}
 function daysUntil(iso: string) {
-  const now = new Date();
-  const then = new Date(iso);
+  // Stable anchor so SSR/client match; illustrative countdown.
+  const now = new Date("2026-06-01T12:00:00Z");
+  const then = new Date(iso + "T12:00:00Z");
   return Math.max(0, Math.ceil((then.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
@@ -229,16 +241,11 @@ function Dashboard() {
             </Badge>
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm">
-            {["Overview", "Roadmap", "Guests", "Budget", "Vendors", "Messages"].map((n, i) => (
-              <button
-                key={n}
-                className={`rounded-md px-3 py-1.5 transition ${
-                  i === 0 ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
+            <span className="rounded-md bg-accent px-3 py-1.5 text-accent-foreground">Command Center</span>
+            <Link to="/bridgeworld" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">BridgeWorld™</Link>
+            <Link to="/bridgedna" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">BridgeDNA™</Link>
+            <Link to="/bridgevault" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">BridgeVault™</Link>
+            <Link to="/bridge-intelligence" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">Intelligence</Link>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="gap-2">
@@ -287,7 +294,7 @@ function Dashboard() {
               </h1>
               <p className="mt-3 max-w-2xl text-muted-foreground">
                 I've built a {Math.ceil(countdown / 7)}-week roadmap from today until{" "}
-                {new Date(event.date).toLocaleDateString(undefined, { month: "long", day: "numeric" })}, drafted your
+                {fmtMonthDay(event.date)}, drafted your
                 guest communications, matched {vendors.length} vendors, and flagged 3 things that need your attention.
               </p>
 
@@ -403,7 +410,7 @@ function Dashboard() {
               <span className="pb-2 text-sm text-muted-foreground">days to go</span>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {new Date(event.date).toDateString()} · <MapPin className="inline h-3 w-3" /> {event.location}
+              {fmtFullDate(event.date)} · <MapPin className="inline h-3 w-3" /> {event.location}
             </p>
             <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-accent">
               <div
