@@ -15,6 +15,16 @@ import {
   ClipboardList,
   Check,
   Star,
+  Ticket,
+  HeartHandshake,
+  Handshake,
+  Lightbulb,
+  Rocket,
+  PartyPopper,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Youtube,
 } from "lucide-react";
 import heroImage from "@/assets/hero-ai.jpg";
 
@@ -25,48 +35,85 @@ export const Route = createFileRoute("/")({
 const eventTypes = [
   "Weddings",
   "Birthdays",
-  "Reunions",
   "Baby Showers",
+  "Reunions",
   "Funerals",
   "Corporate",
   "Conferences",
   "Vacations",
-  "Graduations",
   "Nonprofits",
+  "School Events",
+];
+
+const howItWorks = [
+  {
+    icon: Lightbulb,
+    step: "01",
+    title: "Share the idea",
+    desc: "Tell MelaBridge what you're planning. A backyard birthday or a 500-guest gala — start with a sentence.",
+  },
+  {
+    icon: Sparkles,
+    step: "02",
+    title: "Let AI build the plan",
+    desc: "Timelines, budgets, vendor shortlists, guest lists and messaging drafts appear in seconds.",
+  },
+  {
+    icon: PartyPopper,
+    step: "03",
+    title: "Bring everyone together",
+    desc: "Invite co-planners, sell tickets, collect RSVPs, raise funds, and run the day from one dashboard.",
+  },
 ];
 
 const features = [
   {
     icon: Sparkles,
-    title: "AI Co-Planner",
+    title: "AI Planning",
     desc: "Describe your vision. MelaBridge drafts the timeline, guest list, and vendor shortlist in seconds.",
   },
   {
-    icon: Calendar,
-    title: "Unified Timeline",
-    desc: "Every task, RSVP, and milestone across all your events, on one calm timeline.",
-  },
-  {
-    icon: Users,
-    title: "Guest Intelligence",
-    desc: "Smart RSVPs, dietary tracking, seating suggestions — your guests feel seen.",
-  },
-  {
     icon: Wallet,
-    title: "Budget Autopilot",
+    title: "Budgets",
     desc: "Live budget tracking with vendor comparisons and gentle nudges when things drift.",
   },
   {
+    icon: Users,
+    title: "Guests",
+    desc: "Smart RSVPs, dietary tracking, and seating suggestions — your guests feel seen.",
+  },
+  {
+    icon: Handshake,
+    title: "Vendors",
+    desc: "Discover, compare, and book florists, venues, and caterers in one concierge inbox.",
+  },
+  {
+    icon: Calendar,
+    title: "Timelines",
+    desc: "Every task and milestone across every event, on one calm shared timeline.",
+  },
+  {
+    icon: Ticket,
+    title: "Ticket Sales",
+    desc: "Sell tickets in minutes with tiered pricing, promo codes, and instant payouts.",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Fundraising",
+    desc: "Run donation campaigns and silent auctions alongside your event, natively.",
+  },
+  {
     icon: MessageSquareHeart,
-    title: "Vendor Concierge",
-    desc: "Chat with florists, venues, and caterers in one inbox — MelaBridge drafts the messages.",
+    title: "Messaging",
+    desc: "Email, SMS and in-app messages — personalized and sent at the right moment.",
   },
   {
     icon: ClipboardList,
-    title: "Beautiful Invitations",
-    desc: "Designer-crafted invites that adapt to your event, brand, and audience automatically.",
+    title: "Collaboration",
+    desc: "Invite family, friends, or teammates with granular permissions and live edits.",
   },
 ];
+
 
 const testimonials = [
   {
