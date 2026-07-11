@@ -593,48 +593,68 @@ function Landing() {
         <div className="mx-auto max-w-2xl text-center">
           <SectionEyebrow>Pricing</SectionEyebrow>
           <h2 className="mt-3 font-display text-4xl md:text-5xl">
-            Simple plans. Serious leverage.
+            Transparent pricing. No surprise fees.
           </h2>
-          <p className="mt-4 text-muted-foreground">Start free. Upgrade when the moment grows.</p>
+          <p className="mt-4 text-muted-foreground">
+            Simple host plans. No fees on RSVPs, invitations, or donations. Start free — upgrade
+            when the moment grows.
+          </p>
         </div>
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {plans.map((p) => (
-            <div
-              key={p.name}
-              className={`relative flex flex-col rounded-3xl border p-8 ${
-                p.featured
-                  ? "border-primary/40 bg-gradient-to-b from-primary/5 to-transparent shadow-elegant"
-                  : "border-border bg-card"
-              }`}
-            >
-              {p.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gold px-3 py-1 text-xs font-medium text-gold-foreground">
-                  Most loved
+          {getPlansFor("host").map((p) => {
+            const { amount, period } = formatPrice(p);
+            return (
+              <div
+                key={p.id}
+                className={`relative flex flex-col rounded-3xl border p-8 ${
+                  p.featured
+                    ? "border-primary/40 bg-gradient-to-b from-primary/5 to-transparent shadow-elegant"
+                    : "border-border bg-card"
+                }`}
+              >
+                {p.featured && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-gold px-3 py-1 text-xs font-semibold text-primary-foreground">
+                    Most Popular
+                  </div>
+                )}
+                <div className="text-sm font-semibold text-primary">{p.name}</div>
+                <p className="mt-1 text-sm text-muted-foreground">{p.tagline}</p>
+                <div className="mt-4 flex items-baseline gap-1">
+                  <span className="font-display text-5xl">{amount}</span>
+                  {period && p.price !== null && (
+                    <span className="text-muted-foreground">{period}</span>
+                  )}
                 </div>
-              )}
-              <div className="text-sm font-medium text-primary">{p.name}</div>
-              <div className="mt-4 flex items-baseline gap-1">
-                <span className="font-display text-5xl">{p.price}</span>
-                {p.period && <span className="text-muted-foreground">{p.period}</span>}
+                <ul className="mt-6 space-y-3 text-sm">
+                  {p.features.slice(0, 6).map((f) => (
+                    <li key={f} className="flex items-start gap-2">
+                      <Check className="mt-0.5 h-4 w-4 text-primary" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-8">
+                  <Button
+                    variant={p.featured ? "hero" : "soft"}
+                    size="lg"
+                    className="w-full"
+                    asChild
+                  >
+                    <Link to={p.ctaHref}>{p.ctaLabel}</Link>
+                  </Button>
+                </div>
               </div>
-              <p className="mt-2 text-sm text-muted-foreground">{p.tagline}</p>
-              <ul className="mt-6 space-y-3 text-sm">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2">
-                    <Check className="mt-0.5 h-4 w-4 text-primary" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-8">
-                <Button variant={p.variant} size="lg" className="w-full" asChild>
-                  <Link to="/auth">{p.cta}</Link>
-                </Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+          Also available: Vendor plans from $0 · Planner plans from $49/mo ·{" "}
+          <Link to="/pricing" className="underline hover:text-foreground">
+            See full pricing →
+          </Link>
+        </p>
       </section>
+
 
       {/* TESTIMONIALS */}
       <section className="bg-secondary/40 py-28">
