@@ -241,16 +241,11 @@ function Dashboard() {
             </Badge>
           </Link>
           <nav className="hidden md:flex items-center gap-1 text-sm">
-            {["Overview", "Roadmap", "Guests", "Budget", "Vendors", "Messages"].map((n, i) => (
-              <button
-                key={n}
-                className={`rounded-md px-3 py-1.5 transition ${
-                  i === 0 ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {n}
-              </button>
-            ))}
+            <span className="rounded-md bg-accent px-3 py-1.5 text-accent-foreground">Command Center</span>
+            <Link to="/bridgeworld" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">BridgeWorld™</Link>
+            <Link to="/bridgedna" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">BridgeDNA™</Link>
+            <Link to="/bridgevault" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">BridgeVault™</Link>
+            <Link to="/bridge-intelligence" className="rounded-md px-3 py-1.5 text-muted-foreground transition hover:text-foreground">Intelligence</Link>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="gap-2">
