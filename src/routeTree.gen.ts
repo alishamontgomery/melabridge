@@ -11,6 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as NewEventRouteImport } from './routes/new-event'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BridgeworldRouteImport } from './routes/bridgeworld'
+import { Route as BridgevaultRouteImport } from './routes/bridgevault'
+import { Route as BridgednaRouteImport } from './routes/bridgedna'
+import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intelligence'
 import { Route as IndexRouteImport } from './routes/index'
 
 const NewEventRoute = NewEventRouteImport.update({
@@ -23,6 +27,26 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BridgeworldRoute = BridgeworldRouteImport.update({
+  id: '/bridgeworld',
+  path: '/bridgeworld',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgevaultRoute = BridgevaultRouteImport.update({
+  id: '/bridgevault',
+  path: '/bridgevault',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgednaRoute = BridgednaRouteImport.update({
+  id: '/bridgedna',
+  path: '/bridgedna',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BridgeIntelligenceRoute = BridgeIntelligenceRouteImport.update({
+  id: '/bridge-intelligence',
+  path: '/bridge-intelligence',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +55,68 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bridge-intelligence': typeof BridgeIntelligenceRoute
+  '/bridgedna': typeof BridgednaRoute
+  '/bridgevault': typeof BridgevaultRoute
+  '/bridgeworld': typeof BridgeworldRoute
   '/dashboard': typeof DashboardRoute
   '/new-event': typeof NewEventRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bridge-intelligence': typeof BridgeIntelligenceRoute
+  '/bridgedna': typeof BridgednaRoute
+  '/bridgevault': typeof BridgevaultRoute
+  '/bridgeworld': typeof BridgeworldRoute
   '/dashboard': typeof DashboardRoute
   '/new-event': typeof NewEventRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bridge-intelligence': typeof BridgeIntelligenceRoute
+  '/bridgedna': typeof BridgednaRoute
+  '/bridgevault': typeof BridgevaultRoute
+  '/bridgeworld': typeof BridgeworldRoute
   '/dashboard': typeof DashboardRoute
   '/new-event': typeof NewEventRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/new-event'
+  fullPaths:
+    | '/'
+    | '/bridge-intelligence'
+    | '/bridgedna'
+    | '/bridgevault'
+    | '/bridgeworld'
+    | '/dashboard'
+    | '/new-event'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/new-event'
-  id: '__root__' | '/' | '/dashboard' | '/new-event'
+  to:
+    | '/'
+    | '/bridge-intelligence'
+    | '/bridgedna'
+    | '/bridgevault'
+    | '/bridgeworld'
+    | '/dashboard'
+    | '/new-event'
+  id:
+    | '__root__'
+    | '/'
+    | '/bridge-intelligence'
+    | '/bridgedna'
+    | '/bridgevault'
+    | '/bridgeworld'
+    | '/dashboard'
+    | '/new-event'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BridgeIntelligenceRoute: typeof BridgeIntelligenceRoute
+  BridgednaRoute: typeof BridgednaRoute
+  BridgevaultRoute: typeof BridgevaultRoute
+  BridgeworldRoute: typeof BridgeworldRoute
   DashboardRoute: typeof DashboardRoute
   NewEventRoute: typeof NewEventRoute
 }
@@ -75,6 +137,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bridgeworld': {
+      id: '/bridgeworld'
+      path: '/bridgeworld'
+      fullPath: '/bridgeworld'
+      preLoaderRoute: typeof BridgeworldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridgevault': {
+      id: '/bridgevault'
+      path: '/bridgevault'
+      fullPath: '/bridgevault'
+      preLoaderRoute: typeof BridgevaultRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridgedna': {
+      id: '/bridgedna'
+      path: '/bridgedna'
+      fullPath: '/bridgedna'
+      preLoaderRoute: typeof BridgednaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bridge-intelligence': {
+      id: '/bridge-intelligence'
+      path: '/bridge-intelligence'
+      fullPath: '/bridge-intelligence'
+      preLoaderRoute: typeof BridgeIntelligenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +177,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BridgeIntelligenceRoute: BridgeIntelligenceRoute,
+  BridgednaRoute: BridgednaRoute,
+  BridgevaultRoute: BridgevaultRoute,
+  BridgeworldRoute: BridgeworldRoute,
   DashboardRoute: DashboardRoute,
   NewEventRoute: NewEventRoute,
 }
