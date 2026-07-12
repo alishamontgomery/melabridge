@@ -235,7 +235,10 @@ export function SiteFooter() {
               +1 (256) 784-8427
             </a>
           </p>
+        </div>
       </div>
+
+
 
       {/* Bottom bar */}
       <div className="border-t border-border/60">
