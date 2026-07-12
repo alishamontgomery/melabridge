@@ -238,6 +238,36 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          channel: string
+          created_at: string
+          email_enabled: boolean
+          id: string
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_type: string | null
@@ -283,6 +313,45 @@ export type Database = {
           planning_priorities?: string[] | null
           primary_role?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      scheduled_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          recipients: string[]
+          send_at: string
+          status: string
+          subject: string
+          template_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          recipients?: string[]
+          send_at: string
+          status?: string
+          subject?: string
+          template_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          recipients?: string[]
+          send_at?: string
+          status?: string
+          subject?: string
+          template_key?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
