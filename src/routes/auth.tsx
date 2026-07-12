@@ -265,7 +265,7 @@ function AuthPage() {
         await ensureProfile(data.session.user, nm);
       }
       toast.success("Account created — welcome to MelaBridge");
-      navigate({ to: "/onboarding" });
+      navigate({ to: "/onboarding", search: { type: accountType } });
     });
   }
 
