@@ -40,7 +40,7 @@ function VendorPortalPage() {
             { icon: Upload, title: "Deliverables upload", detail: "Send proofs and finals directly into the event workspace." },
             { icon: MessageSquare, title: "Direct messaging", detail: "Threaded chat with the couple, planner, and coordinators." },
             { icon: Wallet, title: "Milestone payouts", detail: "Track scheduled payouts and request early release." },
-            { icon: Briefcase, title: "Multi-event view", detail: "Vendors managing many events see it all in BridgePilot™." },
+            { icon: Briefcase, title: "Multi-event view", detail: "Vendors managing many events see it all in MelaAssist™." },
           ]}
         />
         <Section title="Your bookings this month">

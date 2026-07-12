@@ -106,7 +106,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/guest-portal", label: "Guest Portal", icon: UserCheck },
       { to: "/vendor-portal", label: "Vendor Portal", icon: Briefcase },
-      { to: "/bridgepilot", label: "BridgePilot™", icon: Briefcase },
+      { to: "/bridgepilot", label: "MelaAssist™", icon: Briefcase },
     ],
   },
   {

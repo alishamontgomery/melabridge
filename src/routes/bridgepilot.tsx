@@ -38,16 +38,16 @@ import {
 export const Route = createFileRoute("/bridgepilot")({
   head: () => ({
     meta: [
-      { title: "BridgePilot™ — MelaBridge for Vendors" },
+      { title: "MelaAssist™ — MelaBridge for Vendors" },
       {
         name: "description",
         content:
-          "BridgePilot™ is the AI business operating system for MelaBridge vendors — inbox triage, instant quotes, proposals, follow-ups, and a live BridgeScore™.",
+          "MelaAssist™ is the AI business operating system for MelaBridge vendors — inbox triage, instant quotes, proposals, follow-ups, and a live BridgeScore™.",
       },
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: BridgePilotPage,
+  component: MelaAssistPage,
 });
 
 // ---------------- Mock data ----------------
@@ -189,18 +189,18 @@ const STAGE_TONE: Record<LeadStage, string> = {
 
 // ---------------- Page ----------------
 
-function BridgePilotPage() {
+function MelaAssistPage() {
   return (
     <AppShell active="/bridgepilot">
       <PageHeader
-        eyebrow="BridgePilot™ · AI business OS for vendors"
+        eyebrow="MelaAssist™ · AI business OS for vendors"
         icon={Briefcase}
         title={
           <>
             What do you need to do <span className="text-gradient">today</span>?
           </>
         }
-        description="One calm home base for your event business. BridgePilot triages inquiries, drafts replies, sends quotes, and closes the loop — so you can keep the personal touch that wins bookings."
+        description="One calm home base for your event business. MelaAssist triages inquiries, drafts replies, sends quotes, and closes the loop — so you can keep the personal touch that wins bookings."
         actions={
           <>
             <Button variant="outline">
@@ -244,7 +244,7 @@ function TodayView() {
       <div className="space-y-6">
         <div className="rounded-3xl border border-border bg-gradient-to-br from-primary/5 via-background to-accent/20 p-6">
           <div className="mb-3 flex items-center gap-2 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Overnight summary from BridgePilot™
+            <Sparkles className="h-3.5 w-3.5" /> Overnight summary from MelaAssist™
           </div>
           <ul className="space-y-2 text-sm">
             {OVERNIGHT_SUMMARY.map((line) => (
@@ -323,7 +323,7 @@ function TodayView() {
 
         <div className="rounded-3xl border border-border bg-hero-radial p-5">
           <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> BridgePilot™ tip of the day
+            <Sparkles className="h-3.5 w-3.5" /> MelaAssist™ tip of the day
           </div>
           <p className="text-sm">
             Your fastest replies (under 12 min) convert 3.2× more than replies over an hour. Approve the 5 drafts now and lock in your streak.
@@ -747,7 +747,7 @@ function CoachView() {
         <h3 className="font-display text-lg font-semibold">Ask your coach</h3>
         <p className="text-sm text-muted-foreground">Get plain-language advice on pricing, marketing, or a specific lead.</p>
         <Textarea placeholder="e.g. Should I raise my Saturday minimum for December?" className="mt-3 min-h-[120px]" />
-        <Button variant="hero" className="mt-3"><Sparkles className="mr-2 h-4 w-4" /> Ask BridgePilot™</Button>
+        <Button variant="hero" className="mt-3"><Sparkles className="mr-2 h-4 w-4" /> Ask MelaAssist™</Button>
       </div>
     </div>
   );
@@ -846,7 +846,7 @@ function ScoreView() {
           ))}
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          Higher scores earn priority placement in the MelaBridge marketplace and unlock BridgePilot Pro features.
+          Higher scores earn priority placement in the MelaBridge marketplace and unlock MelaAssist Pro features.
         </p>
       </div>
       <div className="space-y-3">
