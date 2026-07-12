@@ -60,6 +60,7 @@ import { Route as BridgeIntelligenceRouteImport } from './routes/bridge-intellig
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AiPlanningRouteImport } from './routes/ai-planning'
+import { Route as AiMemoryRouteImport } from './routes/ai-memory'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
@@ -327,6 +328,11 @@ const AiPlanningRoute = AiPlanningRouteImport.update({
   path: '/ai-planning',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiMemoryRoute = AiMemoryRouteImport.update({
+  id: '/ai-memory',
+  path: '/ai-memory',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -389,6 +395,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/admin': typeof AdminRoute
+  '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRouteWithChildren
@@ -452,6 +459,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/admin': typeof AdminRoute
+  '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRouteWithChildren
@@ -517,6 +525,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/admin': typeof AdminRoute
+  '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRouteWithChildren
@@ -582,6 +591,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/accessibility'
     | '/admin'
+    | '/ai-memory'
     | '/ai-planning'
     | '/analytics'
     | '/auth'
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/accessibility'
     | '/admin'
+    | '/ai-memory'
     | '/ai-planning'
     | '/analytics'
     | '/auth'
@@ -709,6 +720,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/accessibility'
     | '/admin'
+    | '/ai-memory'
     | '/ai-planning'
     | '/analytics'
     | '/auth'
@@ -774,6 +786,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccessibilityRoute: typeof AccessibilityRoute
   AdminRoute: typeof AdminRoute
+  AiMemoryRoute: typeof AiMemoryRoute
   AiPlanningRoute: typeof AiPlanningRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRouteWithChildren
@@ -1186,6 +1199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiPlanningRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-memory': {
+      id: '/ai-memory'
+      path: '/ai-memory'
+      fullPath: '/ai-memory'
+      preLoaderRoute: typeof AiMemoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -1301,6 +1321,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AccessibilityRoute: AccessibilityRoute,
   AdminRoute: AdminRoute,
+  AiMemoryRoute: AiMemoryRoute,
   AiPlanningRoute: AiPlanningRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRouteWithChildren,
