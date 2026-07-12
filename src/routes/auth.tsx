@@ -223,7 +223,7 @@ function AuthPage() {
       const signedInUser = await waitForAuthenticatedUser();
       await ensureProfile(signedInUser);
       toast.success("Welcome back");
-      navigate({ to: "/events" });
+      navigate({ to: await landingRouteForUser(signedInUser.id) });
     });
   }
 
