@@ -204,7 +204,9 @@ function AuthPage() {
       setStatusMessage("Setting up your workspace...");
       await ensureProfile(signedInUser);
       toast.success("Signed in successfully");
-      navigate({ to: safeNextPath() as "/events", replace: true });
+      const landing = await landingRouteForUser(signedInUser.id);
+      const next = safeNextPath();
+      navigate({ to: (next === "/events" ? landing : next) as "/events", replace: true });
     });
     // Run once on mount so OAuth callbacks cannot loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
