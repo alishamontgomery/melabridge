@@ -207,7 +207,7 @@ export function SiteFooter() {
               <span className="font-medium">@mela.bridge</span>
             </a>
             <a
-              href="https://facebook.com/melabridge"
+              href="https://www.facebook.com/melabridge"
               target="_blank"
               rel="noreferrer noopener"
               aria-label="Follow MelaBridge on Facebook"
@@ -220,7 +220,25 @@ export function SiteFooter() {
             </a>
           </div>
         </div>
+
+        {/* Contact info */}
+        <div className="mt-10 grid gap-4 border-t border-border/60 pt-8 text-sm text-muted-foreground sm:grid-cols-2">
+          <p>
+            <span className="mr-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/70">Email</span>
+            <a href="mailto:hello@melabridge.com" className="text-foreground hover:text-primary">
+              hello@melabridge.com
+            </a>
+          </p>
+          <p className="sm:text-right">
+            <span className="mr-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/70">Phone</span>
+            <a href="tel:+12567848427" className="text-foreground hover:text-primary">
+              +1 (256) 784-8427
+            </a>
+          </p>
+        </div>
       </div>
+
+
 
       {/* Bottom bar */}
       <div className="border-t border-border/60">

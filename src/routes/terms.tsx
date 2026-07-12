@@ -29,7 +29,7 @@ export const Route = createFileRoute("/terms")({
       <h2>6. Disclaimers</h2>
       <p>MelaBridge is provided "as is" without warranties. To the maximum extent permitted by law, our liability is limited to the fees paid in the prior 12 months.</p>
       <h2>7. Contact</h2>
-      <p>Questions about these terms? Email legal@melabridge.com.</p>
+      <p>Questions about these terms? Email <a href="mailto:hello@melabridge.com">hello@melabridge.com</a> or call <a href="tel:+12567848427">+1 (256) 784-8427</a>.</p>
     </MarketingPage>
   ),
 });

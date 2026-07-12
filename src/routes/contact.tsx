@@ -41,7 +41,13 @@ export const Route = createFileRoute("/contact")({
         <Button variant="hero" size="lg" className="justify-self-start rounded-full">Send message</Button>
       </form>
       <h2>Other ways to reach us</h2>
-      <p><strong>Support:</strong> support@melabridge.com<br /><strong>Sales:</strong> sales@melabridge.com<br /><strong>Press:</strong> press@melabridge.com</p>
+      <p>
+        <strong>Email:</strong>{" "}
+        <a href="mailto:hello@melabridge.com">hello@melabridge.com</a>
+        <br />
+        <strong>Phone:</strong>{" "}
+        <a href="tel:+12567848427">+1 (256) 784-8427</a>
+      </p>
     </MarketingPage>
   ),
 });

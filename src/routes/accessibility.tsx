@@ -26,7 +26,7 @@ export const Route = createFileRoute("/accessibility")({
         <li>Reduced-motion support for animations</li>
       </ul>
       <h2>Feedback</h2>
-      <p>If you encounter an accessibility barrier, please email accessibility@melabridge.com and we'll respond within two business days.</p>
+      <p>If you encounter an accessibility barrier, please email <a href="mailto:hello@melabridge.com">hello@melabridge.com</a> or call <a href="tel:+12567848427">+1 (256) 784-8427</a> and we'll respond within two business days.</p>
     </MarketingPage>
   ),
 });

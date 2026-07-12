@@ -27,7 +27,7 @@ export const Route = createFileRoute("/privacy")({
       <h2>5. Security</h2>
       <p>All data is encrypted in transit and at rest. Payments are processed via PCI-compliant providers.</p>
       <h2>6. Contact</h2>
-      <p>Questions? Email privacy@melabridge.com.</p>
+      <p>Questions? Email <a href="mailto:hello@melabridge.com">hello@melabridge.com</a> or call <a href="tel:+12567848427">+1 (256) 784-8427</a>.</p>
     </MarketingPage>
   ),
 });
