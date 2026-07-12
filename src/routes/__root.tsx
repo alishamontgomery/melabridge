@@ -95,11 +95,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "MelaBridge — AI Event Planning Platform" },
       { name: "twitter:description", content: "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/2WRNFqL59YfsV98qGKmrhxx065u2/social-images/social-1783880508369-78056AD5-94FC-4DE0-A39E-23278C508D38.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/2WRNFqL59YfsV98qGKmrhxx065u2/social-images/social-1783880508369-78056AD5-94FC-4DE0-A39E-23278C508D38.webp" },
+      { property: "og:image", content: "https://melabridge.lovable.app/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
+      { name: "twitter:image", content: "https://melabridge.lovable.app/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
+      { name: "theme-color", content: "#6a2fbf" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/png", href: "/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
+      { rel: "apple-touch-icon", href: "/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

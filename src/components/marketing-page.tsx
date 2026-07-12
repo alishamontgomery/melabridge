@@ -4,14 +4,11 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site-footer";
 
+import { BrandMark } from "@/components/brand-logo";
 function MarketingLogo() {
   return (
     <Link to="/" className="flex items-center gap-2">
-      <div className="relative h-8 w-8">
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-glow to-primary" />
-        <div className="absolute inset-1 rounded-full border border-gold/70" />
-        <div className="absolute inset-2.5 rounded-full bg-gold" />
-      </div>
+      <BrandMark size="md" />
       <span className="font-display text-xl font-semibold tracking-tight">MelaBridge</span>
     </Link>
   );
