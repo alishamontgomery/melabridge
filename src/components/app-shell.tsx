@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { Link } from "@tanstack/react-router";
 import {
   Sparkles,
@@ -235,9 +236,7 @@ export function AppShell({ active, children }: { active: string; children: React
                 <SheetContent side="left" className="w-72 overflow-y-auto p-4">
                   <SheetHeader className="mb-4 text-left">
                     <SheetTitle className="flex items-center gap-2">
-                      <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
-                        <Sparkles className="h-3.5 w-3.5" />
-                      </span>
+                      <BrandMark size="sm" />
                       MelaBridge
                     </SheetTitle>
                   </SheetHeader>
@@ -245,9 +244,7 @@ export function AppShell({ active, children }: { active: string; children: React
                 </SheetContent>
               </Sheet>
               <Link to="/" className="flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
-                  <Sparkles className="h-4 w-4" />
-                </span>
+                <BrandMark size="md" />
                 <span className="font-display text-lg font-semibold">MelaBridge</span>
                 <Badge variant="secondary" className="ml-1 hidden sm:inline-flex bg-accent text-accent-foreground">
                   Ecosystem™

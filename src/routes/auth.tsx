@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
@@ -318,9 +319,7 @@ function AuthPage() {
     <div className="min-h-screen bg-hero-radial px-4 py-10">
       <div className="mx-auto max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
-            <Sparkles className="h-4 w-4" />
-          </span>
+          <BrandMark size="lg" />
           <span className="font-display text-xl font-semibold">MelaBridge</span>
         </Link>
 

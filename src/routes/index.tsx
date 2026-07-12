@@ -172,17 +172,9 @@ const faqs = [
    Small building blocks
    ———————————————————————————————————————— */
 
+import { BrandLogo } from "@/components/brand-logo";
 function Logo() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="relative h-8 w-8">
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-glow to-primary" />
-        <div className="absolute inset-1 rounded-full border border-gold/70" />
-        <div className="absolute inset-2.5 rounded-full bg-gold" />
-      </div>
-      <span className="font-display text-xl font-semibold tracking-tight">MelaBridge</span>
-    </div>
-  );
+  return <BrandLogo size="md" />;
 }
 
 function SectionEyebrow({ children }: { children: React.ReactNode }) {

@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Sparkles, Heart, ShieldCheck, HandCoins, Ticket, Users2, Store, Briefcase } from "lucide-react";
@@ -93,10 +94,7 @@ function PricingPage() {
       {/* NAV */}
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-6">
         <Link to="/" className="flex items-center gap-2">
-          <div className="relative h-8 w-8">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary-glow to-primary" />
-            <div className="absolute inset-1 rounded-full border border-gold/70" />
-          </div>
+          <BrandMark size="md" />
           <span className="font-display text-xl">MelaBridge</span>
         </Link>
         <div className="flex items-center gap-3">
