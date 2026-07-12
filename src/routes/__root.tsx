@@ -79,28 +79,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MelaBridge — The AI-Powered Event Planning Platform" },
+      { title: "MelaBridge — AI Event Planning Platform" },
       {
         name: "description",
         content:
-          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
+          "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform.",
       },
-      { property: "og:title", content: "MelaBridge — The AI-Powered Event Planning Platform" },
+      { property: "og:title", content: "MelaBridge — AI Event Planning Platform" },
       {
         property: "og:description",
         content:
-          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
+          "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "MelaBridge — The AI-Powered Event Planning Platform" },
-      { name: "twitter:description", content: "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/efd3c2e3-99bd-445c-9599-c65ced2cb8d9/id-preview-15e5f94f--e4d706de-6d99-4798-9f73-89f91b1a4b9f.lovable.app-1783799932581.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/efd3c2e3-99bd-445c-9599-c65ced2cb8d9/id-preview-15e5f94f--e4d706de-6d99-4798-9f73-89f91b1a4b9f.lovable.app-1783799932581.png" },
+      { name: "twitter:title", content: "MelaBridge — AI Event Planning Platform" },
+      { name: "twitter:description", content: "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/2WRNFqL59YfsV98qGKmrhxx065u2/social-images/social-1783880508369-78056AD5-94FC-4DE0-A39E-23278C508D38.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/2WRNFqL59YfsV98qGKmrhxx065u2/social-images/social-1783880508369-78056AD5-94FC-4DE0-A39E-23278C508D38.webp" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

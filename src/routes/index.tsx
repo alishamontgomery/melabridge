@@ -34,17 +34,17 @@ import { getPlansFor, formatPrice } from "@/lib/billing-config";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "MelaBridge — The AI-Powered Event Planning Platform" },
+      { title: "MelaBridge — AI Event Planning Platform" },
       {
         name: "description",
         content:
-          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
+          "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform.",
       },
-      { property: "og:title", content: "MelaBridge — The AI-Powered Event Planning Platform" },
+      { property: "og:title", content: "MelaBridge — AI Event Planning Platform" },
       {
         property: "og:description",
         content:
-          "One intelligent platform connecting your AI planner, vendors, venues, guests, budgets and payments — so every event comes together beautifully.",
+          "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
