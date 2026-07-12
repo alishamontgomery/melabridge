@@ -1,92 +1,84 @@
-# MelaBridge — Production-Readiness Plan
+# MelaBridge UX Redesign + RBAC + Contact Info
 
-## Honest scoping note
+This is a large change. I'll break it into four coordinated workstreams, all shipped together.
 
-What you've asked for is an MVP built to production quality across **17 phases, ~25 modules, full auth, RLS, AI, invitations, messaging, notifications, file storage, permissions, and a 4-persona QA pass**. Realistically that's several focused work sessions, not one turn. Trying to do it all at once produces the exact problem you're auditing against — dozens of pages that *look* wired up but don't actually save, validate, or enforce permissions.
+## 1. Role model & RBAC
 
-So this plan does two things:
+**Data**
+- New enum `app_role`: `planner`, `vendor`, `guest`, `admin`.
+- New table `public.user_roles (user_id, role)` with proper GRANTs, RLS, and unique `(user_id, role)`.
+- `has_role(_user_id, _role)` security-definer function.
+- Auto-assign role on signup based on onboarding `account_type` (extend `handle_new_user` trigger or add a post-onboarding writer).
+- Tighten existing RLS: events (planner owns), vendor_profiles (vendor owns), guest access via `event_members`.
 
-1. **Delivers the one complete end-to-end user journey you called out as the priority**, backed by a real database, in this first pass.
-2. **Sequences the rest** so every subsequent pass ships a fully-working slice (interface + persistence + validation + permissions + errors) rather than another layer of scaffolding.
+**Client**
+- `useRole()` hook reading `user_roles`, cached in React Query.
+- `RoleGate` component + `requireRole` helper for route `beforeLoad`.
+- Role-aware redirect from `/dashboard` → planner/vendor/guest/admin home.
 
-Right now the app has ~50 routes but **zero real backend** — Lovable Cloud is not enabled, there's no `auth`, no DB tables, no RLS, and every module uses in-memory demo state. That is the single biggest blocker; everything in your prompt depends on fixing it first.
+## 2. Navigation redesign (AppShell rewrite)
 
----
+Replace the current flat sidebar with a **grouped, collapsible sidebar** (shadcn `Sidebar`, `collapsible="icon"`) driven by role. ~10–12 top-level items per role, organized into sections.
 
-## Pass 1 (this turn, after you approve) — Foundation + core loop
+**Planner sidebar**
+- Dashboard: Home, My Events
+- Planning: Guests, Vendors, Budget, Timeline, Tasks
+- Communication: Messages, Team
+- Resources: Files
+- Account: Profile, Subscription, Settings, Help
 
-Goal: a real user can sign up, land in onboarding, create a persisted event, see it on a dashboard, add tasks/budget/guests, log out, log back in, and find everything intact.
+**Vendor sidebar**
+- Dashboard: Home
+- Business: Leads, Bookings, Calendar, Payments, Contracts
+- Communication: Messages
+- Resources: Files
+- Account: Business Profile, Reviews, Settings, Help
 
-**1. Enable Lovable Cloud** and provision the schema for the core loop:
-`profiles`, `user_roles` (app_role enum: owner/admin/editor/commenter/viewer), `events`, `event_members`, `tasks`, `budget_items`, `guests`, `vendors`, `activity_log`. All with RLS scoped through a `has_event_access(event_id, min_role)` security-definer function so we never write recursive policies. Grants + timestamps + indexes on `event_id`.
+**Guest sidebar** (minimal top bar, no side nav)
+- Event Details, RSVP, Schedule, Travel, Registry, Photos, Messages
 
-**2. Auth** (email/password + Google via Lovable Cloud):
-`/auth` (sign in + sign up tabs), `/forgot-password`, `/reset-password`, `onAuthStateChange` wired in `__root.tsx`, `_authenticated/route.tsx` gate, header shows avatar/sign-out when signed in, protected routes moved under `_authenticated/`. Profile row auto-created via DB trigger on signup.
+**Admin sidebar**
+- Dashboard: Overview
+- Platform: Users, Vendors, Events, Marketplace, Payments, Analytics, Reports
+- System: AdminOS, AI Command Center, Ecosystem Map
+- AI & Memory (single item → hub page)
+- Settings: Platform Settings, Subscription Management, Feature Flags
 
-**3. Onboarding** (`/onboarding`) — real form, writes to `profiles` + creates first `events` row, redirects to `/events/$id`.
+## 3. Feature consolidation
 
-**4. Event CRUD** — create, edit, archive, delete-with-confirm, cover image upload to Storage, list at `/events`, detail at `/events/$id`. Server functions with `requireSupabaseAuth` + Zod validation.
+- New `/ai-memory` hub page presenting BridgeLive, BridgeVault, Digital Twin, BridgeGraph, BridgeWorld, BridgeDNA, Bridge Intelligence as cards with descriptions. Admin-only in nav.
+- New `/marketplace-hub` (or reuse existing `/marketplace`) that groups Vendor Search, Contracts, Payments as cards for planners.
+- Existing branded routes stay reachable by URL but are removed from top-level nav.
 
-**5. Core modules wired to DB for the active event**: Tasks (CRUD + complete + assign + due date), Budget (categories + estimated/actual/paid), Guests (add/edit/RSVP/import CSV). Each with loading, empty, and error states.
+## 4. Dashboards
 
-**6. Dashboard** (`/events/$id`) rebuilt on real data: countdown, progress from task completion %, budget summary, guest RSVP summary, recent activity. Every card links somewhere real.
+- **Planner** `/dashboard`: Upcoming Events, Tasks Due Today, Budget Snapshot, Recent Messages, Vendor Activity, Timeline Progress, Quick Actions (Create Event, Invite Guests, Find Vendors). No empty enterprise modules.
+- **Vendor** `/vendor`: already exists — trim modules, keep leads/bookings/payments focus.
+- **Guest** `/guest-portal`: already exists — verify simplicity.
+- **Admin** `/admin`: already exists — reorganize to match new nav.
 
-**7. Cleanup pass on the audit list**:
-- Remove dead buttons and fake interactions in touched routes
-- Delete/hide modules we haven't wired yet from the sidebar until their pass lands (so nothing in-nav is a lie)
-- Fix the current landing-page footer social handles per your Phase 13 spec (already done last turn — verify)
-- Global 404 + Unauthorized pages, toast system, confirmation dialog, error boundary
+## 5. Global contact info updates
 
-At the end of pass 1 you'll have: **Homepage → Sign up → Onboarding → Create Event → Dashboard → Tasks/Budget/Guests → Logout → Login → data persists**. That's the journey you led with.
+Replace across codebase:
+- Email → `hello@melabridge.com`
+- Phone → `+1 (256) 784-8427` (with `tel:+12567848427`)
+- Facebook links → `https://www.facebook.com/melabridge` with `target="_blank" rel="noopener noreferrer"`
 
----
-
-## Pass 2 — AI Planner + Vendors + Decisions + Files
-
-- Wire Bridge Concierge™ to Lovable AI Gateway (`google/gemini-3-flash-preview`) via a `createServerFn`, streaming a structured event plan. Accepted recommendations write to real tables (`tasks`, `budget_items`, `ai_recommendations`).
-- Vendors CRUD + quotes + contract status + compare view.
-- Decision Center™: `decisions`, `decision_choices`, `votes` tables; create/vote/close/override flows.
-- Files: Storage bucket per event, upload/preview/rename/delete, RLS by event membership.
-
----
-
-## Pass 3 — Collaboration, Messaging, Notifications
-
-- Invitations (email + link) → `event_members` with role.
-- Roles enforced in UI (hide/disable) AND in RLS (`has_event_access(event_id, min_role)`).
-- Comments + @mentions on tasks/decisions.
-- Messaging: `conversations` + `messages` + unread indicators + attachments.
-- Notifications table + preferences + bell dropdown + toasts.
-- Activity log surfaced on the Planning Board.
-
----
-
-## Pass 4 — Settings, Polish, QA
-
-- Settings pages that actually save: profile, password, notification prefs, AI prefs, appearance, privacy, account deletion (hard delete via admin server fn).
-- Sample "Johnson Family Reunion" demo event behind an explicit `Explore Demo` button on `/events` — seeded via a migration into a dedicated `demo_events` flag so it never mixes with real user data.
-- Accessibility sweep: focus rings, ARIA labels, reduced-motion, contrast.
-- 4-persona manual QA via Playwright (owner, editor, commenter, viewer) on desktop + mobile.
-- Final report: fixed / functional / needs-credentials / migrations / env vars / remaining blockers.
+Files touched: `contact.tsx`, `site-footer.tsx`, `help.tsx`, `privacy.tsx`, `terms.tsx`, marketing pages, any notification/email templates. I'll grep to catch everything.
 
 ---
 
-## Technical details
+## Technical notes
 
-- **Stack**: keep TanStack Start + Tailwind v4 + shadcn + existing design tokens. No brand/nav/palette changes.
-- **Backend**: Lovable Cloud (Supabase under the hood). `createServerFn` for app-internal reads/writes with `requireSupabaseAuth`; browser client for realtime + auth flows only.
-- **RLS pattern**: `user_roles` table + `has_role()` for platform roles; `event_members` + `has_event_access(event_id, min_role)` for per-event permissions. Security-definer functions to avoid recursive policies.
-- **AI**: Lovable AI Gateway via `@ai-sdk/openai-compatible`, key in `LOVABLE_API_KEY`, server-only. Structured output with Zod schemas. No mock data presented as live AI — if the key is missing we show a clearly-labeled "AI unavailable — configure Lovable AI" state.
-- **Existing routes** stay mounted but modules not yet wired get a "Coming in the next build pass" empty state instead of fake interactions, so the audit rule "no visible buttons that perform no action" holds from turn one.
-- **Migrations**: one per pass, additive. Grants + RLS in the same migration as every `CREATE TABLE`.
+- New migration for `app_role` enum, `user_roles` table, `has_role()`, RLS updates, and onboarding trigger.
+- `AppShell` becomes role-aware — accepts no `active` prop change, just filters `NAV_GROUPS` by role.
+- Guest portal keeps its own minimal shell (no sidebar).
+- Route guards: keep integration-managed `_authenticated/route.tsx`; add per-route `beforeLoad` role checks where relevant (admin routes, vendor routes).
+- Existing routes not in the new nav remain accessible via URL — no dead links, but hidden from sidebar.
 
----
+## Out of scope (call out)
 
-## What I need from you before I start
+- Building brand-new full pages for admin sub-items (Users, Feature Flags, etc.) — I'll wire nav + stub pages where they don't exist, but deep functionality is a follow-up.
+- Sending actual transactional emails — I'll update templates/strings only.
 
-1. **Approve this phased approach** (Pass 1 today, subsequent passes in follow-up turns).
-2. **Confirm I can enable Lovable Cloud** now — it's the prerequisite for literally everything auth/data related.
-3. **Which auth methods for Pass 1**: default is email/password + Google. Say the word if you want to skip Google or add Apple.
-4. **User profiles**: I'm assuming yes (name, avatar, role, preferences) since onboarding collects them — confirm.
-
-Reply "go" (with any tweaks) and I'll start Pass 1 immediately.
+Approve and I'll ship it in one pass.
