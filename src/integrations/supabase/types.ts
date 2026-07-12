@@ -240,34 +240,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string | null
           avatar_url: string | null
           created_at: string
           display_name: string | null
           email: string | null
           id: string
+          is_organization: boolean
           onboarding_completed: boolean
+          organization_name: string | null
+          organization_type: string | null
           planning_priorities: string[] | null
           primary_role: string | null
           updated_at: string
         }
         Insert: {
+          account_type?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id: string
+          is_organization?: boolean
           onboarding_completed?: boolean
+          organization_name?: string | null
+          organization_type?: string | null
           planning_priorities?: string[] | null
           primary_role?: string | null
           updated_at?: string
         }
         Update: {
+          account_type?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
           id?: string
+          is_organization?: boolean
           onboarding_completed?: boolean
+          organization_name?: string | null
+          organization_type?: string | null
           planning_priorities?: string[] | null
           primary_role?: string | null
           updated_at?: string
@@ -326,6 +338,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vendor_profiles: {
+        Row: {
+          accepted_terms: boolean
+          business_address: string | null
+          business_category: string
+          business_description: string | null
+          business_hours: Json | null
+          business_name: string
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          logo_url: string | null
+          mobile_service: boolean | null
+          onboarding_completed: boolean
+          phone: string | null
+          portfolio_urls: string[] | null
+          social_links: Json | null
+          starting_price: number | null
+          state: string | null
+          travel_radius: number | null
+          updated_at: string
+          user_id: string
+          virtual_services: string | null
+          website: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          accepted_terms?: boolean
+          business_address?: string | null
+          business_category: string
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name: string
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean
+          phone?: string | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string
+          user_id: string
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          accepted_terms?: boolean
+          business_address?: string | null
+          business_category?: string
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean
+          phone?: string | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string
+          user_id?: string
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {

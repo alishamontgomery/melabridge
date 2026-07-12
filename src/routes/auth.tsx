@@ -112,6 +112,13 @@ async function ensureProfile(user: User, displayName?: string) {
   if (error) throw new Error(`Your account was created, but workspace setup failed: ${error.message}`);
 }
 
+type SignupAccountType = "planner" | "vendor" | "guest";
+
+async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor"> {
+  const { data } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
+  return data?.account_type === "vendor" ? "/vendor" : "/events";
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -124,6 +131,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [accountType, setAccountType] = useState<SignupAccountType>("planner");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -141,7 +149,9 @@ function AuthPage() {
   const isSignupValid = !nameError && !emailError && !passwordError && !confirmPasswordError;
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/events" });
+    if (!loading && user) {
+      void landingRouteForUser(user.id).then((to) => navigate({ to }));
+    }
   }, [loading, user, navigate]);
 
   async function runAuthOperation(operation: AuthOperation, message: string, action: () => Promise<void>) {
@@ -194,7 +204,9 @@ function AuthPage() {
       setStatusMessage("Setting up your workspace...");
       await ensureProfile(signedInUser);
       toast.success("Signed in successfully");
-      navigate({ to: safeNextPath() as "/events", replace: true });
+      const landing = await landingRouteForUser(signedInUser.id);
+      const next = safeNextPath();
+      navigate({ to: (next === "/events" ? landing : next) as "/events", replace: true });
     });
     // Run once on mount so OAuth callbacks cannot loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -211,7 +223,7 @@ function AuthPage() {
       const signedInUser = await waitForAuthenticatedUser();
       await ensureProfile(signedInUser);
       toast.success("Welcome back");
-      navigate({ to: "/events" });
+      navigate({ to: await landingRouteForUser(signedInUser.id) });
     });
   }
 
@@ -253,7 +265,7 @@ function AuthPage() {
         await ensureProfile(data.session.user, nm);
       }
       toast.success("Account created — welcome to MelaBridge");
-      navigate({ to: "/onboarding" });
+      navigate({ to: "/onboarding", search: { type: accountType } });
     });
   }
 
@@ -275,7 +287,7 @@ function AuthPage() {
       const signedInUser = await waitForAuthenticatedUser();
       await ensureProfile(signedInUser);
       toast.success("Signed in with Google");
-      navigate({ to: "/events" });
+      navigate({ to: await landingRouteForUser(signedInUser.id) });
     });
   }
 
@@ -406,6 +418,36 @@ function AuthPage() {
           ) : (
             <div className="mt-6" role="tabpanel" aria-label="Create account">
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>I want to…</Label>
+                  <div className="grid gap-2">
+                    {([
+                      { v: "planner", t: "Plan an Event", d: "I'm organizing one or more events." },
+                      { v: "vendor", t: "Join as a Vendor", d: "I provide products or services for events." },
+                      { v: "guest", t: "Join an Event", d: "I received an invitation to an event." },
+                    ] as const).map((opt) => (
+                      <label
+                        key={opt.v}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition ${
+                          accountType === opt.v ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="account-type"
+                          value={opt.v}
+                          checked={accountType === opt.v}
+                          onChange={() => setAccountType(opt.v)}
+                          className="mt-1 accent-primary"
+                        />
+                        <span>
+                          <span className="block font-medium">{opt.t}</span>
+                          <span className="block text-xs text-muted-foreground">{opt.d}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-name">Your name</Label>
                   <Input
