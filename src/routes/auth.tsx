@@ -418,6 +418,36 @@ function AuthPage() {
           ) : (
             <div className="mt-6" role="tabpanel" aria-label="Create account">
               <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>I want to…</Label>
+                  <div className="grid gap-2">
+                    {([
+                      { v: "planner", t: "Plan an Event", d: "I'm organizing one or more events." },
+                      { v: "vendor", t: "Join as a Vendor", d: "I provide products or services for events." },
+                      { v: "guest", t: "Join an Event", d: "I received an invitation to an event." },
+                    ] as const).map((opt) => (
+                      <label
+                        key={opt.v}
+                        className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm transition ${
+                          accountType === opt.v ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="account-type"
+                          value={opt.v}
+                          checked={accountType === opt.v}
+                          onChange={() => setAccountType(opt.v)}
+                          className="mt-1 accent-primary"
+                        />
+                        <span>
+                          <span className="block font-medium">{opt.t}</span>
+                          <span className="block text-xs text-muted-foreground">{opt.d}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-name">Your name</Label>
                   <Input
