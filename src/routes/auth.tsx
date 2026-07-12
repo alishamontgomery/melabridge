@@ -149,7 +149,9 @@ function AuthPage() {
   const isSignupValid = !nameError && !emailError && !passwordError && !confirmPasswordError;
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/events" });
+    if (!loading && user) {
+      void landingRouteForUser(user.id).then((to) => navigate({ to }));
+    }
   }, [loading, user, navigate]);
 
   async function runAuthOperation(operation: AuthOperation, message: string, action: () => Promise<void>) {
