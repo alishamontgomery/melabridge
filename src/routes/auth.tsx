@@ -287,7 +287,7 @@ function AuthPage() {
       const signedInUser = await waitForAuthenticatedUser();
       await ensureProfile(signedInUser);
       toast.success("Signed in with Google");
-      navigate({ to: "/events" });
+      navigate({ to: await landingRouteForUser(signedInUser.id) });
     });
   }
 
