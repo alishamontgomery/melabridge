@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { Link } from "@tanstack/react-router";
 import {
   Sparkles,

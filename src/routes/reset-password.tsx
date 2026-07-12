@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";

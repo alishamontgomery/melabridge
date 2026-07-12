@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AlertCircle, Loader2, Sparkles } from "lucide-react";

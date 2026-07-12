@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand-logo";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Sparkles, Heart, ShieldCheck, HandCoins, Ticket, Users2, Store, Briefcase } from "lucide-react";
