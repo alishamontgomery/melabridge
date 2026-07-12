@@ -4,38 +4,32 @@ import {
   Sparkles,
   Bell,
   LayoutDashboard,
-  GitBranch,
   Users,
   Store,
   Wallet,
   ClipboardList,
   Calendar,
-  Handshake,
-  Lightbulb,
-  Vault,
-  Dna,
-  Globe2,
-  BarChart3,
-  Ticket,
-  HeartHandshake,
   MessageSquare,
   FolderOpen,
-  FileBarChart,
   Settings as SettingsIcon,
-  Network,
-  Briefcase,
   Menu,
   User,
   Crown,
-  Share2,
-  Palette,
-  Radio,
-  Boxes,
   LifeBuoy,
   ShieldCheck,
   CreditCard,
-  UserCheck,
-  Rocket,
+  Briefcase,
+  BarChart3,
+  FileBarChart,
+  Network,
+  Brain,
+  Inbox,
+  ScrollText,
+  Star,
+  Building2,
+  Home,
+  Flag,
+  Boxes,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,20 +41,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { useAuth, signOut } from "@/lib/auth";
+import { useRole, type AppRole } from "@/lib/use-role";
 import { LogOut } from "lucide-react";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type NavGroup = { label: string; items: NavItem[] };
 
-export const NAV_GROUPS: NavGroup[] = [
+const PLANNER_NAV: NavGroup[] = [
   {
-    label: "Ecosystem",
+    label: "Dashboard",
     items: [
-      { to: "/events", label: "Your events", icon: Calendar },
-      { to: "/concierge", label: "Bridge Concierge™", icon: Sparkles },
-      { to: "/dashboard", label: "AI Command Center", icon: LayoutDashboard },
-      { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
-      { to: "/workspace", label: "Event Workspace", icon: GitBranch },
+      { to: "/dashboard", label: "Home", icon: Home },
+      { to: "/events", label: "My Events", icon: Calendar },
     ],
   },
   {
@@ -68,55 +60,21 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/guests", label: "Guests", icon: Users },
       { to: "/vendors", label: "Vendors", icon: Store },
-      { to: "/marketplace", label: "Marketplace", icon: Store },
       { to: "/budget", label: "Budget", icon: Wallet },
-      { to: "/bridgepay", label: "BridgePay™", icon: CreditCard },
-      { to: "/tasks", label: "Tasks", icon: ClipboardList },
       { to: "/timeline", label: "Timeline", icon: Calendar },
-      { to: "/decisions", label: "Decision Center™", icon: Lightbulb },
-      { to: "/travel", label: "Travel", icon: Globe2 },
-      { to: "/bridgestudio", label: "BridgeStudio™", icon: Palette },
+      { to: "/tasks", label: "Tasks", icon: ClipboardList },
     ],
   },
   {
-    label: "Community",
+    label: "Communication",
     items: [
-      { to: "/collaboration", label: "Collaboration", icon: Handshake },
+      { to: "/messaging", label: "Messages", icon: MessageSquare },
       { to: "/team", label: "Team", icon: Users },
-      { to: "/messaging", label: "Messaging", icon: MessageSquare },
-      { to: "/notifications", label: "Notifications", icon: Bell },
-      { to: "/tickets", label: "Tickets", icon: Ticket },
-      { to: "/fundraising", label: "Fundraising", icon: HeartHandshake },
-      { to: "/share", label: "Share event", icon: Share2 },
     ],
   },
   {
-    label: "Live & memory",
-    items: [
-      { to: "/bridgelive", label: "BridgeLive™", icon: Radio },
-      { to: "/digital-twin", label: "Digital Twin™", icon: Boxes },
-      { to: "/bridgegraph", label: "BridgeGraph™", icon: Network },
-      { to: "/bridgeworld", label: "BridgeWorld™", icon: Globe2 },
-      { to: "/bridgedna", label: "BridgeDNA™", icon: Dna },
-      { to: "/bridgevault", label: "BridgeVault™", icon: Vault },
-      { to: "/bridge-intelligence", label: "Bridge Intelligence™", icon: BarChart3 },
-    ],
-  },
-  {
-    label: "Portals",
-    items: [
-      { to: "/guest-portal", label: "Guest Portal", icon: UserCheck },
-      { to: "/vendor-portal", label: "Vendor Portal", icon: Briefcase },
-      { to: "/bridgepilot", label: "MelaAssist™", icon: Briefcase },
-    ],
-  },
-  {
-    label: "Insight",
-    items: [
-      { to: "/analytics", label: "Analytics", icon: BarChart3 },
-      { to: "/reports", label: "Reports", icon: FileBarChart },
-      { to: "/files", label: "Files", icon: FolderOpen },
-    ],
+    label: "Resources",
+    items: [{ to: "/files", label: "Files", icon: FolderOpen }],
   },
   {
     label: "Account",
@@ -124,15 +82,107 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: "/profile", label: "Profile", icon: User },
       { to: "/subscription", label: "Subscription", icon: Crown },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
-      { to: "/admin", label: "AdminOS™", icon: ShieldCheck },
       { to: "/help", label: "Help Center", icon: LifeBuoy },
-      { to: "/tutorials", label: "AI Tutorials", icon: Sparkles },
     ],
   },
 ];
 
+const VENDOR_NAV: NavGroup[] = [
+  {
+    label: "Dashboard",
+    items: [{ to: "/vendor", label: "Home", icon: Home }],
+  },
+  {
+    label: "Business",
+    items: [
+      { to: "/vendor-portal", label: "Leads", icon: Inbox },
+      { to: "/vendor-portal", label: "Bookings", icon: Calendar },
+      { to: "/vendor-portal", label: "Calendar", icon: Calendar },
+      { to: "/bridgepay", label: "Payments", icon: Wallet },
+      { to: "/vendor-portal", label: "Contracts", icon: ScrollText },
+    ],
+  },
+  {
+    label: "Communication",
+    items: [{ to: "/messaging", label: "Messages", icon: MessageSquare }],
+  },
+  {
+    label: "Resources",
+    items: [{ to: "/files", label: "Files", icon: FolderOpen }],
+  },
+  {
+    label: "Account",
+    items: [
+      { to: "/profile", label: "Business Profile", icon: Building2 },
+      { to: "/vendor-portal", label: "Reviews", icon: Star },
+      { to: "/settings", label: "Settings", icon: SettingsIcon },
+      { to: "/help", label: "Help", icon: LifeBuoy },
+    ],
+  },
+];
+
+const GUEST_NAV: NavGroup[] = [
+  {
+    label: "Your Event",
+    items: [
+      { to: "/guest-portal", label: "Event Details", icon: Calendar },
+      { to: "/guest-portal", label: "RSVP", icon: CreditCard },
+      { to: "/timeline", label: "Schedule", icon: Calendar },
+      { to: "/travel", label: "Travel", icon: Boxes },
+      { to: "/messaging", label: "Messages", icon: MessageSquare },
+    ],
+  },
+];
+
+const ADMIN_NAV: NavGroup[] = [
+  {
+    label: "Dashboard",
+    items: [{ to: "/dashboard", label: "Overview", icon: LayoutDashboard }],
+  },
+  {
+    label: "Platform",
+    items: [
+      { to: "/admin", label: "Users", icon: Users },
+      { to: "/vendors", label: "Vendors", icon: Store },
+      { to: "/events", label: "Events", icon: Calendar },
+      { to: "/marketplace", label: "Marketplace", icon: Store },
+      { to: "/bridgepay", label: "Payments", icon: Wallet },
+      { to: "/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/reports", label: "Reports", icon: FileBarChart },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { to: "/admin", label: "AdminOS™", icon: ShieldCheck },
+      { to: "/bridgepilot", label: "AI Command Center", icon: Sparkles },
+      { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
+      { to: "/ai-memory", label: "AI & Memory", icon: Brain },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { to: "/settings", label: "Platform Settings", icon: SettingsIcon },
+      { to: "/subscription", label: "Subscription Mgmt", icon: Crown },
+      { to: "/admin", label: "Feature Flags", icon: Flag },
+    ],
+  },
+];
+
+export const NAV_BY_ROLE: Record<AppRole, NavGroup[]> = {
+  planner: PLANNER_NAV,
+  vendor: VENDOR_NAV,
+  guest: GUEST_NAV,
+  admin: ADMIN_NAV,
+};
+
+// Legacy export for any external references.
+export const NAV_GROUPS: NavGroup[] = PLANNER_NAV;
+
 function UserMenu() {
   const { user } = useAuth();
+  const { role } = useRole();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -153,6 +203,8 @@ function UserMenu() {
     navigate({ to: "/auth", replace: true });
   }
 
+  const home = role === "vendor" ? "/vendor" : role === "guest" ? "/guest-portal" : role === "admin" ? "/admin" : "/dashboard";
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -164,9 +216,12 @@ function UserMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
+        <DropdownMenuLabel className="truncate">
+          <div className="truncate text-sm font-medium">{user.email}</div>
+          <div className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">{role}</div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate({ to: "/events" })}>Your events</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: home as "/dashboard" })}>Home</DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>Profile</DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -178,10 +233,10 @@ function UserMenu() {
   );
 }
 
-function NavList({ active, onNavigate }: { active: string; onNavigate?: () => void }) {
+function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: string; onNavigate?: () => void }) {
   return (
     <nav className="space-y-6">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.label}>
           <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
             {group.label}
@@ -190,11 +245,11 @@ function NavList({ active, onNavigate }: { active: string; onNavigate?: () => vo
             {group.items.map((item) => {
               const isActive = item.to === active;
               return (
-                <li key={item.to}>
+                <li key={`${group.label}-${item.label}`}>
                   <Link
                     to={item.to as "/dashboard"}
                     onClick={onNavigate}
-                    className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition ${
+                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition ${
                       isActive
                         ? "bg-accent text-accent-foreground font-medium"
                         : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
@@ -215,6 +270,9 @@ function NavList({ active, onNavigate }: { active: string; onNavigate?: () => vo
 
 export function AppShell({ active, children }: { active: string; children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { role } = useRole();
+  const groups = NAV_BY_ROLE[role];
+
   return (
     <EcosystemProvider>
       <a
@@ -240,14 +298,14 @@ export function AppShell({ active, children }: { active: string; children: React
                       MelaBridge
                     </SheetTitle>
                   </SheetHeader>
-                  <NavList active={active} onNavigate={() => setMobileOpen(false)} />
+                  <NavList groups={groups} active={active} onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
               </Sheet>
               <Link to="/" className="flex items-center gap-2">
                 <BrandMark size="md" />
                 <span className="font-display text-lg font-semibold">MelaBridge</span>
-                <Badge variant="secondary" className="ml-1 hidden sm:inline-flex bg-accent text-accent-foreground">
-                  Ecosystem™
+                <Badge variant="secondary" className="ml-1 hidden sm:inline-flex bg-accent text-accent-foreground capitalize">
+                  {role}
                 </Badge>
               </Link>
             </div>
@@ -273,7 +331,7 @@ export function AppShell({ active, children }: { active: string; children: React
         <div className="mx-auto flex max-w-[1500px] gap-6 px-3 py-4 sm:px-6 sm:py-6">
           <aside className="hidden w-60 shrink-0 lg:block">
             <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
-              <NavList active={active} />
+              <NavList groups={groups} active={active} />
             </div>
           </aside>
 
