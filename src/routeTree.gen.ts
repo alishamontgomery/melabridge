@@ -66,6 +66,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
@@ -355,6 +356,11 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthenticatedVendorRoute = AuthenticatedVendorRouteImport.update({
+  id: '/vendor',
+  path: '/vendor',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -435,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
@@ -497,6 +504,7 @@ export interface FileRoutesByTo {
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
@@ -561,6 +569,7 @@ export interface FileRoutesById {
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
@@ -625,6 +634,7 @@ export interface FileRouteTypes {
     | '/vision'
     | '/workspace'
     | '/onboarding'
+    | '/vendor'
     | '/auth/callback'
     | '/events/$eventId'
     | '/events/new'
@@ -687,6 +697,7 @@ export interface FileRouteTypes {
     | '/vision'
     | '/workspace'
     | '/onboarding'
+    | '/vendor'
     | '/auth/callback'
     | '/events/$eventId'
     | '/events/new'
@@ -750,6 +761,7 @@ export interface FileRouteTypes {
     | '/vision'
     | '/workspace'
     | '/_authenticated/onboarding'
+    | '/_authenticated/vendor'
     | '/auth/callback'
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/new'
@@ -1216,6 +1228,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_authenticated/vendor': {
+      id: '/_authenticated/vendor'
+      path: '/vendor'
+      fullPath: '/vendor'
+      preLoaderRoute: typeof AuthenticatedVendorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -1249,6 +1268,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedVendorRoute: typeof AuthenticatedVendorRoute
   AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
   AuthenticatedEventsNewRoute: typeof AuthenticatedEventsNewRoute
   AuthenticatedEventsIndexRoute: typeof AuthenticatedEventsIndexRoute
@@ -1256,6 +1276,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedVendorRoute: AuthenticatedVendorRoute,
   AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
   AuthenticatedEventsNewRoute: AuthenticatedEventsNewRoute,
   AuthenticatedEventsIndexRoute: AuthenticatedEventsIndexRoute,

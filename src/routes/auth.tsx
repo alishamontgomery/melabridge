@@ -112,6 +112,13 @@ async function ensureProfile(user: User, displayName?: string) {
   if (error) throw new Error(`Your account was created, but workspace setup failed: ${error.message}`);
 }
 
+type SignupAccountType = "planner" | "vendor" | "guest";
+
+async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor"> {
+  const { data } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
+  return data?.account_type === "vendor" ? "/vendor" : "/events";
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
@@ -124,6 +131,7 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [accountType, setAccountType] = useState<SignupAccountType>("planner");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
