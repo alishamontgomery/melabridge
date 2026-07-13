@@ -83,7 +83,10 @@ export const seedTestData = createServerFn({ method: "POST" })
 
     const ids = Object.fromEntries(results.map((r) => [r.role, r.id])) as Record<string, string>;
 
-    const { data: seedSummary, error: seedErr } = await rpc("seed_test_data", {
+    // seed_test_data is service_role only — invoke via admin client.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const adminRpc = supabaseAdmin.rpc as any;
+    const { data: seedSummary, error: seedErr } = await adminRpc("seed_test_data", {
       planner_id: ids.planner,
       vendor_id: ids.vendor,
       attendee_id: ids.attendee,
