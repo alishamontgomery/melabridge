@@ -40,8 +40,12 @@ export function useNotifications(limit = 50) {
 
   useEffect(() => {
     if (!userId) return;
+    // Unique channel name per hook mount — Supabase.channel(name) returns the SAME
+    // channel object for a repeated name, so a second .on() call after the first
+    // .subscribe() throws "cannot add postgres_changes callbacks after subscribe()".
+    const channelName = `notifications:${userId}:${Math.random().toString(36).slice(2)}`;
     const channel = db
-      .channel(`notifications:${userId}`)
+      .channel(channelName)
       .on(
         "postgres_changes" as any,
         { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
@@ -52,6 +56,7 @@ export function useNotifications(limit = 50) {
       db.removeChannel(channel);
     };
   }, [userId, qc]);
+
 
   const items = query.data ?? [];
   const unreadCount = useMemo(() => items.filter((n) => !n.read_at).length, [items]);
