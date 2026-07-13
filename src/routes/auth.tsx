@@ -81,18 +81,31 @@ function safeNextPath() {
   return stored;
 }
 
-async function waitForAuthenticatedUser(maxMs = 4500) {
-  const start = Date.now();
-  let lastError: unknown;
-  while (Date.now() - start < maxMs) {
-    const { data, error } = await supabase.auth.getUser();
-    if (data.user) return data.user;
-    if (error) lastError = error;
-    await wait(250);
-  }
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("We couldn't confirm your session. Please try again.");
+async function waitForAuthenticatedUser(maxMs = 6000) {
+  // Fast path: local session read (no network) — avoids preview fetch-proxy hangs on getUser().
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session?.user) return sessionData.session.user;
+
+  return await new Promise<User>((resolve, reject) => {
+    let settled = false;
+    const finish = (user: User | null) => {
+      if (settled) return;
+      settled = true;
+      sub.subscription.unsubscribe();
+      window.clearInterval(poll);
+      window.clearTimeout(timer);
+      if (user) resolve(user);
+      else reject(new Error("We couldn't confirm your session. Please try again."));
+    };
+    const sub = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session?.user) finish(session.user);
+    }).data;
+    const poll = window.setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) finish(data.session.user);
+    }, 300);
+    const timer = window.setTimeout(() => finish(null), maxMs);
+  });
 }
 
 async function ensureProfile(user: User, displayName?: string) {
