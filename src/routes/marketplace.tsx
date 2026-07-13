@@ -38,9 +38,8 @@ function MarketplacePage() {
     queryKey: ["marketplace-vendors"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("vendor_profiles")
+        .from("vendor_profiles_public")
         .select("id, business_name, business_category, city, state, starting_price, logo_url, onboarding_completed")
-        .eq("onboarding_completed", true)
         .order("created_at", { ascending: false })
         .limit(60);
       if (error) throw error;
