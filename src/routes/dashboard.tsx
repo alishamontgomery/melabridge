@@ -5,7 +5,7 @@ import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { EventDashboardPreview, type DashboardData } from "@/components/event-dashboard-preview";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { useActiveEvent } from "@/lib/use-active-event";
 import { Sparkles, Plus, LayoutDashboard, Loader2 } from "lucide-react";
 
@@ -38,7 +38,7 @@ function daysBetween(from: Date, iso?: string | null) {
 }
 
 function DashboardPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const { event, loading } = useActiveEvent();
 
   const dashQ = useQuery({

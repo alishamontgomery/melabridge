@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/module-page";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveEvent } from "@/lib/use-active-event";
-import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/team")({
 });
 
 function TeamPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const { event, loading: eventLoading } = useActiveEvent();
   const [members, setMembers] = useState<Member[] | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");

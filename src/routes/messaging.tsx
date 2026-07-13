@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { useRole } from "@/lib/use-role";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -90,7 +91,7 @@ const NOTIFICATION_GROUPS = [
 ];
 
 function MessagingPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const { role } = useRole();
 
   const [tab, setTab] = useState<"inbox" | "archive" | "trash" | "templates" | "scheduled" | "settings">("inbox");

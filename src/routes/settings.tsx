@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
@@ -28,7 +28,7 @@ type NotifPref = {
 };
 
 function SettingsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useRequireAuth();
   const [prefs, setPrefs] = useState<NotifPref | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
