@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock } from "lucide-react";
+import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock, FlaskConical, Trash2 } from "lucide-react";
 import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,10 @@ import { useRole } from "@/lib/use-role";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin-stats.functions";
+import { seedTestData, wipeTestData } from "@/lib/test-seed.functions";
 import { useAuth } from "@/lib/auth";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
