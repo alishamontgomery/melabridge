@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { useEcosystem } from "@/lib/ecosystem-store";
 
 export const Route = createFileRoute("/files")({
@@ -54,7 +55,7 @@ type EventFile = {
 const db = supabase;
 
 function FilesPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const { event, hasEvent, loading: eventLoading } = useEcosystem();
   const qc = useQueryClient();
   const [category, setCategory] = useState<Category>("contracts");

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/reports")({
 });
 
 function ReportsPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
 
   const eventsQ = useQuery({
     queryKey: ["reports-events", user?.id],

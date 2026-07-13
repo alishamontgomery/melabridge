@@ -10,6 +10,7 @@ import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { useStripeCheckout } from "@/hooks/use-stripe-checkout";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useAuth } from "@/lib/auth";
+import { useRequireAuth } from "@/lib/use-require-auth";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { createPortalSession } from "@/utils/payments.functions";
 import { toast } from "sonner";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/subscription")({
 const AUDIENCE_ORDER: BillingAudience[] = ["host", "vendor", "planner"];
 
 function SubscriptionPage() {
-  const { user } = useAuth();
+  const { user } = useRequireAuth();
   const { subscription, isActive, loading } = useSubscription();
   const { openCheckout, checkoutElement, isOpen, closeCheckout } = useStripeCheckout();
   const [portalLoading, setPortalLoading] = useState(false);
