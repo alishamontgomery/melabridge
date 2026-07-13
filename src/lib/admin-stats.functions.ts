@@ -36,7 +36,7 @@ export const getAdminStats = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("vendor_profiles")
         .select("id", { count: "exact", head: true })
-        .eq("verification_status", "pending"),
+        .eq("onboarding_completed", false),
     ]);
 
     return {
