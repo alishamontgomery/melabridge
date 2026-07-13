@@ -89,8 +89,8 @@ export const getBooking = createServerFn({ method: "GET" })
 
 const ALLOWED_MANUAL: BookingStage[] = [
   "contacted", "consultation_scheduled", "quote_sent", "quote_under_review",
-  "contract_sent", "contract_signed", "deposit_paid", "completed",
-  "review_requested", "reviewed",
+  "contract_sent", "contract_signed", "deposit_paid", "in_progress", "completed",
+  "review_requested", "reviewed", "cancelled",
 ];
 
 export const advanceStage = createServerFn({ method: "POST" })
