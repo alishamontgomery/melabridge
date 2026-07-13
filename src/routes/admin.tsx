@@ -195,6 +195,74 @@ function QueueCard({
   );
 }
 
+function TestSeedSection() {
+  const seed = useServerFn(seedTestData);
+  const wipe = useServerFn(wipeTestData);
+  const [busy, setBusy] = useState<"seed" | "wipe" | null>(null);
+  const [lastResult, setLastResult] = useState<string | null>(null);
+
+  const isProdHost = typeof window !== "undefined" && /(^|\.)melabridge\.com$/.test(window.location.hostname);
+  if (isProdHost) return null;
+
+  const runSeed = async () => {
+    setBusy("seed");
+    setLastResult(null);
+    try {
+      const res = await seed({ data: undefined } as never);
+      if (!res.ok) throw new Error(res.error);
+      setLastResult(`Seeded ${res.accounts.length} accounts, ${res.events} events, ${res.guests} guests, ${res.notifications} notifications.`);
+      toast.success("Test data seeded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Seed failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const runWipe = async () => {
+    if (!confirm("Delete all rows tagged as test seed? This cannot be undone.")) return;
+    setBusy("wipe");
+    setLastResult(null);
+    try {
+      const res = await wipe({ data: undefined } as never);
+      if (!res.ok) throw new Error(res.error ?? "Wipe failed");
+      setLastResult("Test data wiped.");
+      toast.success("Test data wiped");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Wipe failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Section title="QA test data (dev/preview only)">
+      <Card className="border-dashed border-primary/30 bg-primary/5 p-5 shadow-soft">
+        <div className="flex items-start gap-3">
+          <FlaskConical className="mt-0.5 h-5 w-5 text-primary" />
+          <div className="flex-1 space-y-3">
+            <div>
+              <p className="text-sm font-semibold">Seed five test accounts + realistic data</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Creates <code className="rounded bg-muted px-1">admin/planner/vendor/attendee/guest@test.melabridge.com</code> (password <code className="rounded bg-muted px-1">MelaTest!2026</code>) and populates events, guests, tasks, budget, files, messages, notifications, vendor profile, and a sandbox subscription. Every row is tagged so it can be wiped surgically. Hidden entirely on the production domain.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={runSeed} disabled={busy !== null}>
+                <FlaskConical className="mr-2 h-4 w-4" />{busy === "seed" ? "Seeding…" : "Seed test data"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={runWipe} disabled={busy !== null}>
+                <Trash2 className="mr-2 h-4 w-4" />{busy === "wipe" ? "Wiping…" : "Wipe test data"}
+              </Button>
+            </div>
+            {lastResult && <p className="text-xs text-muted-foreground">{lastResult}</p>}
+          </div>
+        </div>
+      </Card>
+    </Section>
+  );
+}
+
 function ConfigStat({
   icon: Icon,
   label,
