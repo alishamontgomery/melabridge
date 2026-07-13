@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { Crown, CheckCircle2, CreditCard, Sparkles } from "lucide-react";
+import { Crown, CheckCircle2, Sparkles, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,21 +19,18 @@ export const Route = createFileRoute("/subscription")({
   head: () => ({
     meta: [
       { title: "Subscription — MelaBridge" },
-      { name: "description", content: "Manage your MelaBridge plan, seats, and billing." },
+      { name: "description", content: "Manage your MelaBridge plan and billing." },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: SubscriptionPage,
 });
 
-// Simulated "current plan" — in production this is loaded from the user's billing record.
-const CURRENT_PLAN_ID = "host_plus" as const;
-
 const AUDIENCE_ORDER: BillingAudience[] = ["host", "vendor", "planner"];
 
 function SubscriptionPage() {
-  const current = billingConfig.plans[CURRENT_PLAN_ID];
-  const [audience, setAudience] = useState<BillingAudience>(current.audience);
+  // No live billing yet — everyone is on the free host tier until Stripe is wired up.
+  const [audience, setAudience] = useState<BillingAudience>("host");
   const plans = getPlansFor(audience);
 
   return (
@@ -42,25 +39,20 @@ function SubscriptionPage() {
         <PageHeader
           eyebrow="Subscription"
           title="Your MelaBridge plan"
-          description="Transparent pricing. No surprise fees. Upgrade, downgrade, or cancel anytime."
+          description="Transparent pricing. No surprise fees. Upgrade or cancel anytime."
           icon={Crown}
         />
 
         <Card className="flex flex-wrap items-center justify-between gap-4 border-primary/30 bg-gradient-to-r from-primary/5 to-transparent p-5 shadow-soft">
           <div>
-            <p className="text-sm font-semibold">
-              Current plan — {audienceMeta[current.audience].label.split(" ")[0]} · {current.name}
-            </p>
+            <p className="text-sm font-semibold">You're on the Free plan</p>
             <p className="text-xs text-muted-foreground">
-              {formatPrice(current).amount}
-              {formatPrice(current).period} · Renews next cycle · Visa •••• 4242
+              Upgrade to unlock unlimited events, AI planning, and team collaboration.
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
-              <CreditCard className="h-4 w-4" /> Update card
-            </Button>
-            <Button>Manage billing</Button>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            Billing managed securely by Stripe
           </div>
         </Card>
 
@@ -69,8 +61,6 @@ function SubscriptionPage() {
           <div className="text-xs text-muted-foreground">
             <span className="font-semibold text-foreground">{billingConfig.philosophy.headline} </span>
             No fees on RSVPs, invitations, or guest management. 0% on donations and fundraising.
-            Paid plans sell tickets with no MelaBridge platform fee — only your payment processor
-            (such as Stripe) charges its standard rate.
           </div>
         </Card>
 
@@ -95,20 +85,14 @@ function SubscriptionPage() {
             })}
           </div>
 
-          <div
-            className={`grid gap-4 ${
-              plans.length >= 4 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
-            }`}
-          >
+          <div className={`grid gap-4 ${plans.length >= 4 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
             {plans.map((p) => (
-              <PlanCard key={p.id} plan={p} currentId={CURRENT_PLAN_ID} />
+              <PlanCard key={p.id} plan={p} />
             ))}
           </div>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            <Link to="/pricing" className="underline hover:text-foreground">
-              See full pricing comparison →
-            </Link>
+            <Link to="/pricing" className="underline hover:text-foreground">See full pricing comparison →</Link>
           </p>
         </Section>
       </div>
@@ -116,31 +100,18 @@ function SubscriptionPage() {
   );
 }
 
-function PlanCard({ plan, currentId }: { plan: Plan; currentId: string }) {
+function PlanCard({ plan }: { plan: Plan }) {
   const { amount, period } = formatPrice(plan);
-  const isCurrent = plan.id === currentId;
   return (
-    <Card
-      className={`flex flex-col border p-5 shadow-soft ${
-        isCurrent ? "border-primary/60 shadow-elegant" : plan.featured ? "border-primary/30" : "border-border/60"
-      }`}
-    >
+    <Card className={`flex flex-col border p-5 shadow-soft ${plan.featured ? "border-primary/30" : "border-border/60"}`}>
       <div className="mb-3 flex items-center justify-between">
         <p className="font-semibold">{plan.name}</p>
-        {isCurrent ? (
-          <Badge className="bg-gradient-to-r from-primary to-gold text-primary-foreground">
-            Current
-          </Badge>
-        ) : plan.featured ? (
-          <Badge variant="secondary">Most Popular</Badge>
-        ) : null}
+        {plan.featured && <Badge variant="secondary">Most Popular</Badge>}
       </div>
       <p className="text-xs text-muted-foreground">{plan.tagline}</p>
       <div className="mt-3 flex items-baseline gap-1">
         <span className="font-display text-3xl font-semibold">{amount}</span>
-        {period && plan.price !== null && (
-          <span className="text-xs text-muted-foreground">{period}</span>
-        )}
+        {period && plan.price !== null && <span className="text-xs text-muted-foreground">{period}</span>}
       </div>
       <ul className="mt-4 mb-5 space-y-2 text-sm text-muted-foreground">
         {plan.features.slice(0, 5).map((x) => (
@@ -150,8 +121,8 @@ function PlanCard({ plan, currentId }: { plan: Plan; currentId: string }) {
           </li>
         ))}
       </ul>
-      <Button variant={isCurrent ? "outline" : plan.featured ? "hero" : "default"} className="mt-auto">
-        {isCurrent ? "Current plan" : plan.price === null ? "Contact sales" : "Switch to this plan"}
+      <Button variant={plan.featured ? "hero" : "default"} className="mt-auto" disabled title="Checkout launches when Stripe billing is enabled">
+        {plan.price === null ? "Contact sales" : "Choose plan"}
       </Button>
     </Card>
   );
