@@ -705,6 +705,78 @@ export type Database = {
         }
         Relationships: []
       }
+      search_favorites: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          href: string
+          id: string
+          subtitle: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          href: string
+          id?: string
+          subtitle?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          href?: string
+          id?: string
+          subtitle?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      search_recents: {
+        Row: {
+          entity_id: string | null
+          entity_type: string | null
+          href: string | null
+          id: string
+          kind: string
+          opened_at: string
+          query: string | null
+          subtitle: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          entity_id?: string | null
+          entity_type?: string | null
+          href?: string | null
+          id?: string
+          kind: string
+          opened_at?: string
+          query?: string | null
+          subtitle?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          entity_id?: string | null
+          entity_type?: string | null
+          href?: string | null
+          id?: string
+          kind?: string
+          opened_at?: string
+          query?: string | null
+          subtitle?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
