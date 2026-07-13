@@ -1,106 +1,111 @@
-# MelaBridge Production Hardening Plan
+# MelaBridge Launch Readiness Sprint — Execution Plan
 
-This is a very large scope (21 sections, hundreds of sub-items). I can't ship all of it reliably in a single turn without producing shallow work or breaking things. I'll break it into sequenced phases, each independently shippable and verifiable. **Confirm the phase order (or reorder) and I'll start executing Phase 1 immediately.**
+This master prompt covers 24 workstreams. Shipping it in one turn would produce shallow work and regressions. I'll execute it in **8 sequenced phases**, each independently deployable and verifiable. Confirm the order (or reorder) and I'll start Phase 1.
 
-Some items in your list are **already built** from the last passes and only need audit/polish, not rebuild — I've flagged those so we don't duplicate work.
-
----
-
-## Already in place (audit-only, not rebuild)
-
-- 12-stage booking pipeline + `fn_apply_confirmation_rule` trigger (auto-Booked only when contract+deposit rule satisfied) — **§1, §2 core**
-- `vendor_bookings`, `vendor_booking_events` (audit timeline), `vendor_booking_settings`, RLS + `is_booking_party`
-- Notifications table + auto-notify on stage transitions — **§4 backend**
-- Stripe checkout + subscriptions + webhook — **§14 core**
-- Vendor profiles table, marketplace search, calendar module, messaging, tasks
-- Auth email + app email scaffolding
-
-## Rename only (no logic change) — §1
-
-Your requested stage labels differ from what we shipped. Map:
-- `saved` → keep internal, hide from client-facing UI
-- `contacted` → **Inquiry**
-- `quote_sent` → **Quote Sent**
-- `quote_under_review` → **Quote Accepted** (when accepted) / drop "under review" label
-- `contract_sent` → **Contract Sent**
-- `contract_signed` (pre-deposit) → display as **Awaiting Deposit**
-- `deposit_paid` (pre-contract) → display as **Awaiting Signature**
-- `booked` → **Booked** (never shown as "Auto-Booked" in UI — already true)
-- add **In Progress** (event started, not completed) + **Cancelled** as new stages
-- `completed` → **Completed**
-
-Pure label + 2 new stages (`in_progress`, `cancelled`). No pipeline rebuild.
+Some items overlap with work already shipped in prior phases (booking pipeline, notifications, invoices, email templates). Those become **audit-only** — no rebuild.
 
 ---
 
-## Proposed phase order
+## Already in place (audit only)
 
-### Phase 1 — Booking lifecycle finalization (§1, §2, §5)
-- Rename stage labels per above; add `in_progress` + `cancelled` enum values
-- On transition to `booked`, trigger fires the automation fan-out: reserve `calendar_availability`, insert `calendar_events` block, create invoice row, create payment schedule rows, insert activity timeline entries, emit notifications to planner + vendor + client
-- Booking detail page: full audit timeline (already have `vendor_booking_events`, add richer entries: quote_viewed, contract_viewed, invoice_created, payment_received, reminder_sent)
-- Cancel action → `cancelled` stage + release calendar hold
+- 12-stage booking pipeline with contract+deposit rule (§17) — audit stage labels only
+- Notification center + realtime (§4-prior)
+- Invoices & payment schedule auto-generated on `booked` (§17 payment side)
+- Auth + transactional email scaffolding (§15 base)
+- Booking cannot reach `booked` without rule satisfied (§17, §24)
 
-### Phase 2 — Vendor calendar integrity (§3)
-- Add DB constraint / trigger preventing overlapping `calendar_events` for the same vendor when `status='confirmed'`
-- Respect `calendar_blocked_dates` + `calendar_availability` in marketplace availability filter
-- Realtime subscription on `calendar_events` for vendor dashboard (no refresh)
+---
 
-### Phase 3 — Notification center (§4)
-- New `/notifications` route with unread badge, mark read / mark all read, filter chips (booking/quote/payment/message/system), search, archive column, history pagination
-- Header bell with realtime unread count
-- Extend notification types enum
+## Phase 1 — Credibility & messaging cleanup (§1, §3, §4, §5, §10, §12, §20)
 
-### Phase 4 — Payments completeness (§14)
-- Invoice + payment_schedule tables (installments, balance due)
-- Auto-generate on `booked`; auto-reminder cron for upcoming installments
-- Payment history view per booking
-- Prevent duplicate invoices (unique on booking_id + sequence)
+Remove every unsupported claim across the marketing site.
 
-### Phase 5 — Email templates (§6)
-- Replace placeholder auth/app templates with branded MelaBridge templates for: booking confirmed, quote sent, contract sent, reminder, invoice, receipt, balance due, thank you, cancellation, review request
-- Wire triggers to `sendTemplateEmail` on the matching booking events
+- Strip fake stats (12,400 events, 38 countries, SOC 2, fake logos/testimonials) from `index.tsx`, `about.tsx`, `features.tsx`, `how-it-works.tsx`, `ai-planning.tsx`, `vision.tsx`, `bridge-*` pages
+- Replace with **Early Access** messaging ("Now welcoming planners and vendors", "Join the first wave")
+- Replace "escrow" with "Secure payments powered by Stripe" everywhere
+- Remove funeral / celebration-of-life references from category lists
+- Homepage headline: "Your complete event workspace" / "Everything you need to plan your event"
+- Tone down AI claims (no "10,000 simulations", "predictive engine", "world-class")
+- Tag every unfinished feature with `Coming Soon` / `Beta` badges (escrow, digital contracts, QR check-in, silent auctions, floor plans, calendar sync where not shipped, vendor AI matching)
+- Unify positioning: "The intelligent platform for planning every event"
 
-### Phase 6 — Dashboards live data (§7)
-- Audit each dashboard route, replace any static/mock widget with realtime queries (Supabase realtime channels on relevant tables)
-- Vendor / Planner / Client / Admin — one pass each
+## Phase 2 — Pricing restructure (§2)
 
-### Phase 7 — Reviews (§15)
-- After `completed`, cron emits `review_requested` notification + email
-- Reviews table + submit form + vendor public response
-- Aggregate rating on `vendor_profiles`
+Rewrite `src/lib/billing-config.ts` and `pricing.tsx` / `subscription.tsx`:
 
-### Phase 8 — Marketplace + vendor profile polish (§8, §9)
-- Vendor profile completeness checklist (logo, banner, gallery, packages, availability, FAQs, service areas)
-- Marketplace: distance filter (needs coords), availability filter (joins `calendar_availability`), featured/verified flags, favorites, recently viewed
-- Capture a Perfect Memory: package deep-links (each package card → `/vendor/capture-a-perfect-memory/packages/<slug>`), preserve pricing / images / CheckCherry embed exactly
+- **Free (Host)**: unlimited personal event planning, guests, budget, timeline, tasks, basic AI, marketplace access
+- **MelaAssist Plus**: premium AI, automation, smart reminders, calendar integrations, priority support
+- **Vendor**: Free Listing / Professional / Premium (featured, AI assistant, lead automation, analytics)
+- **Professional Planner**: business mgmt, client portals, team, reporting, branding, automation
+- Remove any paywall on core event planning for families
+- Keep existing Stripe price IDs where possible; add new ones via `payments--create_price` where needed
 
-### Phase 9 — Calendar sync (§11)
-- Google Calendar via existing connector: two-way sync, imported events block availability
-- Outlook + ICS import (one-way for ICS)
+## Phase 3 — Public vs authenticated separation + nav (§6, §7)
 
-### Phase 10 — Messaging, tasks, event creation polish (§10, §12, §13)
-- Event creation form: address autocomplete already wired — audit for duplicate Create buttons; add AI-approval gate before insert
-- Messaging: attachments, templates, typing/read receipts (realtime), search, pin
-- Tasks: templates by event type, auto-generation on event create
+- Extract public `<SiteHeader>` component with: Product, Marketplace, For Vendors, Pricing, About, Help, Log In, Get Started
+- Apply to every public route (`index`, `about`, `features`, `pricing`, `marketplace`, `vendors`, `how-it-works`, `help`, `faq`, `contact`, `bridge-*`, etc.)
+- Ensure `AppShell` (planner sidebar) never renders on public routes
+- Anonymous visit to `/` must show marketing chrome only
 
-### Phase 11 — Dead-feature sweep + accessibility + perf (§16, §17, §18, §20)
-- Route-by-route audit script: every `<Link>` target exists, every button has an onClick, every route has head() metadata
-- Remove any remaining placeholder text / sample bookings / fake users
-- Lighthouse pass, image lazy-load, query batching, empty/error states everywhere
-- Playwright a11y sweep (keyboard nav, contrast)
+## Phase 4 — Homepage, AI page, thin pages, FAQ (§10, §11, §13, §14, §21)
 
-### Phase 12 — Final QA (§21)
-- End-to-end Playwright suite covering the four roles (vendor, planner, client, admin) through the full booking lifecycle
-- Console error scan, network 4xx/5xx scan, security linter
-- Produce a signed-off QA report
+- Homepage: prioritize hosts → planners → vendors → venues in that order
+- `ai-planning.tsx`: dedupe MelaAssist heading; sections = Planning Assistant, Smart Recommendations, Timeline Intelligence, Budget Intelligence, Risk Detection, Vendor Assistance, Decision Support
+- Expand `features.tsx`, `about.tsx`, `help.tsx`, `how-it-works.tsx`, `pricing.tsx`, `ai-planning.tsx` with intro + screenshots + use cases + benefits + FAQ + CTA
+- `faq.tsx`: keyboard-accessible accordion, real answers on every question
+
+## Phase 5 — Auth + multi-role profiles (§15, §16)
+
+- Registration form: confirm password, show/hide toggle, strength meter, terms/privacy checkboxes
+- Resend verification email flow
+- Google login error handling
+- Post-signup role picker: Planner / Professional Planner / Vendor / Venue / Guest (multi-select)
+- Multi-role profile switcher in account menu (single login, multiple profiles via `user_roles` table — already exists)
+- Add profile later from settings
+
+## Phase 6 — Marketplace + AI drafts + vendor workflow (§8, §18, §19)
+
+- Marketplace empty state: "We're onboarding our first verified vendors" + Become a Vendor / Request a Vendor / Notify Me CTAs
+- No infinite loading — proper empty/loading/error states
+- AI event creation → always creates `event_drafts` row; review screen with Approve / Edit / Discard (drafts table already exists)
+- Vendor workflow UI: Save, Compare, Request Quote, Request Availability, Invite External, Manual Add (planner side); Accept, Send Quote, Generate/Upload Contract, Signature, Request Deposit (vendor side)
+
+## Phase 7 — Dashboard data consistency + booking labels (§9, §17)
+
+- Audit demo/mock numbers — make them internally consistent (84 days, 96/142 guests → 34 pending + 12 declined, budget totals reconcile)
+- Rename booking stages per master prompt: Saved / Contacted / Availability Requested / Quote Received / Negotiating / Contract Sent / Contract Signed / Deposit Received / Booked / Completed / Cancelled
+- Confirm `fn_apply_confirmation_rule` still blocks `booked` without contract+deposit
+
+## Phase 8 — Launch polish + QA (§22, §24)
+
+Automated sweep via Playwright + code audit:
+
+- Every `<Link>` target exists, every button has an onClick or Coming Soon label
+- No placeholder text, no dead routes, no fabricated content
+- Empty states everywhere
+- Responsive check at 375/768/1280
+- Form validation + error messages
+- A11y: keyboard nav, focus states, labels, contrast
+- Console error scan, network 4xx/5xx scan
+- Signed-off QA report
+
+---
+
+## Preserved (not touched — §23)
+
+- Existing branding, logo, color palette, typography
+- Capture A Perfect Memory package assets + pricing + CheckCherry embed
+- Working functionality (bookings, invoices, notifications, calendar, messaging)
 
 ---
 
 ## What I need from you
 
-1. **Approve this phase order** (or reorder — e.g. "do §6 emails before §4 payments").
-2. **Confirm scope trims** if any: e.g. Apple Calendar ICS is one-way only; Outlook needs a new connector — OK?
-3. **CheckCherry**: confirm the existing embed URL/pattern to preserve verbatim for Capture a Perfect Memory packages.
+1. **Approve phase order** or reorder (e.g. "auth before pricing").
+2. **Confirm pricing amounts** for MelaAssist Plus, Vendor Pro/Premium, Professional Planner — or say "you pick reasonable numbers and I'll adjust in Stripe later".
+3. **Confirm which features are truly shipped vs Coming Soon** so I tag correctly. My current read:
+   - Shipped: bookings, invoices, notifications, calendar module, messaging, tasks, budget, guests, marketplace search, Stripe subscriptions, AI planning (basic)
+   - Coming Soon: escrow (removing), digital contracts (e-sign), QR check-in, silent auctions, floor plans, vendor AI matching, calendar 2-way sync
+   - Confirm or correct.
 
-On approval, I'll start with **Phase 1** in the next turn and ship it end-to-end (migration + UI + Playwright verification) before moving on. Each phase ends with a working, deployable checkpoint.
+On approval I'll start **Phase 1** immediately and ship it end-to-end (code + Playwright verification) before moving on. Each phase ends at a deployable checkpoint.
