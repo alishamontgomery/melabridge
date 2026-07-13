@@ -43,6 +43,7 @@ function formatTime(t: string | null) {
 
 const QUICK_ACTIONS = [
   { label: "New Event", to: "/events/new", icon: Plus },
+  { label: "AI Draft Inbox", to: "/drafts", icon: Sparkles },
   { label: "New Lead", to: "/messaging", icon: UserPlus },
   { label: "Create Quote", to: "/vendor-portal", icon: FileText },
   { label: "Send Contract", to: "/vendor-portal", icon: ScrollText },
@@ -50,7 +51,6 @@ const QUICK_ACTIONS = [
   { label: "Email Client", to: "/messaging", icon: Mail },
   { label: "Calendar Sync", to: "/settings", icon: CalendarSync },
   { label: "Block Dates", to: "/timeline", icon: CalendarX2 },
-  { label: "Open MelaAssist™", to: "/concierge", icon: Sparkles },
 ] as const;
 
 function VendorDashboardPage() {

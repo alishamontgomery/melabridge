@@ -194,6 +194,71 @@ export type Database = {
         }
         Relationships: []
       }
+      event_drafts: {
+        Row: {
+          approved_event_id: string | null
+          confidence: number
+          created_at: string
+          extracted: Json
+          field_confidences: Json
+          id: string
+          owner_id: string
+          raw_input: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          source: Database["public"]["Enums"]["event_draft_source"]
+          source_reference: string | null
+          status: Database["public"]["Enums"]["event_draft_status"]
+          suggested_next_actions: Json
+          summary: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_event_id?: string | null
+          confidence?: number
+          created_at?: string
+          extracted?: Json
+          field_confidences?: Json
+          id?: string
+          owner_id: string
+          raw_input?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          source?: Database["public"]["Enums"]["event_draft_source"]
+          source_reference?: string | null
+          status?: Database["public"]["Enums"]["event_draft_status"]
+          suggested_next_actions?: Json
+          summary?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_event_id?: string | null
+          confidence?: number
+          created_at?: string
+          extracted?: Json
+          field_confidences?: Json
+          id?: string
+          owner_id?: string
+          raw_input?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          source?: Database["public"]["Enums"]["event_draft_source"]
+          source_reference?: string | null
+          status?: Database["public"]["Enums"]["event_draft_status"]
+          suggested_next_actions?: Json
+          summary?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_drafts_approved_event_id_fkey"
+            columns: ["approved_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_files: {
         Row: {
           category: string
@@ -306,6 +371,7 @@ export type Database = {
           owner_id: string
           payment_status: string | null
           preferred_contact: string | null
+          source_draft_id: string | null
           start_time: string | null
           status: Database["public"]["Enums"]["event_status"]
           updated_at: string
@@ -343,6 +409,7 @@ export type Database = {
           owner_id: string
           payment_status?: string | null
           preferred_contact?: string | null
+          source_draft_id?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           updated_at?: string
@@ -380,6 +447,7 @@ export type Database = {
           owner_id?: string
           payment_status?: string | null
           preferred_contact?: string | null
+          source_draft_id?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           updated_at?: string
@@ -391,7 +459,15 @@ export type Database = {
           venue_street?: string | null
           venue_zip?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_source_draft_id_fkey"
+            columns: ["source_draft_id"]
+            isOneToOne: false
+            referencedRelation: "event_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       guests: {
         Row: {
@@ -1144,6 +1220,13 @@ export type Database = {
     }
     Enums: {
       app_role: "planner" | "vendor" | "guest" | "admin" | "attendee"
+      event_draft_source:
+        | "email"
+        | "message"
+        | "voice"
+        | "manual_paste"
+        | "assistant"
+      event_draft_status: "pending" | "approved" | "edited" | "discarded"
       event_role: "owner" | "admin" | "editor" | "commenter" | "viewer"
       event_status:
         | "draft"
@@ -1287,6 +1370,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["planner", "vendor", "guest", "admin", "attendee"],
+      event_draft_source: [
+        "email",
+        "message",
+        "voice",
+        "manual_paste",
+        "assistant",
+      ],
+      event_draft_status: ["pending", "approved", "edited", "discarded"],
       event_role: ["owner", "admin", "editor", "commenter", "viewer"],
       event_status: [
         "draft",
