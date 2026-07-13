@@ -33,8 +33,20 @@ function waitingLabel(b: { current_stage: BookingStage; contract_signed_at: stri
 
 function BookingsIndex() {
   const fn = useServerFn(listMyBookings);
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["bookings", "mine"], queryFn: () => fn() });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const ch = supabase
+      .channel("bookings-index")
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_bookings" },
+        () => qc.invalidateQueries({ queryKey: ["bookings", "mine"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_booking_events" },
+        () => qc.invalidateQueries({ queryKey: ["bookings", "mine"] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
 
   if (isLoading) {
     return (
