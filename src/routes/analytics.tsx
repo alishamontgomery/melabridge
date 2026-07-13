@@ -17,9 +17,9 @@ export const Route = createFileRoute("/analytics")({
 });
 
 function AnalyticsPage() {
-  const { event, health, budgetPct, hasActiveEvent } = useEcosystem();
+  const { event, health, budgetPct, hasEvent } = useEcosystem();
 
-  if (!hasActiveEvent) {
+  if (!hasEvent) {
     return (
       <AppShell active="/analytics">
         <div className="space-y-6">
