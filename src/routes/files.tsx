@@ -51,7 +51,7 @@ type EventFile = {
 };
 
 // Loose cast so we can use event_files before regenerated types land.
-const db = supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> };
+const db = supabase;
 
 function FilesPage() {
   const { user } = useAuth();
