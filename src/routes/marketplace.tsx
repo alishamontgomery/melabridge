@@ -125,6 +125,16 @@ function MarketplacePage() {
 
 function VendorCard({ v }: { v: VendorRow }) {
   const location = [v.city, v.state].filter(Boolean).join(", ");
+  const navigate = useNavigate();
+  const saveFn = useServerFn(createBooking);
+  const save = useMutation({
+    mutationFn: () => saveFn({ data: { vendorId: v.id, title: v.business_name, category: v.business_category } }),
+    onSuccess: (b: any) => {
+      toast.success("Saved to your bookings");
+      navigate({ to: "/bookings/$id", params: { id: b.id } });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to save"),
+  });
   return (
     <Card className="overflow-hidden border-border/60 shadow-soft transition hover:shadow-elegant">
       <div
@@ -149,7 +159,13 @@ function VendorCard({ v }: { v: VendorRow }) {
             <span className="inline-flex items-center gap-1"><Star className="h-3 w-3" />From ${v.starting_price.toLocaleString()}</span>
           )}
         </div>
-        <Button variant="outline" size="sm" className="w-full">View profile</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="flex-1">View profile</Button>
+          <Button size="sm" className="flex-1" onClick={() => save.mutate()} disabled={save.isPending}>
+            <Bookmark className="mr-1 h-3.5 w-3.5" />
+            {save.isPending ? "Saving…" : "Save vendor"}
+          </Button>
+        </div>
       </div>
     </Card>
   );
