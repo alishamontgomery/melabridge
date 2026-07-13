@@ -64,9 +64,9 @@ function SettingsPage() {
           channel: "all",
           email_enabled: next.event_updates_email,
           in_app_enabled: next.event_updates_inapp,
-          frequency: next.weekly_digest_email ? "weekly" : "immediate",
+          frequency: next.weekly_digest_email ? "weekly" : "instant",
         },
-        { onConflict: "user_id,category,channel" }
+        { onConflict: "user_id,channel" }
       );
     setSaving(false);
     if (error) toast.error(error.message);

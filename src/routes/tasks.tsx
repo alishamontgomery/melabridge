@@ -21,7 +21,6 @@ type Priority = Database["public"]["Enums"]["task_priority"];
 const STATUSES: { key: Status; label: string }[] = [
   { key: "todo", label: "To do" },
   { key: "in_progress", label: "In progress" },
-  { key: "blocked", label: "Blocked" },
   { key: "done", label: "Done" },
 ];
 
