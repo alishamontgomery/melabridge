@@ -38,6 +38,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotifications } from "@/hooks/use-notifications";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { useAuth, signOut } from "@/lib/auth";
