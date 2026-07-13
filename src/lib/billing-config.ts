@@ -16,15 +16,14 @@ export type BillingAudience = "host" | "vendor" | "planner";
 export type PlanId =
   // Hosts
   | "host_free"
-  | "host_plus"
-  | "host_pro"
   // Vendors
-  | "vendor_free"
-  | "vendor_growth"
+  | "vendor_starter"
   | "vendor_professional"
+  | "vendor_premium"
   | "vendor_enterprise"
   // Planners
-  | "planner_business";
+  | "planner_professional";
+
 
 export type BillingInterval = "month" | "year";
 
