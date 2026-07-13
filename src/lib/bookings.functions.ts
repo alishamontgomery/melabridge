@@ -89,8 +89,8 @@ export const getBooking = createServerFn({ method: "GET" })
 
 const ALLOWED_MANUAL: BookingStage[] = [
   "contacted", "consultation_scheduled", "quote_sent", "quote_under_review",
-  "contract_sent", "contract_signed", "deposit_paid", "completed",
-  "review_requested", "reviewed",
+  "contract_sent", "contract_signed", "deposit_paid", "in_progress", "completed",
+  "review_requested", "reviewed", "cancelled",
 ];
 
 export const advanceStage = createServerFn({ method: "POST" })
@@ -197,6 +197,21 @@ export const updateVendorSettings = createServerFn({ method: "POST" })
       vendor_id: vp.id,
       confirmation_rule: data.confirmationRule,
       requires_deposit: data.requiresDeposit,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const cancelBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string; reason?: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId,
+      stage: "cancelled",
+      actor_id: userId,
+      note: data.reason ?? "Booking cancelled",
     });
     if (error) throw new Error(error.message);
     return { ok: true };

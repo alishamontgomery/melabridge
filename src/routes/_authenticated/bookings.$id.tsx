@@ -12,7 +12,7 @@ import { Briefcase, Loader2, ArrowLeft } from "lucide-react";
 import { BookingProgressTracker } from "@/components/booking/BookingProgressTracker";
 import { BookingStageBadge } from "@/components/booking/BookingStageBadge";
 import { STAGES, stageMeta, type BookingStage } from "@/lib/booking-stages";
-import { advanceStage, getBooking, recordDeposit, recordQuote } from "@/lib/bookings.functions";
+import { advanceStage, cancelBooking, getBooking, recordDeposit, recordQuote } from "@/lib/bookings.functions";
 
 export const Route = createFileRoute("/_authenticated/bookings/$id")({
   head: () => ({ meta: [{ title: "Booking — MelaBridge" }] }),
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/bookings/$id")({
 
 const ACTION_STAGES: BookingStage[] = [
   "contacted", "consultation_scheduled", "quote_under_review",
-  "contract_sent", "contract_signed", "completed", "review_requested", "reviewed",
+  "contract_sent", "contract_signed", "in_progress", "completed", "review_requested", "reviewed",
 ];
 
 function BookingDetail() {
@@ -32,6 +32,7 @@ function BookingDetail() {
   const advance = useServerFn(advanceStage);
   const quote = useServerFn(recordQuote);
   const deposit = useServerFn(recordDeposit);
+  const cancelFn = useServerFn(cancelBooking);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -63,6 +64,12 @@ function BookingDetail() {
   const depositM = useMutation({
     mutationFn: () => deposit({ data: { bookingId: id, amount: Number(depositAmt) } }),
     onSuccess: () => { toast.success("Deposit recorded"); setDepositAmt(""); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
+  const cancelM = useMutation({
+    mutationFn: () => cancelFn({ data: { bookingId: id } }),
+    onSuccess: () => { toast.success("Booking cancelled"); invalidate(); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
@@ -151,6 +158,22 @@ function BookingDetail() {
           <p className="mt-3 text-xs text-muted-foreground">
             "Booked" cannot be set manually — it's applied automatically the moment the vendor's confirmation rule is satisfied.
           </p>
+          {b.current_stage !== "cancelled" && b.current_stage !== "completed" && (
+            <div className="mt-4 border-t pt-4">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Cancel this booking? This releases any calendar hold and notifies both parties.")) {
+                    cancelM.mutate();
+                  }
+                }}
+                disabled={cancelM.isPending}
+              >
+                {cancelM.isPending ? "Cancelling…" : "Cancel booking"}
+              </Button>
+            </div>
+          )}
         </Card>
 
         <Card className="p-5">
