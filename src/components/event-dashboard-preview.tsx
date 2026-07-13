@@ -264,26 +264,28 @@ export function EventDashboardPreview({
 
           {/* Timeline / Live Planning Board */}
           <Panel className="lg:col-span-7" icon={GitBranch} title="Live Planning Board™">
-            <ol className="relative grid grid-cols-2 items-stretch gap-3 sm:grid-cols-5">
-              {data.timeline.map((m, i) => (
-                <li key={i} className="flex min-w-0 flex-col items-center text-center">
-                  <div
-                    className={[
-                      "grid h-9 w-9 place-items-center rounded-full border-2 text-xs font-medium transition-all duration-500",
-                      m.done
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-muted-foreground",
-                    ].join(" ")}
-                    style={{ transitionDelay: `${300 + i * 150}ms` }}
-                  >
-                    {m.done ? <Check className="h-4 w-4" /> : i + 1}
-                  </div>
-                  <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">{m.date}</div>
-                  <div className="max-w-full text-[11px] font-medium leading-tight">{m.label}</div>
-                </li>
-              ))}
-              <div className="absolute left-4 right-4 top-[18px] -z-10 hidden h-0.5 bg-border sm:block" />
-            </ol>
+            <div className="relative">
+              <div className="pointer-events-none absolute left-4 right-4 top-[18px] -z-10 hidden h-0.5 bg-border sm:block" aria-hidden="true" />
+              <ol className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-5">
+                {data.timeline.map((m, i) => (
+                  <li key={i} className="flex min-w-0 flex-col items-center text-center">
+                    <div
+                      className={[
+                        "grid h-9 w-9 place-items-center rounded-full border-2 text-xs font-medium transition-all duration-500",
+                        m.done
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground",
+                      ].join(" ")}
+                      style={{ transitionDelay: `${300 + i * 150}ms` }}
+                    >
+                      {m.done ? <Check className="h-4 w-4" /> : i + 1}
+                    </div>
+                    <div className="mt-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">{m.date}</div>
+                    <div className="max-w-full text-[11px] font-medium leading-tight">{m.label}</div>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </Panel>
 
           {/* Recent activity */}
