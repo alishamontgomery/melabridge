@@ -1,0 +1,2 @@
+
+GRANT EXECUTE ON FUNCTION public.is_booking_party(uuid, uuid) TO authenticated;
