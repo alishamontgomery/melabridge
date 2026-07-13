@@ -208,7 +208,119 @@ function BookingDetail() {
             })}
           </ol>
         </Card>
+
+        <InvoicesAndSchedule
+          invoices={data.invoices ?? []}
+          schedule={data.schedule ?? []}
+          onRefetch={invalidate}
+        />
       </div>
     </AppShell>
   );
 }
+
+function InvoicesAndSchedule({
+  invoices, schedule, onRefetch,
+}: { invoices: any[]; schedule: any[]; onRefetch: () => void }) {
+  const payFn = useServerFn(recordSchedulePayment);
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const payM = useMutation({
+    mutationFn: (v: { scheduleId: string; amount: number }) => payFn({ data: v }),
+    onSuccess: () => { toast.success("Payment recorded"); onRefetch(); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
+  if (invoices.length === 0 && schedule.length === 0) {
+    return (
+      <Card className="p-5 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Receipt className="h-4 w-4" />
+          Invoices and the payment schedule generate automatically once this booking is confirmed.
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Card className="space-y-3 p-5">
+        <div className="flex items-center gap-2">
+          <Receipt className="h-4 w-4 text-primary" />
+          <h3 className="font-display text-base font-semibold">Invoices</h3>
+        </div>
+        {invoices.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No invoices yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {invoices.map((inv) => (
+              <li key={inv.id} className="rounded-md border border-border/60 p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">{inv.invoice_number}</p>
+                  <Badge variant="secondary" className="capitalize">{inv.status}</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  ${Number(inv.amount).toLocaleString()} {inv.currency} · paid $
+                  {Number(inv.paid_amount ?? 0).toLocaleString()}
+                  {inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString()}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="space-y-3 p-5">
+        <div className="flex items-center gap-2">
+          <CalendarClockIcon className="h-4 w-4 text-primary" />
+          <h3 className="font-display text-base font-semibold">Payment schedule</h3>
+        </div>
+        {schedule.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No instalments yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {schedule.map((s) => {
+              const remaining = Number(s.amount) - Number(s.paid_amount ?? 0);
+              return (
+                <li key={s.id} className="rounded-md border border-border/60 p-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">{s.label}</p>
+                    <Badge variant={s.status === "paid" ? "default" : "secondary"} className="capitalize">
+                      {s.status}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    ${Number(s.amount).toLocaleString()} · paid $
+                    {Number(s.paid_amount ?? 0).toLocaleString()}
+                    {s.due_date ? ` · due ${new Date(s.due_date).toLocaleDateString()}` : ""}
+                  </p>
+                  {s.status !== "paid" && (
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder={remaining.toString()}
+                        value={amounts[s.id] ?? ""}
+                        onChange={(e) => setAmounts((a) => ({ ...a, [s.id]: e.target.value }))}
+                        className="h-8"
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const amt = Number(amounts[s.id] || remaining);
+                          if (amt > 0) payM.mutate({ scheduleId: s.id, amount: amt });
+                        }}
+                        disabled={payM.isPending}
+                      >
+                        Record
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+    </div>
+  );
+}
+
