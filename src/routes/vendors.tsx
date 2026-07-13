@@ -1,65 +1,92 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { RippleFeed } from "@/components/ripple-feed";
-import { useEcosystem } from "@/lib/ecosystem-store";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Store, Check, Clock, Sparkles } from "lucide-react";
+import { Store, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/vendors")({
   head: () => ({
     meta: [
       { title: "Vendors — MelaBridge" },
-      { name: "description", content: "Source, contract, and pay vendors — each confirmation ripples through your plan." },
+      { name: "description", content: "Browse and manage the vendors on your event." },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: VendorsPage,
 });
 
-const VENDORS = [
-  { name: "Bloomhaus Florals", cat: "Florist", status: "Pending", amount: 4800, dnaScore: 96 },
-  { name: "Studio Nero", cat: "Photography", status: "Confirmed", amount: 6200, dnaScore: 98 },
-  { name: "Onyema Catering", cat: "Catering", status: "Confirmed", amount: 14300, dnaScore: 94 },
-  { name: "DJ Kairo", cat: "Music", status: "Confirmed", amount: 3200, dnaScore: 91 },
-  { name: "Paperlane", cat: "Stationery", status: "Pending", amount: 1400, dnaScore: 88 },
-];
+type VendorRow = {
+  id: string;
+  business_name: string;
+  business_category: string;
+  city: string | null;
+  starting_price: number | null;
+};
 
 function VendorsPage() {
-  const { confirmVendor } = useEcosystem();
+  const [loading, setLoading] = useState(true);
+  const [vendors, setVendors] = useState<VendorRow[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("vendor_profiles")
+        .select("id,business_name,business_category,city,starting_price")
+        .eq("onboarding_completed", true)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (cancelled) return;
+      setVendors(data ?? []);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <AppShell active="/vendors">
-      <PageHeader
-        eyebrow="Vendors"
-        icon={Store}
-        title={<>The right people, <span className="text-gradient">already vetted for you</span>.</>}
-        description="BridgeDNA™ ranks matches from your favorites and community reviews. Confirming a vendor cascades to the timeline, budget, and collaboration feed."
-      />
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Vendors"
+          icon={Store}
+          title="Vendor directory"
+          description="Discover vendors on MelaBridge. Contract management and BridgeDNA™ matching launching soon."
+        />
 
-      <section className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="rounded-3xl border border-border bg-card">
-          <ul className="divide-y divide-border">
-            {VENDORS.map((v) => (
-              <li key={v.name} className="flex flex-wrap items-center gap-3 p-4">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{v.name}</p>
-                  <p className="text-xs text-muted-foreground">{v.cat} · ${v.amount.toLocaleString()}</p>
-                </div>
-                <Badge className="bg-primary/10 text-primary gap-1"><Sparkles className="h-3 w-3" /> DNA {v.dnaScore}</Badge>
-                {v.status === "Confirmed" ? (
-                  <Badge className="bg-emerald-500/10 text-emerald-700 gap-1"><Check className="h-3 w-3" /> Confirmed</Badge>
-                ) : (
-                  <Badge className="bg-amber-500/10 text-amber-700 gap-1"><Clock className="h-3 w-3" /> Pending</Badge>
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading vendors…
+          </div>
+        ) : vendors.length === 0 ? (
+          <Card className="p-8 text-center">
+            <Store className="mx-auto mb-3 h-10 w-10 text-primary" />
+            <h3 className="font-display text-lg font-semibold">No vendors listed yet</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              As vendors join MelaBridge, they'll appear in the directory. Invite vendors you already work with to join.
+            </p>
+            <Button asChild className="mt-4"><Link to="/marketplace">Explore marketplace</Link></Button>
+          </Card>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {vendors.map((v) => (
+              <Card key={v.id} className="p-4">
+                <p className="font-semibold">{v.business_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {v.business_category}
+                  {v.city ? ` · ${v.city}` : ""}
+                </p>
+                {v.starting_price != null && (
+                  <p className="mt-2 text-sm">From ${v.starting_price.toLocaleString()}</p>
                 )}
-                {v.status !== "Confirmed" && (
-                  <Button size="sm" variant="hero" onClick={() => confirmVendor(v.name)}>Confirm</Button>
-                )}
-              </li>
+              </Card>
             ))}
-          </ul>
-        </div>
-        <RippleFeed />
-      </section>
+          </div>
+        )}
+      </div>
     </AppShell>
   );
 }

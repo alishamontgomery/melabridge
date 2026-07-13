@@ -1,65 +1,87 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { Briefcase, MessageSquare, FileText, Wallet, Calendar, Upload } from "lucide-react";
-import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
+import { Briefcase, Loader2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/vendor-portal")({
   head: () => ({
     meta: [
       { title: "Vendor Portal — MelaBridge" },
-      { name: "description", content: "One place for vendors to see their bookings, deliverables, and payments." },
+      { name: "description", content: "Your leads, bookings, contracts, and payouts in one place." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: VendorPortalPage,
 });
 
 function VendorPortalPage() {
+  const [loading, setLoading] = useState(true);
+  const [hasProfile, setHasProfile] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const uid = userRes.user?.id;
+      if (!uid) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("vendor_profiles")
+        .select("id")
+        .eq("user_id", uid)
+        .maybeSingle();
+      if (cancelled) return;
+      setHasProfile(!!data);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <AppShell active="/vendor-portal">
       <div className="space-y-6">
         <PageHeader
           eyebrow="Vendor Portal"
-          title="A calm cockpit for every vendor you book"
-          description="Vendors see only what's theirs — deliverables, timelines, messages, contracts, and payouts."
+          title="Your bookings & leads"
+          description="Track incoming leads, confirmed bookings, deliverables, and payouts."
           icon={Briefcase}
         />
-        <MetricRow
-          metrics={[
-            { label: "Active bookings", value: 6 },
-            { label: "Pending deliverables", value: 3 },
-            { label: "Awaiting payment", value: "$1,800" },
-            { label: "Avg. response", value: "42m" },
-          ]}
-        />
-        <ModuleGrid
-          features={[
-            { icon: Calendar, title: "Load-in schedule", detail: "Shared timeline with day-of contacts and access notes." },
-            { icon: FileText, title: "Contracts & briefs", detail: "Signed contracts, mood boards, and creative direction in one place." },
-            { icon: Upload, title: "Deliverables upload", detail: "Send proofs and finals directly into the event workspace." },
-            { icon: MessageSquare, title: "Direct messaging", detail: "Threaded chat with the couple, planner, and coordinators." },
-            { icon: Wallet, title: "Milestone payouts", detail: "Track scheduled payouts and request early release." },
-            { icon: Briefcase, title: "Multi-event view", detail: "Vendors managing many events see it all in MelaAssist™." },
-          ]}
-        />
-        <Section title="Your bookings this month">
-          <Card className="divide-y divide-border/60 border-border/60 shadow-soft">
-            {[
-              { c: "Amara & Kola · Jun 14", role: "Lead florist", s: "On track" },
-              { c: "Idris 40th · Jul 3", role: "Ceremony arrangements", s: "Proof due" },
-              { c: "Adeola × Corp · Aug 22", role: "Corporate arch", s: "Contract sent" },
-            ].map((b) => (
-              <div key={b.c} className="flex items-center justify-between p-4 text-sm">
-                <div>
-                  <p className="font-medium">{b.c}</p>
-                  <p className="text-xs text-muted-foreground">{b.role}</p>
-                </div>
-                <Badge variant="secondary">{b.s}</Badge>
-              </div>
-            ))}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-muted-foreground">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading…
+          </div>
+        ) : !hasProfile ? (
+          <Card className="p-8 text-center">
+            <Briefcase className="mx-auto mb-3 h-10 w-10 text-primary" />
+            <h3 className="font-display text-lg font-semibold">Set up your vendor profile first</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              You need a business profile before leads and bookings can flow into your portal.
+            </p>
+            <Button asChild className="mt-4">
+              <Link to="/profile">Complete vendor profile</Link>
+            </Button>
           </Card>
-        </Section>
+        ) : (
+          <Card className="p-8 text-center">
+            <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
+            <h3 className="font-display text-lg font-semibold">No leads or bookings yet</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              As planners contact you through MelaBridge, leads and bookings will appear here. Manage active conversations in your inbox.
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button asChild variant="outline"><Link to="/messaging">Open inbox</Link></Button>
+              <Button asChild><Link to="/bridgepilot">Open MelaAssist™</Link></Button>
+            </div>
+          </Card>
+        )}
       </div>
     </AppShell>
   );
