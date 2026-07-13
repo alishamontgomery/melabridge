@@ -38,7 +38,7 @@ function VendorsPage() {
         .order("created_at", { ascending: false })
         .limit(50);
       if (cancelled) return;
-      setVendors(data ?? []);
+      setVendors((data ?? []).filter((v): v is VendorRow => !!v.id && !!v.business_name && !!v.business_category));
       setLoading(false);
     })();
     return () => {
