@@ -541,7 +541,7 @@ function TemplatesView({ onUse }: { onUse: (t: { id: string; title: string; body
           <Input placeholder="Search templates…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9"/>
         </div>
         <div className="flex flex-wrap gap-1">
-          {categories.map((c) => (
+          {(categories as string[]).map((c) => (
             <button key={c} onClick={() => setCategory(c)}
               className={`rounded-full border px-2.5 py-1 text-xs capitalize transition ${category === c ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent/40"}`}>
               {c.replace(/_/g, " ")}
