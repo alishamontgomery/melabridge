@@ -85,7 +85,9 @@ function FilesPage() {
   const upload = useMutation({
     mutationFn: async (fileList: FileList) => {
       if (!user || !event.id) throw new Error("Sign in and pick an event first.");
-      for (const file of Array.from(fileList)) {
+      const items = Array.from(fileList);
+      if (items.length === 0) throw new Error("No files selected.");
+      for (const file of items) {
         if (file.size > MAX_FILE_MB * 1024 * 1024) {
           throw new Error(`${file.name} is larger than ${MAX_FILE_MB} MB.`);
         }
