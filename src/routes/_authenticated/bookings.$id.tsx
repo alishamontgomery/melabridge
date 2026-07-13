@@ -53,6 +53,8 @@ function BookingDetail() {
       .channel(`booking-${id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "vendor_bookings", filter: `id=eq.${id}` }, invalidate)
       .on("postgres_changes", { event: "*", schema: "public", table: "vendor_booking_events", filter: `booking_id=eq.${id}` }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "booking_invoices", filter: `booking_id=eq.${id}` }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "booking_payment_schedule", filter: `booking_id=eq.${id}` }, invalidate)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
