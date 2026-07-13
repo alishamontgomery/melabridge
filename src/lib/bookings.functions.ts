@@ -84,7 +84,17 @@ export const getBooking = createServerFn({ method: "GET" })
       .select("*")
       .eq("booking_id", data.id)
       .order("occurred_at", { ascending: true });
-    return { booking, events: events ?? [] };
+    const { data: invoices } = await supabase
+      .from("booking_invoices")
+      .select("*")
+      .eq("booking_id", data.id)
+      .order("issued_at", { ascending: false });
+    const { data: schedule } = await supabase
+      .from("booking_payment_schedule")
+      .select("*")
+      .eq("booking_id", data.id)
+      .order("sort_order", { ascending: true });
+    return { booking, events: events ?? [], invoices: invoices ?? [], schedule: schedule ?? [] };
   });
 
 const ALLOWED_MANUAL: BookingStage[] = [
