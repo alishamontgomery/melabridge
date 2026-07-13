@@ -1091,6 +1091,11 @@ export type Database = {
         | "confirmed"
         | "completed"
         | "archived"
+        | "inquiry"
+        | "consultation_scheduled"
+        | "quote_sent"
+        | "tentative"
+        | "cancelled"
       guest_rsvp: "pending" | "yes" | "no" | "maybe"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in_progress" | "done"
@@ -1223,7 +1228,18 @@ export const Constants = {
     Enums: {
       app_role: ["planner", "vendor", "guest", "admin", "attendee"],
       event_role: ["owner", "admin", "editor", "commenter", "viewer"],
-      event_status: ["draft", "planning", "confirmed", "completed", "archived"],
+      event_status: [
+        "draft",
+        "planning",
+        "confirmed",
+        "completed",
+        "archived",
+        "inquiry",
+        "consultation_scheduled",
+        "quote_sent",
+        "tentative",
+        "cancelled",
+      ],
       guest_rsvp: ["pending", "yes", "no", "maybe"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in_progress", "done"],
