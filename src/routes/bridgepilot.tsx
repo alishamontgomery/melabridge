@@ -23,7 +23,7 @@ type Stats = {
   unreadThreads: number;
   openTasks: number;
   upcomingBookings: number;
-  vendorProfile: { business_name: string | null; bridge_score: number | null } | null;
+  vendorProfile: { business_name: string | null } | null;
 };
 
 function MelaAssistPage() {
@@ -46,8 +46,8 @@ function MelaAssistPage() {
       }
 
       const [profileRes, tasksRes, convRes] = await Promise.all([
-        supabase.from("vendor_profiles").select("business_name,bridge_score").eq("user_id", uid).maybeSingle(),
-        supabase.from("tasks").select("id", { count: "exact", head: true }).eq("assignee_id", uid).neq("status", "done"),
+        supabase.from("vendor_profiles").select("business_name").eq("user_id", uid).maybeSingle(),
+        supabase.from("tasks").select("id", { count: "exact", head: true }).eq("assigned_to", uid).neq("status", "done"),
         supabase.from("conversation_participants").select("conversation_id", { count: "exact", head: true }).eq("user_id", uid),
       ]);
 
@@ -56,7 +56,7 @@ function MelaAssistPage() {
         unreadThreads: convRes.count ?? 0,
         openTasks: tasksRes.count ?? 0,
         upcomingBookings: 0,
-        vendorProfile: profileRes.data ?? null,
+        vendorProfile: profileRes.data ? { business_name: profileRes.data.business_name } : null,
       });
       setLoading(false);
     })();
