@@ -67,6 +67,12 @@ function BookingDetail() {
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
 
+  const cancelM = useMutation({
+    mutationFn: () => cancelFn({ data: { bookingId: id } }),
+    onSuccess: () => { toast.success("Booking cancelled"); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
   if (isLoading || !data) {
     return (
       <AppShell active="/bookings">
