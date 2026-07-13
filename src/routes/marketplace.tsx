@@ -1,14 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { Store, Search, Star, MapPin, BadgeCheck, Sparkles, Filter } from "lucide-react";
+import { Store, Search, Star, MapPin, BadgeCheck, Sparkles, Filter, Bookmark } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MetricRow, Section } from "@/components/module-page";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { createBooking } from "@/lib/bookings.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
