@@ -105,6 +105,107 @@ export type Database = {
           },
         ]
       }
+      calendar_connections: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          external_account_email: string | null
+          external_calendar_id: string | null
+          id: string
+          is_active: boolean
+          last_error: string | null
+          last_synced_at: string | null
+          provider: Database["public"]["Enums"]["calendar_provider"]
+          refresh_token: string | null
+          scope: string | null
+          sync_direction: Database["public"]["Enums"]["calendar_sync_direction"]
+          token_expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          external_account_email?: string | null
+          external_calendar_id?: string | null
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider: Database["public"]["Enums"]["calendar_provider"]
+          refresh_token?: string | null
+          scope?: string | null
+          sync_direction?: Database["public"]["Enums"]["calendar_sync_direction"]
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          external_account_email?: string | null
+          external_calendar_id?: string | null
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: Database["public"]["Enums"]["calendar_provider"]
+          refresh_token?: string | null
+          scope?: string | null
+          sync_direction?: Database["public"]["Enums"]["calendar_sync_direction"]
+          token_expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_sync_map: {
+        Row: {
+          created_at: string
+          event_id: string
+          external_etag: string | null
+          external_event_id: string
+          id: string
+          last_pulled_at: string | null
+          last_pushed_at: string | null
+          provider: Database["public"]["Enums"]["calendar_provider"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          external_etag?: string | null
+          external_event_id: string
+          id?: string
+          last_pulled_at?: string | null
+          last_pushed_at?: string | null
+          provider: Database["public"]["Enums"]["calendar_provider"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          external_etag?: string | null
+          external_event_id?: string
+          id?: string
+          last_pulled_at?: string | null
+          last_pushed_at?: string | null
+          provider?: Database["public"]["Enums"]["calendar_provider"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_sync_map_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -758,6 +859,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          ics_token: string | null
           id: string
           is_organization: boolean
           is_test_seed: boolean
@@ -774,6 +876,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          ics_token?: string | null
           id: string
           is_organization?: boolean
           is_test_seed?: boolean
@@ -790,6 +893,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          ics_token?: string | null
           id?: string
           is_organization?: boolean
           is_test_seed?: boolean
@@ -1220,6 +1324,8 @@ export type Database = {
     }
     Enums: {
       app_role: "planner" | "vendor" | "guest" | "admin" | "attendee"
+      calendar_provider: "google" | "outlook"
+      calendar_sync_direction: "push" | "pull" | "two_way"
       event_draft_source:
         | "email"
         | "message"
@@ -1370,6 +1476,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["planner", "vendor", "guest", "admin", "attendee"],
+      calendar_provider: ["google", "outlook"],
+      calendar_sync_direction: ["push", "pull", "two_way"],
       event_draft_source: [
         "email",
         "message",
