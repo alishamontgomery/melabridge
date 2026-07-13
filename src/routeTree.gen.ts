@@ -66,12 +66,14 @@ import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
   id: '/workspace',
@@ -357,6 +359,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/checkout/return',
+  path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
   path: '/callback',
@@ -388,6 +395,12 @@ const AuthenticatedEventsEventIdRoute =
     id: '/events/$eventId',
     path: '/events/$eventId',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -450,9 +463,11 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -514,9 +529,11 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/events': typeof AuthenticatedEventsIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -580,9 +597,11 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -646,9 +665,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/vendor'
     | '/auth/callback'
+    | '/checkout/return'
     | '/events/$eventId'
     | '/events/new'
     | '/events/'
+    | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -710,9 +731,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/vendor'
     | '/auth/callback'
+    | '/checkout/return'
     | '/events/$eventId'
     | '/events/new'
     | '/events'
+    | '/api/public/payments/webhook'
   id:
     | '__root__'
     | '/'
@@ -775,9 +798,11 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
     | '/auth/callback'
+    | '/checkout/return'
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/new'
     | '/_authenticated/events/'
+    | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -838,6 +863,8 @@ export interface RootRouteChildren {
   VendorsRoute: typeof VendorsRoute
   VisionRoute: typeof VisionRoute
   WorkspaceRoute: typeof WorkspaceRoute
+  CheckoutReturnRoute: typeof CheckoutReturnRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1241,6 +1268,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/return': {
+      id: '/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/callback'
@@ -1282,6 +1316,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/events/$eventId'
       preLoaderRoute: typeof AuthenticatedEventsEventIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1373,6 +1414,8 @@ const rootRouteChildren: RootRouteChildren = {
   VendorsRoute: VendorsRoute,
   VisionRoute: VisionRoute,
   WorkspaceRoute: WorkspaceRoute,
+  CheckoutReturnRoute: CheckoutReturnRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
