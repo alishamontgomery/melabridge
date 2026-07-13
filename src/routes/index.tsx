@@ -336,7 +336,7 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <SectionEyebrow>The MelaBridge dashboard</SectionEyebrow>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">This is the actual product.</h2>
+            <h2 className="mt-3 font-display text-4xl md:text-5xl">Your complete event workspace.</h2>
             <p className="mt-4 text-muted-foreground">
               A calm, intelligent workspace where budget, guests, vendors, tasks and your AI
               planner work together in real time.
