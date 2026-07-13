@@ -71,7 +71,7 @@ export function MarketingPage({
             <p className="mt-1 text-sm text-muted-foreground">Get started with MelaBridge in minutes.</p>
           </div>
           <Button variant="hero" size="lg" asChild>
-            <Link to="/dashboard">Open MelaBridge <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
+            <Link to="/auth">Open MelaBridge <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
           </Button>
         </div>
       </main>
