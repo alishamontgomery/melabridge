@@ -99,7 +99,7 @@ async function waitForAuthenticatedUser(maxMs = 6000) {
     };
     const sub = supabase.auth.onAuthStateChange((_e, session) => {
       if (session?.user) finish(session.user);
-    });
+    }).data;
     const poll = window.setInterval(async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session?.user) finish(data.session.user);
