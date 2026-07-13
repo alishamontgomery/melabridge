@@ -33,9 +33,8 @@ function VendorsPage() {
     let cancelled = false;
     (async () => {
       const { data } = await supabase
-        .from("vendor_profiles")
+        .from("vendor_profiles_public")
         .select("id,business_name,business_category,city,starting_price")
-        .eq("onboarding_completed", true)
         .order("created_at", { ascending: false })
         .limit(50);
       if (cancelled) return;
