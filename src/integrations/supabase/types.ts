@@ -49,6 +49,109 @@ export type Database = {
           },
         ]
       }
+      booking_invoices: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          id: string
+          invoice_number: string
+          issued_at: string
+          notes: string | null
+          paid_amount: number
+          status: Database["public"]["Enums"]["invoice_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          issued_at?: string
+          notes?: string | null
+          paid_amount?: number
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          issued_at?: string
+          notes?: string | null
+          paid_amount?: number
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_payment_schedule: {
+        Row: {
+          amount: number
+          booking_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          label: string
+          paid_amount: number
+          sort_order: number
+          status: Database["public"]["Enums"]["payment_schedule_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          booking_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          label: string
+          paid_amount?: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["payment_schedule_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          label?: string
+          paid_amount?: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["payment_schedule_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_payment_schedule_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_items: {
         Row: {
           actual_amount: number
@@ -1833,6 +1936,8 @@ export type Database = {
         | "tentative"
         | "cancelled"
       guest_rsvp: "pending" | "yes" | "no" | "maybe"
+      invoice_status: "draft" | "sent" | "partial" | "paid" | "overdue" | "void"
+      payment_schedule_status: "pending" | "paid" | "overdue" | "waived"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in_progress" | "done"
     }
@@ -2026,6 +2131,8 @@ export const Constants = {
         "cancelled",
       ],
       guest_rsvp: ["pending", "yes", "no", "maybe"],
+      invoice_status: ["draft", "sent", "partial", "paid", "overdue", "void"],
+      payment_schedule_status: ["pending", "paid", "overdue", "waived"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in_progress", "done"],
     },
