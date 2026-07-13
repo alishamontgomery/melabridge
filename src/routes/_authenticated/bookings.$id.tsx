@@ -12,7 +12,7 @@ import { Briefcase, Loader2, ArrowLeft } from "lucide-react";
 import { BookingProgressTracker } from "@/components/booking/BookingProgressTracker";
 import { BookingStageBadge } from "@/components/booking/BookingStageBadge";
 import { STAGES, stageMeta, type BookingStage } from "@/lib/booking-stages";
-import { advanceStage, getBooking, recordDeposit, recordQuote } from "@/lib/bookings.functions";
+import { advanceStage, cancelBooking, getBooking, recordDeposit, recordQuote } from "@/lib/bookings.functions";
 
 export const Route = createFileRoute("/_authenticated/bookings/$id")({
   head: () => ({ meta: [{ title: "Booking — MelaBridge" }] }),
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/bookings/$id")({
 
 const ACTION_STAGES: BookingStage[] = [
   "contacted", "consultation_scheduled", "quote_under_review",
-  "contract_sent", "contract_signed", "completed", "review_requested", "reviewed",
+  "contract_sent", "contract_signed", "in_progress", "completed", "review_requested", "reviewed",
 ];
 
 function BookingDetail() {
