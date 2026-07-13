@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,7 @@ function MelaAssistPage() {
   const businessName = stats.vendorProfile?.business_name;
 
   return (
-    <AppShell active="/bridgepilot">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="MelaAssist™"
@@ -137,7 +138,7 @@ function MelaAssistPage() {
           </>
         )}
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }
 

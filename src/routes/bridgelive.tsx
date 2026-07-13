@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Radio, Video, MessageCircle, Camera, Users, Heart } from "lucide-react";
 import { ModuleGrid, MetricRow } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/bridgelive")({
 
 function LivePage() {
   return (
-    <AppShell active="/bridgelive">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="BridgeLive™"
@@ -63,6 +64,6 @@ function LivePage() {
           ]}
         />
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }

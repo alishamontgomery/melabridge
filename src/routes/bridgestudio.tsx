@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Palette, Wand2, Image, Layers, Type, PaintBucket } from "lucide-react";
 import { ModuleGrid, Section } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
@@ -19,7 +20,7 @@ const TEMPLATES = ["Save the date", "Formal invite", "Program", "Menu card", "Si
 
 function StudioPage() {
   return (
-    <AppShell active="/bridgestudio">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="BridgeStudio™"
@@ -47,6 +48,6 @@ function StudioPage() {
           </div>
         </Section>
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }

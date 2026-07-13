@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { LifeBuoy, MessageCircle, BookOpen, Search, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -42,7 +43,7 @@ function HelpPage() {
   }, [q, category]);
 
   return (
-    <AppShell active="/help">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="Help Center"
@@ -126,6 +127,6 @@ function HelpPage() {
           </div>
         </Section>
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }

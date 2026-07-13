@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,7 +68,7 @@ function BridgeVault() {
   const active = vaults.find((v) => v.id === activeVault)!;
 
   return (
-    <AppShell active="/bridgevault">
+    <PublicShell>
       <PageHeader
         eyebrow="BridgeVault™ · Permanent digital archive"
         icon={Vault}
@@ -177,6 +178,6 @@ function BridgeVault() {
           </div>
         </div>
       </section>
-    </AppShell>
+    </PublicShell>
   );
 }

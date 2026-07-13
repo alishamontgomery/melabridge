@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
@@ -60,7 +61,7 @@ function BridgeIntelligence() {
   const maxBudget = Math.max(...budgetBands.map((b) => b.high));
 
   return (
-    <AppShell active="/bridge-intelligence">
+    <PublicShell>
       <PageHeader
         eyebrow="Bridge Intelligence™ · Community benchmarks"
         icon={BarChart3}
@@ -199,6 +200,6 @@ function BridgeIntelligence() {
           <Badge className="bg-primary/10 text-primary"><ShieldCheck className="mr-1 h-3 w-3" /> Privacy-first analytics</Badge>
         </div>
       </section>
-    </AppShell>
+    </PublicShell>
   );
 }

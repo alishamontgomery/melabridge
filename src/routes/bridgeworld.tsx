@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +82,7 @@ function BridgeWorld() {
   const years = Object.keys(grouped).map(Number).sort((a, b) => a - b);
 
   return (
-    <AppShell active="/bridgeworld">
+    <PublicShell>
       <PageHeader
         eyebrow="BridgeWorld™ · Your Life Journey"
         icon={Globe2}
@@ -206,6 +207,6 @@ function BridgeWorld() {
           </div>
         </div>
       </section>
-    </AppShell>
+    </PublicShell>
   );
 }

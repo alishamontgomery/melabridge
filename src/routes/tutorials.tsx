@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { PlayCircle, Sparkles, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +26,7 @@ const TUTORIALS = [
 
 function TutorialsPage() {
   return (
-    <AppShell active="/tutorials">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="AI Tutorials"
@@ -55,6 +56,6 @@ function TutorialsPage() {
           ))}
         </div>
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }

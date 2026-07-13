@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { CreditCard, ShieldCheck, Receipt, RefreshCw, Banknote, PiggyBank, Lock, Sparkles } from "lucide-react";
 import { ModuleGrid, MetricRow, Section, CTARow } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/bridgepay")({
 
 function BridgePayPage() {
   return (
-    <AppShell active="/bridgepay">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="BridgePay™"
@@ -65,6 +66,6 @@ function BridgePayPage() {
         </Section>
         <CTARow label="Get notified when BridgePay launches" note="We'll email you the moment milestone payments and payouts open." cta="Notify me" />
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -89,7 +90,7 @@ function BridgeDNA() {
   const [feedback, setFeedback] = useState<Record<string, "up" | "down" | null>>({});
 
   return (
-    <AppShell active="/bridgedna">
+    <PublicShell>
       <PageHeader
         eyebrow="BridgeDNA™ · Personalization engine"
         icon={Dna}
@@ -243,6 +244,6 @@ function BridgeDNA() {
           </ul>
         </div>
       </section>
-    </AppShell>
+    </PublicShell>
   );
 }

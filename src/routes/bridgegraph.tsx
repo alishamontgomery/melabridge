@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
 import { Network, Users, Store, Calendar, Sparkles } from "lucide-react";
 import { ModuleGrid } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/bridgegraph")({
 
 function GraphPage() {
   return (
-    <AppShell active="/bridgegraph">
+    <PublicShell>
       <div className="space-y-6">
         <PageHeader
           eyebrow="BridgeGraph™"
@@ -63,6 +64,6 @@ function GraphPage() {
           ]}
         />
       </div>
-    </AppShell>
+    </PublicShell>
   );
 }
