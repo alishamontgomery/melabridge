@@ -132,8 +132,11 @@ function CalendarSettingsPage() {
           iconClass="bg-blue-500/10 text-blue-600"
           conn={google}
           loading={loading}
-          onConnect={() => {
-            window.location.href = "/api/oauth/google-calendar/start";
+          onConnect={async () => {
+            const { data } = await supabase.auth.getUser();
+            const uid = data.user?.id;
+            if (!uid) return toast.error("Sign in required");
+            window.location.href = `/api/oauth/google-calendar/start?uid=${uid}`;
           }}
           onDisconnect={() => onDisconnect("google")}
           description="Two-way sync. Events created or updated in MelaBridge appear on Google Calendar, and changes made there flow back."
@@ -146,12 +149,16 @@ function CalendarSettingsPage() {
           iconClass="bg-sky-500/10 text-sky-600"
           conn={outlook}
           loading={loading}
-          onConnect={() => {
-            window.location.href = "/api/oauth/outlook-calendar/start";
+          onConnect={async () => {
+            const { data } = await supabase.auth.getUser();
+            const uid = data.user?.id;
+            if (!uid) return toast.error("Sign in required");
+            window.location.href = `/api/oauth/outlook-calendar/start?uid=${uid}`;
           }}
           onDisconnect={() => onDisconnect("outlook")}
           description="Two-way sync via Microsoft Graph. Great for Office 365 accounts."
         />
+
 
         {/* Apple / ICS */}
         <Card className="p-5">
