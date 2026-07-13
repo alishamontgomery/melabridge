@@ -11,7 +11,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin-stats.functions";
 import { seedTestData, wipeTestData } from "@/lib/test-seed.functions";
-import { useAuth } from "@/lib/auth";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useState } from "react";
 import { toast } from "sonner";

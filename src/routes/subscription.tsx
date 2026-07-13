@@ -9,7 +9,6 @@ import { Section } from "@/components/module-page";
 import { PaymentTestModeBanner } from "@/components/payment-test-mode-banner";
 import { useStripeCheckout } from "@/hooks/use-stripe-checkout";
 import { useSubscription } from "@/hooks/use-subscription";
-import { useAuth } from "@/lib/auth";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { createPortalSession } from "@/utils/payments.functions";

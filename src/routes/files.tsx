@@ -11,7 +11,6 @@ import {
   Utensils, Mail, MapPin, Loader2, Download, Trash2, Plus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useEcosystem } from "@/lib/ecosystem-store";
 

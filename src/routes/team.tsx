@@ -10,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/module-page";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveEvent } from "@/lib/use-active-event";
-import { useAuth } from "@/lib/auth";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
