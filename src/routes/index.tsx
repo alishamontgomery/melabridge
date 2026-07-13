@@ -432,7 +432,7 @@ function Landing() {
               {[
                 "Natural-language planning — describe your vision, get a full plan back",
                 "MelaAssist™ continuously optimizes budget, tasks and logistics",
-                "AI Event Simulator™ stress-tests your plan against 10,000+ scenarios",
+                "AI Event Simulator™ stress-tests your plan against real-world scenarios",
                 "Event Health Score™ reflects your event's readiness in a single number",
               ].map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
