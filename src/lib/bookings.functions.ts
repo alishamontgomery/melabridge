@@ -84,7 +84,17 @@ export const getBooking = createServerFn({ method: "GET" })
       .select("*")
       .eq("booking_id", data.id)
       .order("occurred_at", { ascending: true });
-    return { booking, events: events ?? [] };
+    const { data: invoices } = await supabase
+      .from("booking_invoices")
+      .select("*")
+      .eq("booking_id", data.id)
+      .order("issued_at", { ascending: false });
+    const { data: schedule } = await supabase
+      .from("booking_payment_schedule")
+      .select("*")
+      .eq("booking_id", data.id)
+      .order("sort_order", { ascending: true });
+    return { booking, events: events ?? [], invoices: invoices ?? [], schedule: schedule ?? [] };
   });
 
 const ALLOWED_MANUAL: BookingStage[] = [
@@ -214,5 +224,41 @@ export const cancelBooking = createServerFn({ method: "POST" })
       note: data.reason ?? "Booking cancelled",
     });
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const recordSchedulePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { scheduleId: string; amount: number }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row } = await supabase.from("booking_payment_schedule")
+      .select("id, booking_id, amount, paid_amount, label")
+      .eq("id", data.scheduleId).maybeSingle();
+    if (!row) throw new Error("Instalment not found");
+    const newPaid = Number(row.paid_amount ?? 0) + data.amount;
+    const status = newPaid >= Number(row.amount) ? "paid" : "pending";
+    await supabase.from("booking_payment_schedule")
+      .update({ paid_amount: newPaid, status })
+      .eq("id", row.id);
+    // Also record on the booking totals + event log
+    const { data: b } = await supabase.from("vendor_bookings")
+      .select("total_paid, deposit_paid_amount").eq("id", row.booking_id).maybeSingle();
+    if (b) {
+      const isDeposit = /deposit/i.test(row.label);
+      await supabase.from("vendor_bookings").update({
+        total_paid: Number(b.total_paid ?? 0) + data.amount,
+        deposit_paid_amount: isDeposit
+          ? Number(b.deposit_paid_amount ?? 0) + data.amount
+          : b.deposit_paid_amount,
+      }).eq("id", row.booking_id);
+    }
+    await supabase.from("vendor_booking_events").insert({
+      booking_id: row.booking_id,
+      stage: /deposit/i.test(row.label) ? "deposit_paid" : "booked",
+      actor_id: userId,
+      note: `${row.label} payment: $${data.amount.toLocaleString()}`,
+      metadata: { schedule_id: row.id, amount: data.amount },
+    });
     return { ok: true };
   });
