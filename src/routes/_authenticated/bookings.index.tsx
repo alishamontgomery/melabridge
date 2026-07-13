@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect } from "react";
 import { listMyBookings } from "@/lib/bookings.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Loader2, PlusCircle } from "lucide-react";
@@ -31,8 +33,20 @@ function waitingLabel(b: { current_stage: BookingStage; contract_signed_at: stri
 
 function BookingsIndex() {
   const fn = useServerFn(listMyBookings);
+  const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["bookings", "mine"], queryFn: () => fn() });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const ch = supabase
+      .channel("bookings-index")
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_bookings" },
+        () => qc.invalidateQueries({ queryKey: ["bookings", "mine"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_booking_events" },
+        () => qc.invalidateQueries({ queryKey: ["bookings", "mine"] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
 
   if (isLoading) {
     return (

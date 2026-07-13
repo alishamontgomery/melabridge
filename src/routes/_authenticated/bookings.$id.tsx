@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,16 @@ function BookingDetail() {
     qc.invalidateQueries({ queryKey: ["booking", id] });
     qc.invalidateQueries({ queryKey: ["bookings"] });
   };
+
+  useEffect(() => {
+    const ch = supabase
+      .channel(`booking-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_bookings", filter: `id=eq.${id}` }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_booking_events", filter: `booking_id=eq.${id}` }, invalidate)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const advanceM = useMutation({
     mutationFn: (stage: BookingStage) => advance({ data: { bookingId: id, stage } }),
