@@ -1,108 +1,102 @@
-# MelaBridge Calendar v1 — Native Scheduling
+# Vendor Booking Lifecycle — Core Platform Redesign
 
-Replace the current OAuth-based calendar sync flow with a self-contained scheduling system. External providers become "Coming Soon" placeholders; no OAuth, no credentials, no user setup.
+Replace the flat "Booked" flag with a full 12-stage booking pipeline that becomes the single source of truth across Planner Dashboard, Vendor Portal, Marketplace, CRM, Notifications, and Analytics.
 
-## 1. Remove external sync from the MVP
+## 1. Data model (migration)
 
-Delete these files:
-- `src/routes/api/oauth/google-calendar.start.ts`
-- `src/routes/api/oauth/google-calendar.callback.ts`
-- `src/routes/api/oauth/outlook-calendar.start.ts`
-- `src/routes/api/oauth/outlook-calendar.callback.ts`
-- `src/routes/api/public/calendar.$token.ts` (ICS feed)
+New enum + table + supporting rows.
 
-Keep the `calendar_connections` and `calendar_sync_map` tables in the DB (harmless, reserved for future two-way sync). Do not reference them in the UI.
+```text
+booking_stage enum:
+  saved | contacted | consultation_scheduled | quote_sent |
+  quote_under_review | contract_sent | contract_signed |
+  deposit_paid | booked | completed | review_requested | reviewed
 
-Rewrite `src/routes/_authenticated/settings.calendar.tsx` so it only shows a disabled "External Calendar Sync" card with three greyed rows:
-- Google Calendar — Coming Soon
-- Microsoft Outlook — Coming Soon
-- Apple Calendar — Coming Soon
+booking_confirmation_rule enum:
+  contract_only | deposit_only | contract_and_deposit | manual
+```
 
-No copy URL, no rotate token, no connect buttons, no instructions.
+- `vendor_bookings` — one row per planner↔vendor engagement
+  - planner_id, vendor_id (vendor_profiles.id), event_id (nullable)
+  - category, title, current_stage, confirmed_at
+  - quote_amount, deposit_amount, deposit_paid_amount, total_paid
+  - contract_sent_at, contract_signed_at, deposit_paid_at, completed_at
+  - notes, created_by
+- `vendor_booking_events` — immutable stage history (stage, actor_id, note, occurred_at)
+- `vendor_settings` — one row per vendor: `confirmation_rule` (default `contract_and_deposit`), `requires_deposit`, `auto_advance` bool
 
-Strip ICS/OAuth server functions from `src/lib/calendar.functions.ts` (getIcsUrl, listCalendarConnections, disconnectCalendar).
+RLS + GRANTs:
+- planner and vendor on the booking can select/update; only planner or vendor can insert stage events
+- vendor_settings: vendor owns their row
 
-If onboarding prompts a calendar connection anywhere, remove that step.
+Trigger `fn_apply_confirmation_rule()`:
+- On insert into `vendor_booking_events`, evaluates the vendor's `confirmation_rule` against the booking's flags and, if satisfied, inserts a `booked` stage event and stamps `confirmed_at` — guarantees "never Booked before requirements met" server-side.
+- Also emits a `notifications` row for both planner and vendor with a `/bookings/{id}` deep link.
 
-## 2. New database schema (native calendar)
+## 2. Shared UI kit
 
-One migration adds:
+`src/lib/booking-stages.ts`
+- Ordered stage list with `{ key, label, icon, color, group }` (group = discovery / negotiation / contract / payment / delivered).
+- Helpers: `stageIndex`, `nextStage`, `progressPct`, `isConfirmed`.
 
-**`calendar_availability`** — vendor weekly business hours
-- `user_id`, `weekday` (0–6), `start_time`, `end_time`, `is_active`
-- Multiple rows per weekday allowed (multiple windows).
+`src/components/booking/`
+- `BookingStageBadge.tsx` — icon + label + semantic color chip.
+- `BookingProgressTracker.tsx` — horizontal stepper with ✓ / ⏳ / • markers and "Current status" caption.
+- `BookingStageSelect.tsx` — action menu that dispatches the correct server fn.
 
-**`calendar_blocked_dates`** — days off / vacation
-- `user_id`, `start_date`, `end_date`, `reason` (`day_off` | `vacation` | `travel`), `notes`
+All colors go through existing semantic tokens (`--primary`, `--gold`, `--muted`, `--destructive`, plus two new tokens `--stage-progress` / `--stage-complete` in `src/styles.css`).
 
-**`calendar_settings`** — per-vendor rules
-- `user_id` PK, `buffer_before_minutes`, `buffer_after_minutes`, `max_events_per_day`, `block_travel_days`, `vacation_start`, `vacation_end`
+## 3. Server functions (`src/lib/bookings.functions.ts`)
 
-**`calendar_events`** — the actual bookings
-- `id`, `vendor_id`, `planner_id` (nullable), `event_id` (nullable link to `events`), `client_name`, `event_name`, `event_type`, `venue_name`, `address`, `starts_at`, `ends_at`, `setup_minutes`, `breakdown_minutes`, `status` (`inquiry` | `pending` | `confirmed` | `completed` | `cancelled` | `declined`), `internal_notes`, `payment_status`, `contract_status`, `checklist` jsonb, `attachments` jsonb, `team_assignments` jsonb, `timeline` jsonb, `source` (`native` | `external`, defaults `native` — reserved for future sync), `external_provider`, `external_id`
+All `requireSupabaseAuth`:
+- `listPlannerBookings`, `listVendorBookings`, `getBooking`
+- `createBooking` (planner saves a vendor → `saved`)
+- `advanceStage({ bookingId, stage, meta })` — validates transition, inserts stage event; trigger handles auto-`booked`
+- `recordQuote`, `sendContract`, `signContract`, `recordDeposit`, `recordFinalPayment`, `markCompleted`, `requestReview`, `submitReview`
+- `updateVendorConfirmationRule`
 
-**`calendar_booking_requests`** — planner-initiated requests / alternate proposals
-- `id`, `booking_id` (nullable — created once approved), `vendor_id`, `planner_id`, `requested_start`, `requested_end`, `message`, `status` (`pending` | `approved` | `declined` | `alternate_proposed`), `alternate_start`, `alternate_end`, `alternate_message`
+## 4. Screens
 
-All tables: `GRANT` to `authenticated` + `service_role`, RLS enabled, policies scoped so vendors manage their own rows and planners see rows where they're the `planner_id`.
+### Planner
+- `/_authenticated/bookings/index.tsx` — table of bookings with `BookingProgressTracker` inline; filter by stage/event/category.
+- `/_authenticated/bookings/$id.tsx` — full timeline, stage history, contract & payment panels, actions.
+- Planner dashboard widget: "Vendors in progress" using the tracker.
 
-## 3. Server functions (`src/lib/calendar.functions.ts`)
+### Vendor
+- `/_authenticated/vendor.tsx` gains a Bookings tab (leads list + tracker + action buttons: Send Quote, Schedule Consultation, Send Contract, Record Deposit, Record Final Payment, Mark Completed).
+- New `/_authenticated/vendor/settings.tsx` — **Booking Confirmation Rules** section (4 radio options, default Contract Signed + Deposit Paid) + toggle "Requires deposit".
 
-Replace the file with:
-- `getCalendarSettings`, `updateCalendarSettings`
-- `listAvailability`, `upsertAvailability`, `deleteAvailability`
-- `listBlockedDates`, `addBlockedDate`, `deleteBlockedDate`
-- `listEvents({ from, to, status?, type?, q? })`
-- `getEvent(id)`, `createEvent`, `updateEvent`, `duplicateEvent`, `cancelEvent`, `completeEvent`
-- `requestBooking` (planner)
-- `respondToBookingRequest({ id, action: 'approve' | 'decline' | 'propose_alternate', ... })`
-- `getDashboardSummary` — today's events, upcoming, pending approvals, monthly count, revenue sum, availability status
-- `checkConflicts({ start, end, setup_minutes, breakdown_minutes, excludeId? })` — used before approval to prevent overlap; returns conflict list with reason (event/setup/breakdown/travel/blocked/vacation/max-per-day)
+### Marketplace / CRM
+- Vendor card gains a "Save vendor" action → creates a booking in `saved`.
+- CRM view (existing `/vendors`) shows current stage per vendor.
 
-## 4. UI
+### Notifications
+- Existing notifications route already renders rows; the DB trigger inserts stage-transition notifications with `href = /bookings/{id}`. Add stage icons to the row renderer.
 
-New routes (all under `_authenticated`):
-- `/calendar` — main calendar with Month/Week/Day/Agenda tabs, status color legend, filters (type, status), search
-- `/calendar/settings` — availability windows, blocked dates, vacation mode, buffers, max/day, travel-day toggle
-- `/calendar/requests` — pending booking requests with Approve / Decline / Propose Alternate
-- `/calendar/events/$id` — full event detail (all fields, timeline, checklist, attachments, team, payment/contract status)
-- `/calendar/dashboard` — today, upcoming, pending, monthly count, revenue, availability summary
+### Analytics
+- Add a "Bookings funnel" section to `/analytics` powered by a server fn that groups `vendor_booking_events` by stage.
 
-Update `/settings` to link to `/calendar/settings` (replacing the old calendar sync link).
-Update `/settings/calendar` to the "Coming Soon" placeholder described above.
-Add "Calendar" entry to `AppShell` nav.
+## 5. Guardrails
 
-Color tokens for statuses use existing semantic tokens (add to `src/styles.css` if missing): inquiry=muted, pending=amber, confirmed=primary, completed=emerald, cancelled=rose.
+- `advanceStage` rejects manual jumps to `booked`; only the trigger writes it (except when `confirmation_rule = 'manual'`, in which case a dedicated `confirmBookingManually` fn is required and audited).
+- All stage writes require the actor be a member of the booking (RLS + server check).
+- Future integrations (e-sign, Stripe, calendar, AI follow-ups) plug in by calling the same `advanceStage` / `recordDeposit` fns — no additional status surface.
 
-## 5. Conflict / protection logic
+## 6. Rollout
 
-`checkConflicts` runs on:
-- Vendor approving a request
-- Vendor creating/editing an event
-- Planner requesting a date (soft warning only)
+1. Migration (enums, tables, trigger, RLS, GRANTs, default vendor_settings backfill).
+2. Shared stage kit + components.
+3. Server fns.
+4. Planner bookings screens + dashboard widget.
+5. Vendor bookings tab + settings screen.
+6. Marketplace "Save vendor" + CRM stage column.
+7. Analytics funnel + notification icon polish.
+8. Playwright sweep: save → quote → contract → deposit → auto-Booked; manual rule path; completed → review.
 
-Rules:
-- Overlap with existing confirmed event's `[starts_at - setup, ends_at + breakdown]` window → hard block on approve.
-- Overlap with buffer_before/after settings → warning.
-- Overlap with blocked date / vacation → hard block.
-- `max_events_per_day` exceeded → hard block.
-- `block_travel_days` on and different city than adjacent booking → warning.
+## Out of scope (explicitly deferred)
 
-## 6. Planner vs vendor experience
+- Actual e-signature provider integration (stubs `contract_signed_at` via a "Mark signed" action).
+- Live Stripe deposit capture (records amounts; wiring to Stripe webhook is a follow-up but the schema supports it).
+- Calendar auto-holds on consultation scheduling.
 
-Role gate via existing `has_role`:
-- Vendor sees: settings, requests inbox, full event CRUD, complete/duplicate, dashboard.
-- Planner sees: request form, their own request statuses, notifications when approved, propose-alternate reply.
-
-Notifications reuse the existing `notifications` table (category `calendar`).
-
-## 7. Future-sync friendliness
-
-`calendar_events.source`, `external_provider`, `external_id` columns exist from day one so a later job can push/pull without a schema migration. `calendar_connections` / `calendar_sync_map` stay untouched.
-
-## Technical notes
-
-- All new server fns use `.middleware([requireSupabaseAuth])`.
-- Loaders in `_authenticated/*` may call them; public routes must not.
-- Types regenerate after the migration; UI + fns land after that step.
-- No new secrets, no OAuth, no ICS.
+Confirm and I'll implement in the order above.
