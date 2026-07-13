@@ -201,3 +201,18 @@ export const updateVendorSettings = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const cancelBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string; reason?: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId,
+      stage: "cancelled",
+      actor_id: userId,
+      note: data.reason ?? "Booking cancelled",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
