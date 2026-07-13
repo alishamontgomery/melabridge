@@ -38,10 +38,10 @@ export function MarketingPage({
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="rounded-full" asChild>
-              <Link to="/dashboard">Log in</Link>
+              <Link to="/auth">Log in</Link>
             </Button>
             <Button variant="hero" size="sm" className="rounded-full" asChild>
-              <Link to="/dashboard">Sign up</Link>
+              <Link to="/auth" search={{ intent: "signup" } as never}>Sign up</Link>
             </Button>
           </div>
         </div>
@@ -71,7 +71,7 @@ export function MarketingPage({
             <p className="mt-1 text-sm text-muted-foreground">Get started with MelaBridge in minutes.</p>
           </div>
           <Button variant="hero" size="lg" asChild>
-            <Link to="/dashboard">Open MelaBridge <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
+            <Link to="/auth">Open MelaBridge <ArrowRight className="ml-1.5 h-4 w-4" /></Link>
           </Button>
         </div>
       </main>
