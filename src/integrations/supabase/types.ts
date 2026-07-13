@@ -1166,37 +1166,6 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
-      list_public_vendors: {
-        Args: never
-        Returns: {
-          business_category: string | null
-          business_description: string | null
-          business_hours: Json | null
-          business_name: string | null
-          city: string | null
-          created_at: string | null
-          id: string | null
-          logo_url: string | null
-          mobile_service: boolean | null
-          onboarding_completed: boolean | null
-          portfolio_urls: string[] | null
-          social_links: Json | null
-          starting_price: number | null
-          state: string | null
-          travel_radius: number | null
-          updated_at: string | null
-          user_id: string | null
-          virtual_services: string | null
-          website: string | null
-          years_in_business: number | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "vendor_profiles_public"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       seed_test_data: {
         Args: {
           admin_id: string
