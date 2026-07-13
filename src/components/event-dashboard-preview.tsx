@@ -433,7 +433,7 @@ function TaskCheck({ done, delay }: { done: boolean; delay: number }) {
 
 function VendorPill({ status }: { status: "confirmed" | "pending" | "quoted" }) {
   const map = {
-    confirmed: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
+    confirmed: "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 border-emerald-500/30",
     quoted: "bg-primary/10 text-primary border-primary/20",
     pending: "bg-gold/20 text-gold-foreground border-gold/30",
   } as const;
