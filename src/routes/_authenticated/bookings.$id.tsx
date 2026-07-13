@@ -32,6 +32,7 @@ function BookingDetail() {
   const advance = useServerFn(advanceStage);
   const quote = useServerFn(recordQuote);
   const deposit = useServerFn(recordDeposit);
+  const cancelFn = useServerFn(cancelBooking);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
