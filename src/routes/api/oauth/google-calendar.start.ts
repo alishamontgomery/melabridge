@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
 
 function html(status: number, title: string, msg: string) {
   return new Response(
@@ -11,24 +10,6 @@ function html(status: number, title: string, msg: string) {
     <p><a href="/settings/calendar">← Back to calendar settings</a></p></body></html>`,
     { status, headers: { "Content-Type": "text/html; charset=utf-8" } },
   );
-}
-
-async function getUserFromRequest(request: Request) {
-  const authHeader = request.headers.get("authorization") ?? request.headers.get("Authorization");
-  const cookie = request.headers.get("cookie") ?? "";
-  const tokenFromCookie = /sb-[^=]+-auth-token=([^;]+)/.exec(cookie)?.[1];
-  const bearer = authHeader?.replace(/^Bearer\s+/i, "") ?? null;
-  const token = bearer ?? (tokenFromCookie ? decodeURIComponent(tokenFromCookie) : null);
-  // We don't have session available in a top-level redirect; rely on the Referer
-  // check being from an authenticated page. Since this route is triggered from
-  // the settings page (protected), and the callback stores against the passed
-  // state we sign, we defer user identity to the state token.
-  return { token };
-}
-
-function signState(userId: string, secret: string, nonce: string): string {
-  // Simple HMAC-SHA256 over `${userId}.${nonce}` using Web Crypto
-  return `${userId}.${nonce}`;
 }
 
 export const Route = createFileRoute("/api/oauth/google-calendar/start")({
