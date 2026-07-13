@@ -301,6 +301,11 @@ export function getPlan(id: PlanId): Plan {
   return billingConfig.plans[id];
 }
 
+export function findPlanByPriceId(priceId: string | null | undefined): Plan | null {
+  if (!priceId) return null;
+  return Object.values(billingConfig.plans).find((p) => p.priceId === priceId) ?? null;
+}
+
 export function formatPrice(plan: Plan): { amount: string; period: string } {
   if (plan.price === null) return { amount: "Custom", period: "" };
   if (plan.price === 0) return { amount: "$0", period: `/${plan.interval}` };
