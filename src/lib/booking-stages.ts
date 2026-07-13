@@ -1,6 +1,6 @@
 import {
   Bookmark, MessageCircle, CalendarClock, FileText, Eye,
-  ScrollText, PenSquare, Wallet, CheckCircle2, PartyPopper, Star, Trophy,
+  ScrollText, PenSquare, Wallet, CheckCircle2, PartyPopper, Star, Trophy, PlayCircle, XCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,9 +14,11 @@ export type BookingStage =
   | "contract_signed"
   | "deposit_paid"
   | "booked"
+  | "in_progress"
   | "completed"
   | "review_requested"
-  | "reviewed";
+  | "reviewed"
+  | "cancelled";
 
 export type ConfirmationRule =
   | "contract_only"
@@ -36,17 +38,19 @@ export type StageMeta = {
 
 export const STAGES: readonly StageMeta[] = [
   { key: "saved",                  label: "Saved",                 short: "Saved",       icon: Bookmark,       group: "discovery",  tone: "bg-muted text-muted-foreground" },
-  { key: "contacted",              label: "Contacted",             short: "Contacted",   icon: MessageCircle,  group: "discovery",  tone: "bg-muted text-foreground" },
+  { key: "contacted",              label: "Inquiry",               short: "Inquiry",     icon: MessageCircle,  group: "discovery",  tone: "bg-muted text-foreground" },
   { key: "consultation_scheduled", label: "Consultation Scheduled",short: "Consult",     icon: CalendarClock,  group: "negotiation",tone: "bg-primary/10 text-primary" },
   { key: "quote_sent",             label: "Quote Sent",            short: "Quote Sent",  icon: FileText,       group: "negotiation",tone: "bg-primary/10 text-primary" },
-  { key: "quote_under_review",     label: "Quote Under Review",    short: "Reviewing",   icon: Eye,            group: "negotiation",tone: "bg-primary/15 text-primary" },
+  { key: "quote_under_review",     label: "Quote Accepted",        short: "Accepted",    icon: Eye,            group: "negotiation",tone: "bg-primary/15 text-primary" },
   { key: "contract_sent",          label: "Contract Sent",         short: "Contract",    icon: ScrollText,     group: "contract",   tone: "bg-gold/15 text-gold-foreground" },
-  { key: "contract_signed",        label: "Contract Signed",       short: "Signed",      icon: PenSquare,      group: "contract",   tone: "bg-gold/25 text-gold-foreground" },
-  { key: "deposit_paid",           label: "Deposit Paid",          short: "Deposit",     icon: Wallet,         group: "payment",    tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
+  { key: "contract_signed",        label: "Awaiting Deposit",      short: "Awaiting Dep.", icon: PenSquare,    group: "contract",   tone: "bg-gold/25 text-gold-foreground" },
+  { key: "deposit_paid",           label: "Awaiting Signature",    short: "Awaiting Sig.", icon: Wallet,       group: "payment",    tone: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" },
   { key: "booked",                 label: "Booked",                short: "Booked",      icon: CheckCircle2,   group: "payment",    tone: "bg-emerald-500 text-white" },
+  { key: "in_progress",            label: "In Progress",           short: "In Progress", icon: PlayCircle,     group: "delivered",  tone: "bg-primary/20 text-primary" },
   { key: "completed",              label: "Completed",             short: "Completed",   icon: PartyPopper,    group: "delivered",  tone: "bg-primary text-primary-foreground" },
   { key: "review_requested",       label: "Review Requested",      short: "Review Req.", icon: Star,           group: "delivered",  tone: "bg-primary/10 text-primary" },
   { key: "reviewed",               label: "Reviewed",              short: "Reviewed",    icon: Trophy,         group: "delivered",  tone: "bg-primary/20 text-primary" },
+  { key: "cancelled",              label: "Cancelled",             short: "Cancelled",   icon: XCircle,        group: "delivered",  tone: "bg-destructive/15 text-destructive" },
 ] as const;
 
 export const STAGE_MAP: Record<BookingStage, StageMeta> =
