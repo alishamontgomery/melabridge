@@ -158,6 +158,22 @@ function BookingDetail() {
           <p className="mt-3 text-xs text-muted-foreground">
             "Booked" cannot be set manually — it's applied automatically the moment the vendor's confirmation rule is satisfied.
           </p>
+          {b.current_stage !== "cancelled" && b.current_stage !== "completed" && (
+            <div className="mt-4 border-t pt-4">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Cancel this booking? This releases any calendar hold and notifies both parties.")) {
+                    cancelM.mutate();
+                  }
+                }}
+                disabled={cancelM.isPending}
+              >
+                {cancelM.isPending ? "Cancelling…" : "Cancel booking"}
+              </Button>
+            </div>
+          )}
         </Card>
 
         <Card className="p-5">
