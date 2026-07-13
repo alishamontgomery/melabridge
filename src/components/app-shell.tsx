@@ -371,3 +371,21 @@ export function PageHeader({
 export function RipplePanel() {
   return null;
 }
+
+function NotificationsBell() {
+  const { unreadCount } = useNotifications(20);
+  return (
+    <Link
+      to="/notifications"
+      className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
+      aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+    >
+      <Bell className="h-4 w-4" />
+      {unreadCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
+    </Link>
+  );
+}
