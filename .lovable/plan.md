@@ -1,81 +1,108 @@
+# MelaBridge Calendar v1 — Native Scheduling
 
-# Final Launch QA — Plan
+Replace the current OAuth-based calendar sync flow with a self-contained scheduling system. External providers become "Coming Soon" placeholders; no OAuth, no credentials, no user setup.
 
-Scope: launch-blockers only. Not a Lighthouse tune-up or exhaustive pixel audit. Delivered in 4 batches so each is reviewable and reversible.
+## 1. Remove external sync from the MVP
 
-## Batch A — Seed test accounts + data (dev/preview only)
+Delete these files:
+- `src/routes/api/oauth/google-calendar.start.ts`
+- `src/routes/api/oauth/google-calendar.callback.ts`
+- `src/routes/api/oauth/outlook-calendar.start.ts`
+- `src/routes/api/oauth/outlook-calendar.callback.ts`
+- `src/routes/api/public/calendar.$token.ts` (ICS feed)
 
-Create a **guarded** migration + server function that seeds five accounts and realistic data. Guarded means: refuses to run unless `LOVABLE_ENV != 'production'` AND caller is admin. No test data ever lands in prod.
+Keep the `calendar_connections` and `calendar_sync_map` tables in the DB (harmless, reserved for future two-way sync). Do not reference them in the UI.
 
-**Accounts** (password `MelaTest!2026` for all):
-- admin@test.melabridge.com — Admin role
-- planner@test.melabridge.com — Planner
-- vendor@test.melabridge.com — Vendor (approved vendor_profile)
-- attendee@test.melabridge.com — Attendee (event guest w/ ticket)
-- guest@test.melabridge.com — Guest (RSVP only)
+Rewrite `src/routes/_authenticated/settings.calendar.tsx` so it only shows a disabled "External Calendar Sync" card with three greyed rows:
+- Google Calendar — Coming Soon
+- Microsoft Outlook — Coming Soon
+- Apple Calendar — Coming Soon
 
-**Per-account seed data**:
-- Planner: 3 events (draft/upcoming/completed), 8 guests w/ RSVPs, 5 tasks, 6 budget items, 4 timeline items, 3 files in BridgeVault, 1 conversation w/ vendor, 2 notifications, 1 active subscription (sandbox).
-- Vendor: complete vendor_profile, 2 services w/ pricing, 3 inquiries, 1 booking, 2 reviews.
-- Attendee: 1 purchased ticket (sandbox), RSVP=yes, notifications.
-- Guest: 1 pending RSVP invite.
-- Admin: view of all above (no owned data).
+No copy URL, no rotate token, no connect buttons, no instructions.
 
-Exposed as `/admin` button "Seed test data" (admin-only, dev-only). Also a "Wipe test data" counterpart that deletes rows tagged `is_test_seed = true` (new nullable column, defaulted false — production data unaffected).
+Strip ICS/OAuth server functions from `src/lib/calendar.functions.ts` (getIcsUrl, listCalendarConnections, disconnectCalendar).
 
-## Batch B — Playwright QA pass by role
+If onboarding prompts a calendar connection anywhere, remove that step.
 
-Log in as each of the 5 accounts, crawl main routes, capture:
-- Console errors + failed network requests
-- 404s / broken links / dead buttons
-- Missing empty/loading/error states on core flows
-- Mobile viewport (390×844) layout breaks on top 15 routes
-- RLS/permission leaks (e.g. attendee hitting `/admin`)
+## 2. New database schema (native calendar)
 
-Output: `/tmp/qa/report.md` with route × role × issue matrix + screenshots. Shared with you before Batch C.
+One migration adds:
 
-## Batch C — Fix blockers
+**`calendar_availability`** — vendor weekly business hours
+- `user_id`, `weekday` (0–6), `start_time`, `end_time`, `is_active`
+- Multiple rows per weekday allowed (multiple windows).
 
-From the QA report, fix in priority order:
-1. Any auth/signup/reset/verify flow breakage
-2. Any Stripe checkout/webhook/portal breakage (sandbox + live)
-3. Broken links & dead primary CTAs
-4. Missing 404 & 500 pages (add `src/routes/__root.tsx` notFound + errorComponent polish)
-5. Remaining mock data on user-facing pages
-6. Role gate leaks
-7. Mobile layout breaks on top-level routes
-8. Console errors visible in normal use
+**`calendar_blocked_dates`** — days off / vacation
+- `user_id`, `start_date`, `end_date`, `reason` (`day_off` | `vacation` | `travel`), `notes`
 
-Not in scope this pass (call out in report, not fix): deep a11y (WCAG AA audit), Lighthouse ≥90 tuning, exhaustive image replacement, full timezone matrix testing, Android device testing (iOS Safari + Chrome desktop + 390px mobile viewport only).
+**`calendar_settings`** — per-vendor rules
+- `user_id` PK, `buffer_before_minutes`, `buffer_after_minutes`, `max_events_per_day`, `block_travel_days`, `vacation_start`, `vacation_end`
 
-## Batch D — Launch verification
+**`calendar_events`** — the actual bookings
+- `id`, `vendor_id`, `planner_id` (nullable), `event_id` (nullable link to `events`), `client_name`, `event_name`, `event_type`, `venue_name`, `address`, `starts_at`, `ends_at`, `setup_minutes`, `breakdown_minutes`, `status` (`inquiry` | `pending` | `confirmed` | `completed` | `cancelled` | `declined`), `internal_notes`, `payment_status`, `contract_status`, `checklist` jsonb, `attachments` jsonb, `team_assignments` jsonb, `timeline` jsonb, `source` (`native` | `external`, defaults `native` — reserved for future sync), `external_provider`, `external_id`
 
-- Verify `hello@melabridge.com` is the sender on all 6 auth email templates + any transactional templates; check email domain status.
-- Verify Stripe go-live status; if live keys present, test one live checkout end-to-end (won't charge — void the payment intent) and confirm webhook writes to `subscriptions` with `environment='live'`.
-- Confirm Terms/Privacy/Contact/Help/FAQ routes are populated (no lorem/todo).
-- Grep codebase for `TODO`, `FIXME`, `mock`, `dummy`, `lorem`, `test@example`, `Placeholder`, `console.log` in user paths.
-- Confirm seed data wipe works; seed button hidden in production build.
-- Produce final `LAUNCH_REPORT.md` at repo root: what was fixed, what's known-open, sign-off checklist.
+**`calendar_booking_requests`** — planner-initiated requests / alternate proposals
+- `id`, `booking_id` (nullable — created once approved), `vendor_id`, `planner_id`, `requested_start`, `requested_end`, `message`, `status` (`pending` | `approved` | `declined` | `alternate_proposed`), `alternate_start`, `alternate_end`, `alternate_message`
 
-## What I'll need from you between batches
+All tables: `GRANT` to `authenticated` + `service_role`, RLS enabled, policies scoped so vendors manage their own rows and planners see rows where they're the `planner_id`.
 
-- After Batch A: approve the migration (I'll surface it for review).
-- After Batch B: skim the QA report — you may want to reprioritize or expand scope.
-- After Batch D: read the launch report before hitting Publish.
+## 3. Server functions (`src/lib/calendar.functions.ts`)
+
+Replace the file with:
+- `getCalendarSettings`, `updateCalendarSettings`
+- `listAvailability`, `upsertAvailability`, `deleteAvailability`
+- `listBlockedDates`, `addBlockedDate`, `deleteBlockedDate`
+- `listEvents({ from, to, status?, type?, q? })`
+- `getEvent(id)`, `createEvent`, `updateEvent`, `duplicateEvent`, `cancelEvent`, `completeEvent`
+- `requestBooking` (planner)
+- `respondToBookingRequest({ id, action: 'approve' | 'decline' | 'propose_alternate', ... })`
+- `getDashboardSummary` — today's events, upcoming, pending approvals, monthly count, revenue sum, availability status
+- `checkConflicts({ start, end, setup_minutes, breakdown_minutes, excludeId? })` — used before approval to prevent overlap; returns conflict list with reason (event/setup/breakdown/travel/blocked/vacation/max-per-day)
+
+## 4. UI
+
+New routes (all under `_authenticated`):
+- `/calendar` — main calendar with Month/Week/Day/Agenda tabs, status color legend, filters (type, status), search
+- `/calendar/settings` — availability windows, blocked dates, vacation mode, buffers, max/day, travel-day toggle
+- `/calendar/requests` — pending booking requests with Approve / Decline / Propose Alternate
+- `/calendar/events/$id` — full event detail (all fields, timeline, checklist, attachments, team, payment/contract status)
+- `/calendar/dashboard` — today, upcoming, pending, monthly count, revenue, availability summary
+
+Update `/settings` to link to `/calendar/settings` (replacing the old calendar sync link).
+Update `/settings/calendar` to the "Coming Soon" placeholder described above.
+Add "Calendar" entry to `AppShell` nav.
+
+Color tokens for statuses use existing semantic tokens (add to `src/styles.css` if missing): inquiry=muted, pending=amber, confirmed=primary, completed=emerald, cancelled=rose.
+
+## 5. Conflict / protection logic
+
+`checkConflicts` runs on:
+- Vendor approving a request
+- Vendor creating/editing an event
+- Planner requesting a date (soft warning only)
+
+Rules:
+- Overlap with existing confirmed event's `[starts_at - setup, ends_at + breakdown]` window → hard block on approve.
+- Overlap with buffer_before/after settings → warning.
+- Overlap with blocked date / vacation → hard block.
+- `max_events_per_day` exceeded → hard block.
+- `block_travel_days` on and different city than adjacent booking → warning.
+
+## 6. Planner vs vendor experience
+
+Role gate via existing `has_role`:
+- Vendor sees: settings, requests inbox, full event CRUD, complete/duplicate, dashboard.
+- Planner sees: request form, their own request statuses, notifications when approved, propose-alternate reply.
+
+Notifications reuse the existing `notifications` table (category `calendar`).
+
+## 7. Future-sync friendliness
+
+`calendar_events.source`, `external_provider`, `external_id` columns exist from day one so a later job can push/pull without a schema migration. `calendar_connections` / `calendar_sync_map` stay untouched.
 
 ## Technical notes
 
-- Seed guard uses a Postgres function `public.assert_non_production()` that raises unless the env allows it; server function double-checks admin role via `has_role(auth.uid(), 'admin')`.
-- New column `is_test_seed boolean default false` added to events, guests, tasks, budget_items, timeline items, files, conversations, notifications, vendor_profiles, subscriptions, tickets — makes wipe surgical.
-- Playwright runs headless in the sandbox against `http://localhost:8080`; screenshots to `/tmp/qa/screens/`.
-- Stripe live verification uses `stripe.paymentIntents.cancel` immediately after auth, so no real charge lands.
-- No changes to `client.ts`, `types.ts`, `.env`, `supabase/config.toml`.
-
-## Estimated size
-
-- Batch A: 1 migration + 2 server functions + 1 admin UI button (~400 lines).
-- Batch B: 1 Playwright script + report (no product code).
-- Batch C: variable — will report back a fix count before starting each cluster.
-- Batch D: verification only, minimal code.
-
-Ready to start Batch A on your go-ahead.
+- All new server fns use `.middleware([requireSupabaseAuth])`.
+- Loaders in `_authenticated/*` may call them; public routes must not.
+- Types regenerate after the migration; UI + fns land after that step.
+- No new secrets, no OAuth, no ICS.

@@ -59,6 +59,7 @@ const PLANNER_NAV: NavGroup[] = [
   {
     label: "Planning",
     items: [
+      { to: "/calendar", label: "Calendar", icon: Calendar },
       { to: "/guests", label: "Guests", icon: Users },
       { to: "/vendors", label: "Vendors", icon: Store },
       { to: "/budget", label: "Budget", icon: Wallet },
@@ -96,9 +97,9 @@ const VENDOR_NAV: NavGroup[] = [
   {
     label: "Business",
     items: [
+      { to: "/calendar", label: "Calendar", icon: Calendar },
+      { to: "/calendar/requests", label: "Requests", icon: Inbox },
       { to: "/vendor-portal", label: "Leads", icon: Inbox },
-      { to: "/vendor-portal", label: "Bookings", icon: Calendar },
-      { to: "/vendor-portal", label: "Calendar", icon: Calendar },
       { to: "/bridgepay", label: "Payments", icon: Wallet },
       { to: "/vendor-portal", label: "Contracts", icon: ScrollText },
     ],
