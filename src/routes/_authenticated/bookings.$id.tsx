@@ -46,6 +46,16 @@ function BookingDetail() {
     qc.invalidateQueries({ queryKey: ["bookings"] });
   };
 
+  useEffect(() => {
+    const ch = supabase
+      .channel(`booking-${id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_bookings", filter: `id=eq.${id}` }, invalidate)
+      .on("postgres_changes", { event: "*", schema: "public", table: "vendor_booking_events", filter: `booking_id=eq.${id}` }, invalidate)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
   const advanceM = useMutation({
     mutationFn: (stage: BookingStage) => advance({ data: { bookingId: id, stage } }),
     onSuccess: () => { toast.success("Stage updated"); invalidate(); },
