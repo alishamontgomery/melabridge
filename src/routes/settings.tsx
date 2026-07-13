@@ -149,14 +149,19 @@ function SettingsPage() {
           </div>
         </SettingsCard>
 
-        <SettingsCard icon={Globe2} title="Integrations">
+        <SettingsCard icon={Globe2} title="Calendar">
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Sync your MelaBridge events with Google Calendar, Microsoft Outlook, or Apple Calendar.
+              Manage availability, bookings, and rules in MelaBridge Calendar. External sync (Google, Outlook, Apple) is coming soon.
             </p>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/settings/calendar">Manage calendar sync</Link>
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/calendar/settings">Availability & rules</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/settings/calendar">External sync</Link>
+              </Button>
+            </div>
           </div>
         </SettingsCard>
       </div>

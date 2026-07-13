@@ -71,11 +71,16 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDraftsRouteImport } from './routes/_authenticated/drafts'
+import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticated/calendar'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
 import { Route as AuthenticatedSettingsCalendarRouteImport } from './routes/_authenticated/settings.calendar'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
+import { Route as AuthenticatedCalendarSettingsRouteImport } from './routes/_authenticated/calendar.settings'
+import { Route as AuthenticatedCalendarRequestsRouteImport } from './routes/_authenticated/calendar.requests'
+import { Route as AuthenticatedCalendarDashboardRouteImport } from './routes/_authenticated/calendar.dashboard'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as AuthenticatedCalendarEventsIdRouteImport } from './routes/_authenticated/calendar.events.$id'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
   id: '/workspace',
@@ -386,6 +391,11 @@ const AuthenticatedDraftsRoute = AuthenticatedDraftsRouteImport.update({
   path: '/drafts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCalendarRoute = AuthenticatedCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEventsIndexRoute =
   AuthenticatedEventsIndexRouteImport.update({
     id: '/events/',
@@ -409,11 +419,35 @@ const AuthenticatedEventsEventIdRoute =
     path: '/events/$eventId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCalendarSettingsRoute =
+  AuthenticatedCalendarSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedCalendarRoute,
+  } as any)
+const AuthenticatedCalendarRequestsRoute =
+  AuthenticatedCalendarRequestsRouteImport.update({
+    id: '/requests',
+    path: '/requests',
+    getParentRoute: () => AuthenticatedCalendarRoute,
+  } as any)
+const AuthenticatedCalendarDashboardRoute =
+  AuthenticatedCalendarDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedCalendarRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedCalendarEventsIdRoute =
+  AuthenticatedCalendarEventsIdRouteImport.update({
+    id: '/events/$id',
+    path: '/events/$id',
+    getParentRoute: () => AuthenticatedCalendarRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -473,15 +507,20 @@ export interface FileRoutesByFullPath {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/calendar': typeof AuthenticatedCalendarRouteWithChildren
   '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
+  '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
+  '/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
+  '/calendar/events/$id': typeof AuthenticatedCalendarEventsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -541,15 +580,20 @@ export interface FileRoutesByTo {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/calendar': typeof AuthenticatedCalendarRouteWithChildren
   '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
+  '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
+  '/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/events': typeof AuthenticatedEventsIndexRoute
+  '/calendar/events/$id': typeof AuthenticatedCalendarEventsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -611,15 +655,20 @@ export interface FileRoutesById {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/_authenticated/calendar': typeof AuthenticatedCalendarRouteWithChildren
   '/_authenticated/drafts': typeof AuthenticatedDraftsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/_authenticated/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
+  '/_authenticated/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
+  '/_authenticated/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
+  '/_authenticated/calendar/events/$id': typeof AuthenticatedCalendarEventsIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -681,15 +730,20 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/calendar'
     | '/drafts'
     | '/onboarding'
     | '/vendor'
     | '/auth/callback'
     | '/checkout/return'
+    | '/calendar/dashboard'
+    | '/calendar/requests'
+    | '/calendar/settings'
     | '/events/$eventId'
     | '/events/new'
     | '/settings/calendar'
     | '/events/'
+    | '/calendar/events/$id'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -749,15 +803,20 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/calendar'
     | '/drafts'
     | '/onboarding'
     | '/vendor'
     | '/auth/callback'
     | '/checkout/return'
+    | '/calendar/dashboard'
+    | '/calendar/requests'
+    | '/calendar/settings'
     | '/events/$eventId'
     | '/events/new'
     | '/settings/calendar'
     | '/events'
+    | '/calendar/events/$id'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -818,15 +877,20 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/_authenticated/calendar'
     | '/_authenticated/drafts'
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
     | '/auth/callback'
     | '/checkout/return'
+    | '/_authenticated/calendar/dashboard'
+    | '/_authenticated/calendar/requests'
+    | '/_authenticated/calendar/settings'
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/new'
     | '/_authenticated/settings/calendar'
     | '/_authenticated/events/'
+    | '/_authenticated/calendar/events/$id'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -1328,6 +1392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDraftsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/calendar': {
+      id: '/_authenticated/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AuthenticatedCalendarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/events/': {
       id: '/_authenticated/events/'
       path: '/events'
@@ -1356,6 +1427,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventsEventIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/calendar/settings': {
+      id: '/_authenticated/calendar/settings'
+      path: '/settings'
+      fullPath: '/calendar/settings'
+      preLoaderRoute: typeof AuthenticatedCalendarSettingsRouteImport
+      parentRoute: typeof AuthenticatedCalendarRoute
+    }
+    '/_authenticated/calendar/requests': {
+      id: '/_authenticated/calendar/requests'
+      path: '/requests'
+      fullPath: '/calendar/requests'
+      preLoaderRoute: typeof AuthenticatedCalendarRequestsRouteImport
+      parentRoute: typeof AuthenticatedCalendarRoute
+    }
+    '/_authenticated/calendar/dashboard': {
+      id: '/_authenticated/calendar/dashboard'
+      path: '/dashboard'
+      fullPath: '/calendar/dashboard'
+      preLoaderRoute: typeof AuthenticatedCalendarDashboardRouteImport
+      parentRoute: typeof AuthenticatedCalendarRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -1363,10 +1455,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/calendar/events/$id': {
+      id: '/_authenticated/calendar/events/$id'
+      path: '/events/$id'
+      fullPath: '/calendar/events/$id'
+      preLoaderRoute: typeof AuthenticatedCalendarEventsIdRouteImport
+      parentRoute: typeof AuthenticatedCalendarRoute
+    }
   }
 }
 
+interface AuthenticatedCalendarRouteChildren {
+  AuthenticatedCalendarDashboardRoute: typeof AuthenticatedCalendarDashboardRoute
+  AuthenticatedCalendarRequestsRoute: typeof AuthenticatedCalendarRequestsRoute
+  AuthenticatedCalendarSettingsRoute: typeof AuthenticatedCalendarSettingsRoute
+  AuthenticatedCalendarEventsIdRoute: typeof AuthenticatedCalendarEventsIdRoute
+}
+
+const AuthenticatedCalendarRouteChildren: AuthenticatedCalendarRouteChildren = {
+  AuthenticatedCalendarDashboardRoute: AuthenticatedCalendarDashboardRoute,
+  AuthenticatedCalendarRequestsRoute: AuthenticatedCalendarRequestsRoute,
+  AuthenticatedCalendarSettingsRoute: AuthenticatedCalendarSettingsRoute,
+  AuthenticatedCalendarEventsIdRoute: AuthenticatedCalendarEventsIdRoute,
+}
+
+const AuthenticatedCalendarRouteWithChildren =
+  AuthenticatedCalendarRoute._addFileChildren(
+    AuthenticatedCalendarRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCalendarRoute: typeof AuthenticatedCalendarRouteWithChildren
   AuthenticatedDraftsRoute: typeof AuthenticatedDraftsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedVendorRoute: typeof AuthenticatedVendorRoute
@@ -1377,6 +1496,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCalendarRoute: AuthenticatedCalendarRouteWithChildren,
   AuthenticatedDraftsRoute: AuthenticatedDraftsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedVendorRoute: AuthenticatedVendorRoute,
