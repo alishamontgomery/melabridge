@@ -448,7 +448,7 @@ function VendorFlow({ onBack }: { onBack: () => void }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="biz-name">Business name</Label>
-              <Input id="biz-name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Bloomhaus Florals" autoFocus />
+              <Input id="biz-name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Your business name" autoFocus />
             </div>
             <div className="space-y-1.5">
               <Label>Business category</Label>
