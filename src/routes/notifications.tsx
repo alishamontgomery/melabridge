@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { Bell, Settings as SettingsIcon, CheckCheck, Trash2, MessageSquare, CreditCard, Sparkles, Users, ShieldCheck, Circle } from "lucide-react";
+import { Bell, Settings as SettingsIcon, CheckCheck, Trash2, MessageSquare, CreditCard, Sparkles, Users, ShieldCheck, Circle, Search, Briefcase } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useNotifications, type NotificationRow } from "@/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
@@ -24,13 +27,44 @@ const iconFor = (category: string) => {
     case "payments": return CreditCard;
     case "ai": return Sparkles;
     case "team": return Users;
+    case "booking": return Briefcase;
     case "system": return ShieldCheck;
     default: return Bell;
   }
 };
 
+type Filter = "all" | "unread" | "messages" | "booking" | "payments" | "team" | "system" | "ai";
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "unread", label: "Unread" },
+  { key: "booking", label: "Bookings" },
+  { key: "messages", label: "Messages" },
+  { key: "payments", label: "Payments" },
+  { key: "team", label: "Team" },
+  { key: "ai", label: "AI" },
+  { key: "system", label: "System" },
+];
+
 function NotificationsPage() {
-  const { items, unreadCount, isLoading, markRead, markAllRead, remove } = useNotifications();
+  const { items, unreadCount, isLoading, markRead, markAllRead, remove } = useNotifications(100);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [q, setQ] = useState("");
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return items.filter((n) => {
+      if (filter === "unread" && n.read_at) return false;
+      if (filter !== "all" && filter !== "unread" && n.category !== filter) return false;
+      if (!term) return true;
+      return `${n.title} ${n.body ?? ""}`.toLowerCase().includes(term);
+    });
+  }, [items, filter, q]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: items.length, unread: unreadCount };
+    for (const n of items) c[n.category] = (c[n.category] ?? 0) + 1;
+    return c;
+  }, [items, unreadCount]);
 
   return (
     <AppShell active="/notifications">
@@ -54,24 +88,68 @@ function NotificationsPage() {
           }
         />
 
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search notifications…"
+              className="pl-9"
+            />
+          </div>
+          <div className="-mx-1 flex flex-wrap gap-1.5 overflow-x-auto px-1">
+            {FILTERS.map((f) => {
+              const active = filter === f.key;
+              const n = counts[f.key];
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border/60 bg-background text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {f.label}
+                  {typeof n === "number" && n > 0 && (
+                    <span className={cn("rounded-full px-1.5 text-[10px]", active ? "bg-primary-foreground/20" : "bg-muted")}>
+                      {n}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {isLoading ? (
           <Card className="p-10 text-center text-sm text-muted-foreground">Loading…</Card>
-        ) : items.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <Card className="border-border/60 p-10 text-center shadow-soft">
             <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
               <Bell className="h-5 w-5" />
             </div>
-            <h3 className="font-display text-lg font-semibold">You're all caught up</h3>
+            <h3 className="font-display text-lg font-semibold">
+              {items.length === 0 ? "You're all caught up" : "No matching notifications"}
+            </h3>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              New notifications about your events, guests, and vendors will appear here.
+              {items.length === 0
+                ? "New notifications about your events, guests, and vendors will appear here."
+                : "Try a different filter or clear the search."}
             </p>
-            <Button variant="outline" className="mt-4" asChild>
-              <Link to="/settings">Notification preferences</Link>
-            </Button>
+            {items.length === 0 && (
+              <Button variant="outline" className="mt-4" asChild>
+                <Link to="/settings">Notification preferences</Link>
+              </Button>
+            )}
           </Card>
         ) : (
           <div className="space-y-2">
-            {items.map((n) => (
+            {filtered.map((n) => (
               <NotificationItem
                 key={n.id}
                 n={n}
@@ -111,7 +189,7 @@ function NotificationItem({ n, onRead, onDelete }: { n: NotificationRow; onRead:
         type="button"
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
         className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-        aria-label="Delete notification"
+        aria-label="Archive notification"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
