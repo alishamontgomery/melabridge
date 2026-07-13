@@ -102,6 +102,92 @@ export type Database = {
           },
         ]
       }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          joined_at: string
+          participant_role: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          joined_at?: string
+          participant_role?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          joined_at?: string
+          participant_role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_archived: boolean
+          is_favorite: boolean
+          is_muted: boolean
+          is_pinned: boolean
+          labels: string[]
+          last_message_at: string
+          last_message_preview: string | null
+          owner_id: string
+          title: string | null
+          type: string
+          unread_count: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_archived?: boolean
+          is_favorite?: boolean
+          is_muted?: boolean
+          is_pinned?: boolean
+          labels?: string[]
+          last_message_at?: string
+          last_message_preview?: string | null
+          owner_id: string
+          title?: string | null
+          type?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_archived?: boolean
+          is_favorite?: boolean
+          is_muted?: boolean
+          is_pinned?: boolean
+          labels?: string[]
+          last_message_at?: string
+          last_message_preview?: string | null
+          owner_id?: string
+          title?: string | null
+          type?: string
+          unread_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_members: {
         Row: {
           created_at: string
@@ -238,31 +324,179 @@ export type Database = {
           },
         ]
       }
+      message_template_versions: {
+        Row: {
+          body: string
+          created_at: string
+          edited_by: string | null
+          id: string
+          template_id: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          edited_by?: string | null
+          id?: string
+          template_id: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          edited_by?: string | null
+          id?: string
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "message_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_favorite: boolean
+          last_used_at: string | null
+          owner_id: string | null
+          title: string
+          tone: string | null
+          updated_at: string
+          usage_count: number
+          variables: string[]
+        }
+        Insert: {
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_favorite?: boolean
+          last_used_at?: string | null
+          owner_id?: string | null
+          title: string
+          tone?: string | null
+          updated_at?: string
+          usage_count?: number
+          variables?: string[]
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_favorite?: boolean
+          last_used_at?: string | null
+          owner_id?: string | null
+          title?: string
+          tone?: string | null
+          updated_at?: string
+          usage_count?: number
+          variables?: string[]
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          attachments: Json
+          body: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          sender_id: string
+          status: string
+        }
+        Insert: {
+          attachments?: Json
+          body?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id: string
+          status?: string
+        }
+        Update: {
+          attachments?: Json
+          body?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
+          calendar_enabled: boolean
+          category: string
           channel: string
           created_at: string
           email_enabled: boolean
+          event_id: string | null
+          frequency: string
           id: string
+          in_app_enabled: boolean
           push_enabled: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          sms_enabled: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          calendar_enabled?: boolean
+          category?: string
           channel: string
           created_at?: string
           email_enabled?: boolean
+          event_id?: string | null
+          frequency?: string
           id?: string
+          in_app_enabled?: boolean
           push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_enabled?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          calendar_enabled?: boolean
+          category?: string
           channel?: string
           created_at?: string
           email_enabled?: boolean
+          event_id?: string | null
+          frequency?: string
           id?: string
+          in_app_enabled?: boolean
           push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_enabled?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -532,6 +766,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_conversation_participant: {
+        Args: { _conv: string; _user: string }
         Returns: boolean
       }
       is_event_member: {

@@ -1,84 +1,61 @@
-# MelaBridge UX Redesign + RBAC + Contact Info
+## Messaging Center v2 — Phased Build Plan
 
-This is a large change. I'll break it into four coordinated workstreams, all shipped together.
+This is a very large scope (inbox management, rich compose, template library of 75+ entries, notifications matrix, BridgeMind AI, role permissions, mobile gestures, accessibility). Shipping it all in one turn would produce a shallow result across every area. I'll build it in **4 phases**, each independently usable and verifiable, on the shared `/messaging` route so every role (Planner, Vendor, Guest, Admin, Internal, and future vendor sub-roles) gets the same interface with role-gated capabilities.
 
-## 1. Role model & RBAC
+### Phase 1 — Data model + Inbox v2 (this turn)
 
-**Data**
-- New enum `app_role`: `planner`, `vendor`, `guest`, `admin`.
-- New table `public.user_roles (user_id, role)` with proper GRANTs, RLS, and unique `(user_id, role)`.
-- `has_role(_user_id, _role)` security-definer function.
-- Auto-assign role on signup based on onboarding `account_type` (extend `handle_new_user` trigger or add a post-onboarding writer).
-- Tighten existing RLS: events (planner owns), vendor_profiles (vendor owns), guest access via `event_members`.
+**Database (single migration):**
+- `conversations` — id, owner_id, title, type (internal/vendor/guest/payment/system), is_pinned, is_muted, is_favorite, is_archived, archived_at, deleted_at (30-day trash), labels text[], last_message_at, unread_count
+- `conversation_participants` — conversation_id, user_id, role, joined_at
+- `messages` — id, conversation_id, sender_id, body, attachments jsonb, status (sent/delivered/read), created_at, read_at
+- `message_templates` — id, owner_id (nullable = global), category, title, body, variables text[], is_favorite, usage_count, last_used_at, is_archived
+- Extend `notification_preferences` with: category (messages/ai/event/payments/team/system), channel (in_app/push/email/sms/calendar), frequency (instant/hourly/daily/weekly/off), quiet_hours_start, quiet_hours_end
+- Seed 75+ templates covering: Guest (RSVP, save-the-date, travel, thank-you, dietary, timeline), Vendor (deposit, contract, timeline, walkthrough, load-in), Internal (mentions, weekly sync, decisions needed), Payment (invoice, receipt, past-due), Emergency (weather, venue change), Marketing (announcements), etc.
+- RLS: participants can read; owner can archive/delete; templates readable by all authenticated, editable by owner
 
-**Client**
-- `useRole()` hook reading `user_roles`, cached in React Query.
-- `RoleGate` component + `requireRole` helper for route `beforeLoad`.
-- Role-aware redirect from `/dashboard` → planner/vendor/guest/admin home.
+**Inbox UI:**
+- Left rail: search with filters (Unread, Archived, Vendors, Guests, Internal, Payments, Scheduled, Attachments, Favorites), grouped by Today/Yesterday/This Week/Earlier
+- Rows: avatar, participant + role badge, last message preview, timestamp, unread count, status dot, pin/favorite/mute icons
+- Hover actions (desktop): Archive, Delete, Pin, Mark Unread, Mute, Favorite, Export
+- Swipe actions (mobile): Archive left, Delete right (via touch handlers)
+- Bulk selection mode with Archive / Delete / Mark Read-Unread / Assign Labels
+- Tabs: Inbox · Archive · Trash (30-day recovery, Restore action)
 
-## 2. Navigation redesign (AppShell rewrite)
+### Phase 2 — Compose v2 + Rich Editor + Attachments
 
-Replace the current flat sidebar with a **grouped, collapsible sidebar** (shadcn `Sidebar`, `collapsible="icon"`) driven by role. ~10–12 top-level items per role, organized into sections.
+- Recipient chip input with contact search (queries profiles + participants), To/CC/BCC (CC/BCC collapsed)
+- Reply / Reply All / Forward
+- Rich text (bold, italic, underline, bullets, numbered, links) via lightweight contenteditable — no heavy editor dep
+- Emoji picker (popover with curated set, no extra package)
+- Drag-and-drop + file input, storage bucket `message-attachments`, per-file progress + preview + validation (25MB/file, PDF/img/docx/xlsx/pptx/mp4/mp3/zip)
+- "Attach from MelaBridge" picker (contracts, invoices, timelines, seating, guest lists, galleries) — reads existing project resources
+- Schedule: calendar + time + timezone + recurrence (none/daily/weekly/monthly) + "suggested send time"
+- Save Draft / Preview / Schedule / Send Now / Cancel — all wired to backend
+- Side panel: BridgeMind AI with Draft / Rewrite / Shorten / Expand / Friendly / Professional / Luxury / Urgent / Translate (Lovable AI Gateway, google/gemini-3-flash-preview via `createServerFn`)
 
-**Planner sidebar**
-- Dashboard: Home, My Events
-- Planning: Guests, Vendors, Budget, Timeline, Tasks
-- Communication: Messages, Team
-- Resources: Files
-- Account: Profile, Subscription, Settings, Help
+### Phase 3 — Template Library v2 + Notifications v2
 
-**Vendor sidebar**
-- Dashboard: Home
-- Business: Leads, Bookings, Calendar, Payments, Contracts
-- Communication: Messages
-- Resources: Files
-- Account: Business Profile, Reviews, Settings, Help
+- Template library page: category tabs, search, filters, favorites, collections, recently used
+- Card shows usage count, last edited, variables, category badge; actions: Preview / Edit / Duplicate / Share / Archive / Delete / Favorite / Version History
+- BridgeMind Template Builder: prompt → generated template saved to library
+- Notifications settings redesigned into 6 category groups (Messages, AI, Event Activity, Payments, Team, System) × 5 channels (In-App, Push, Email, SMS, Calendar), each with frequency + description
+- Quiet Hours picker, Enable/Disable All, Reset to Defaults, Test Notification, notification history feed, per-event overrides, BridgeMind recommendations
 
-**Guest sidebar** (minimal top bar, no side nav)
-- Event Details, RSVP, Schedule, Travel, Registry, Photos, Messages
+### Phase 4 — AI polish, permissions, a11y, QA
 
-**Admin sidebar**
-- Dashboard: Overview
-- Platform: Users, Vendors, Events, Marketplace, Payments, Analytics, Reports
-- System: AdminOS, AI Command Center, Ecosystem Map
-- AI & Memory (single item → hub page)
-- Settings: Platform Settings, Subscription Management, Feature Flags
+- BridgeMind assists: suggested recipients/templates/attachments, conversation summarization, action-item extraction, unanswered detection, follow-up suggestions, payment reminder nudges — all as server functions
+- Role gating via `useRole()`: Guests see only planner threads; Vendors see planner + team-authorized threads; Internal gets @mentions; Admin sees moderation surface
+- Keyboard navigation (j/k, e archive, # delete, r reply), aria roles, focus rings, contrast pass
+- Loading skeletons, empty states, success toasts, error boundaries
+- Playwright pass across role sessions to verify no dead controls
 
-## 3. Feature consolidation
+### Technical notes
 
-- New `/ai-memory` hub page presenting BridgeLive, BridgeVault, Digital Twin, BridgeGraph, BridgeWorld, BridgeDNA, Bridge Intelligence as cards with descriptions. Admin-only in nav.
-- New `/marketplace-hub` (or reuse existing `/marketplace`) that groups Vendor Search, Contracts, Payments as cards for planners.
-- Existing branded routes stay reachable by URL but are removed from top-level nav.
+- All AI calls go through `createServerFn` + Lovable AI Gateway (`google/gemini-3-flash-preview`) — no client-side keys
+- Storage bucket `message-attachments` (private, RLS by participant)
+- Existing `scheduled_messages` and `notification_preferences` tables extended, not replaced
+- Route stays `/messaging` — same shell for all roles; permissions gate features, not the page
 
-## 4. Dashboards
+### Starting now with Phase 1
 
-- **Planner** `/dashboard`: Upcoming Events, Tasks Due Today, Budget Snapshot, Recent Messages, Vendor Activity, Timeline Progress, Quick Actions (Create Event, Invite Guests, Find Vendors). No empty enterprise modules.
-- **Vendor** `/vendor`: already exists — trim modules, keep leads/bookings/payments focus.
-- **Guest** `/guest-portal`: already exists — verify simplicity.
-- **Admin** `/admin`: already exists — reorganize to match new nav.
-
-## 5. Global contact info updates
-
-Replace across codebase:
-- Email → `hello@melabridge.com`
-- Phone → `+1 (256) 784-8427` (with `tel:+12567848427`)
-- Facebook links → `https://www.facebook.com/melabridge` with `target="_blank" rel="noopener noreferrer"`
-
-Files touched: `contact.tsx`, `site-footer.tsx`, `help.tsx`, `privacy.tsx`, `terms.tsx`, marketing pages, any notification/email templates. I'll grep to catch everything.
-
----
-
-## Technical notes
-
-- New migration for `app_role` enum, `user_roles` table, `has_role()`, RLS updates, and onboarding trigger.
-- `AppShell` becomes role-aware — accepts no `active` prop change, just filters `NAV_GROUPS` by role.
-- Guest portal keeps its own minimal shell (no sidebar).
-- Route guards: keep integration-managed `_authenticated/route.tsx`; add per-route `beforeLoad` role checks where relevant (admin routes, vendor routes).
-- Existing routes not in the new nav remain accessible via URL — no dead links, but hidden from sidebar.
-
-## Out of scope (call out)
-
-- Building brand-new full pages for admin sub-items (Users, Feature Flags, etc.) — I'll wire nav + stub pages where they don't exist, but deep functionality is a follow-up.
-- Sending actual transactional emails — I'll update templates/strings only.
-
-Approve and I'll ship it in one pass.
+I'll ship the migration + Inbox v2 in this turn. Reply "continue" after each phase to move to the next, or tell me to reorder/skip anything.
