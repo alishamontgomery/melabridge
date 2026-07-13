@@ -50,7 +50,7 @@ function WorkspacePage() {
       </section>
       <section className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="rounded-3xl border border-border bg-hero-radial p-6">
-          <div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><span className="text-xs uppercase tracking-widest">BridgeMind™ suggestion</span></div>
+          <div className="flex items-center gap-2 text-primary"><Sparkles className="h-4 w-4" /><span className="text-xs uppercase tracking-widest">MelaAssist™ suggestion</span></div>
           <p className="mt-3 text-lg">Your florist contract has been outstanding for 4 days. I've drafted a friendly nudge and a fallback vendor from your BridgeDNA™ favorites in case it falls through.</p>
         </div>
         <RippleFeed compact />

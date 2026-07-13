@@ -53,7 +53,7 @@ export function CommandPalette() {
   const actions: ActionItem[] = useMemo(
     () => [
       { id: "a-new-event", title: "Create a new event", hint: "Start the wizard", icon: Plus, run: () => go("/new-event") },
-      { id: "a-ask", title: "Ask BridgeMind™ anything", hint: "Open AI chat", icon: Sparkles, run: () => go("/decisions") },
+      { id: "a-ask", title: "Ask MelaAssist™ anything", hint: "Open AI chat", icon: Sparkles, run: () => go("/decisions") },
       { id: "a-upload", title: "Upload files to BridgeVault™", icon: Upload, run: () => go("/bridgevault") },
       { id: "a-invite", title: "Invite collaborators", icon: UserPlus, run: () => go("/collaboration") },
       { id: "a-guest", title: "Add a guest", icon: UserPlus, run: () => go("/guests") },
@@ -145,7 +145,7 @@ export function CommandTrigger() {
       aria-label="Open command palette"
     >
       <Sparkles className="h-3.5 w-3.5 text-primary" />
-      <span className="hidden sm:inline">Search or ask BridgeMind™…</span>
+      <span className="hidden sm:inline">Search or ask MelaAssist™…</span>
       <span className="sm:hidden">Search…</span>
       <kbd className="hidden rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium sm:inline">
         {shortcut}

@@ -57,7 +57,7 @@ function BudgetPage() {
         eyebrow="Budget Center"
         icon={Wallet}
         title={<>Money <span className="text-gradient">managed with intention</span>.</>}
-        description={`$${event.budget.toLocaleString()} total budget · $${totalActual.toLocaleString()} committed · BridgeMind is watching for overspend, missed deposits, and savings opportunities.`}
+        description={`$${event.budget.toLocaleString()} total budget · $${totalActual.toLocaleString()} committed · MelaAssist is watching for overspend, missed deposits, and savings opportunities.`}
         actions={<>
           <Button variant="outline"><Upload className="mr-2 h-4 w-4"/>Upload receipt</Button>
           <Button variant="hero"><Download className="mr-2 h-4 w-4"/>Export report</Button>
@@ -72,7 +72,7 @@ function BudgetPage() {
       </section>
 
       <section className="mt-6 rounded-3xl border border-primary/20 bg-primary/5 p-5">
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary"><Sparkles className="h-3.5 w-3.5"/>BridgeMind™ recommendations</div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary"><Sparkles className="h-3.5 w-3.5"/>MelaAssist™ recommendations</div>
         <ul className="grid gap-2 text-sm md:grid-cols-2">
           <li className="flex gap-2"><PiggyBank className="mt-0.5 h-4 w-4 text-emerald-600"/><span>Switching from premium bar to house-select could save $1,900 without guest impact.</span></li>
           <li className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600"/><span>Onyema Catering deposit of $4,200 is due Dec 3 — 12 days out.</span></li>

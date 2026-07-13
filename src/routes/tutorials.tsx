@@ -15,7 +15,7 @@ export const Route = createFileRoute("/tutorials")({
 });
 
 const TUTORIALS = [
-  { t: "Meet Bridge Concierge™", d: "Your guided tour of the AI planner.", len: "4 min", level: "Beginner" },
+  { t: "Meet MelaAssist™", d: "Your guided tour of the AI planner.", len: "4 min", level: "Beginner" },
   { t: "Building your first budget", d: "Let Concierge allocate spend intelligently.", len: "6 min", level: "Beginner" },
   { t: "Running the Event Simulator™", d: "Find issues before they happen.", len: "5 min", level: "Intermediate" },
   { t: "Booking vendors via Marketplace", d: "From match to signed contract.", len: "7 min", level: "Beginner" },

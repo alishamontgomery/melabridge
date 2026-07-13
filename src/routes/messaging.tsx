@@ -82,7 +82,7 @@ type FilterKey = typeof FILTERS[number]["key"];
 
 const NOTIFICATION_GROUPS = [
   { key: "messages", label: "Messages", desc: "New replies, mentions, and reactions across your inboxes." },
-  { key: "ai", label: "AI", desc: "BridgeMind draft approvals and suggested actions." },
+  { key: "ai", label: "AI", desc: "MelaAssist draft approvals and suggested actions." },
   { key: "event", label: "Event activity", desc: "RSVPs, timeline changes, and guest updates." },
   { key: "payments", label: "Payments", desc: "Invoices, receipts, deposits, and past-due nudges." },
   { key: "team", label: "Team", desc: "Assignments, @mentions, and handoffs." },
@@ -484,7 +484,7 @@ function ConversationPanel({ conversationId, onPatch }: { conversationId: string
         ))}
       </div>
       <div className="mt-5 rounded-2xl border border-primary/20 bg-primary/5 p-3">
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary"><Sparkles className="h-3.5 w-3.5"/>BridgeMind AI</div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary"><Sparkles className="h-3.5 w-3.5"/>MelaAssist AI</div>
         <p className="text-xs text-muted-foreground">Rich-text compose, attachments, and AI drafts arrive in Phase 2. Use "New message" above to schedule or send with the current composer.</p>
       </div>
     </div>
