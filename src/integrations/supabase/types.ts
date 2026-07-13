@@ -105,6 +105,143 @@ export type Database = {
           },
         ]
       }
+      calendar_availability: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_active: boolean
+          start_time: string
+          updated_at: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_active?: boolean
+          start_time: string
+          updated_at?: string
+          user_id: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_active?: boolean
+          start_time?: string
+          updated_at?: string
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
+      calendar_blocked_dates: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          notes: string | null
+          reason: Database["public"]["Enums"]["calendar_block_reason"]
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          notes?: string | null
+          reason?: Database["public"]["Enums"]["calendar_block_reason"]
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          notes?: string | null
+          reason?: Database["public"]["Enums"]["calendar_block_reason"]
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_booking_requests: {
+        Row: {
+          address: string | null
+          alternate_end: string | null
+          alternate_message: string | null
+          alternate_start: string | null
+          booking_id: string | null
+          client_name: string | null
+          created_at: string
+          event_name: string
+          event_type: string | null
+          id: string
+          message: string | null
+          planner_id: string
+          requested_end: string
+          requested_start: string
+          status: Database["public"]["Enums"]["calendar_request_status"]
+          updated_at: string
+          vendor_id: string
+          venue_name: string | null
+        }
+        Insert: {
+          address?: string | null
+          alternate_end?: string | null
+          alternate_message?: string | null
+          alternate_start?: string | null
+          booking_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          event_name: string
+          event_type?: string | null
+          id?: string
+          message?: string | null
+          planner_id: string
+          requested_end: string
+          requested_start: string
+          status?: Database["public"]["Enums"]["calendar_request_status"]
+          updated_at?: string
+          vendor_id: string
+          venue_name?: string | null
+        }
+        Update: {
+          address?: string | null
+          alternate_end?: string | null
+          alternate_message?: string | null
+          alternate_start?: string | null
+          booking_id?: string | null
+          client_name?: string | null
+          created_at?: string
+          event_name?: string
+          event_type?: string | null
+          id?: string
+          message?: string | null
+          planner_id?: string
+          requested_end?: string
+          requested_start?: string
+          status?: Database["public"]["Enums"]["calendar_request_status"]
+          updated_at?: string
+          vendor_id?: string
+          venue_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_booking_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_connections: {
         Row: {
           access_token: string | null
@@ -156,6 +293,143 @@ export type Database = {
           token_expires_at?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      calendar_events: {
+        Row: {
+          address: string | null
+          attachments: Json
+          breakdown_minutes: number
+          checklist: Json
+          client_name: string | null
+          contract_status: string | null
+          created_at: string
+          ends_at: string
+          event_id: string | null
+          event_name: string
+          event_type: string | null
+          external_id: string | null
+          external_provider: string | null
+          id: string
+          internal_notes: string | null
+          payment_status: string | null
+          planner_id: string | null
+          revenue_amount: number | null
+          setup_minutes: number
+          source: Database["public"]["Enums"]["calendar_event_source"]
+          starts_at: string
+          status: Database["public"]["Enums"]["calendar_event_status"]
+          team_assignments: Json
+          timeline: Json
+          updated_at: string
+          vendor_id: string
+          venue_name: string | null
+        }
+        Insert: {
+          address?: string | null
+          attachments?: Json
+          breakdown_minutes?: number
+          checklist?: Json
+          client_name?: string | null
+          contract_status?: string | null
+          created_at?: string
+          ends_at: string
+          event_id?: string | null
+          event_name: string
+          event_type?: string | null
+          external_id?: string | null
+          external_provider?: string | null
+          id?: string
+          internal_notes?: string | null
+          payment_status?: string | null
+          planner_id?: string | null
+          revenue_amount?: number | null
+          setup_minutes?: number
+          source?: Database["public"]["Enums"]["calendar_event_source"]
+          starts_at: string
+          status?: Database["public"]["Enums"]["calendar_event_status"]
+          team_assignments?: Json
+          timeline?: Json
+          updated_at?: string
+          vendor_id: string
+          venue_name?: string | null
+        }
+        Update: {
+          address?: string | null
+          attachments?: Json
+          breakdown_minutes?: number
+          checklist?: Json
+          client_name?: string | null
+          contract_status?: string | null
+          created_at?: string
+          ends_at?: string
+          event_id?: string | null
+          event_name?: string
+          event_type?: string | null
+          external_id?: string | null
+          external_provider?: string | null
+          id?: string
+          internal_notes?: string | null
+          payment_status?: string | null
+          planner_id?: string | null
+          revenue_amount?: number | null
+          setup_minutes?: number
+          source?: Database["public"]["Enums"]["calendar_event_source"]
+          starts_at?: string
+          status?: Database["public"]["Enums"]["calendar_event_status"]
+          team_assignments?: Json
+          timeline?: Json
+          updated_at?: string
+          vendor_id?: string
+          venue_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_settings: {
+        Row: {
+          block_travel_days: boolean
+          buffer_after_minutes: number
+          buffer_before_minutes: number
+          created_at: string
+          max_events_per_day: number
+          timezone: string
+          updated_at: string
+          user_id: string
+          vacation_end: string | null
+          vacation_start: string | null
+        }
+        Insert: {
+          block_travel_days?: boolean
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          created_at?: string
+          max_events_per_day?: number
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          vacation_end?: string | null
+          vacation_start?: string | null
+        }
+        Update: {
+          block_travel_days?: boolean
+          buffer_after_minutes?: number
+          buffer_before_minutes?: number
+          created_at?: string
+          max_events_per_day?: number
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          vacation_end?: string | null
+          vacation_start?: string | null
         }
         Relationships: []
       }
@@ -1324,7 +1598,22 @@ export type Database = {
     }
     Enums: {
       app_role: "planner" | "vendor" | "guest" | "admin" | "attendee"
+      calendar_block_reason: "day_off" | "vacation" | "travel"
+      calendar_event_source: "native" | "external"
+      calendar_event_status:
+        | "inquiry"
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled"
+        | "declined"
       calendar_provider: "google" | "outlook"
+      calendar_request_status:
+        | "pending"
+        | "approved"
+        | "declined"
+        | "alternate_proposed"
+        | "cancelled"
       calendar_sync_direction: "push" | "pull" | "two_way"
       event_draft_source:
         | "email"
@@ -1476,7 +1765,24 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["planner", "vendor", "guest", "admin", "attendee"],
+      calendar_block_reason: ["day_off", "vacation", "travel"],
+      calendar_event_source: ["native", "external"],
+      calendar_event_status: [
+        "inquiry",
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled",
+        "declined",
+      ],
       calendar_provider: ["google", "outlook"],
+      calendar_request_status: [
+        "pending",
+        "approved",
+        "declined",
+        "alternate_proposed",
+        "cancelled",
+      ],
       calendar_sync_direction: ["push", "pull", "two_way"],
       event_draft_source: [
         "email",
