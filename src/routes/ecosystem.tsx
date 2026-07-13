@@ -112,9 +112,9 @@ function SimulatorCard() {
               </button>
             ))}
           </div>
-          <p className="text-sm font-medium">Vendors</p>
+          <p className="text-sm font-medium">Simulate vendor confirmation</p>
           <div className="flex flex-wrap gap-2">
-            {["Bloomhaus", "Studio Nero", "Onyema", "DJ Kairo", "Paperlane"].map((v) => (
+            {["Florist", "Photographer", "Caterer", "DJ", "Stationery"].map((v) => (
               <Button key={v} size="sm" variant="soft" onClick={() => confirmVendor(v)}>Confirm {v}</Button>
             ))}
           </div>
