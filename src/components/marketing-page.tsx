@@ -38,10 +38,10 @@ export function MarketingPage({
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" className="rounded-full" asChild>
-              <Link to="/dashboard">Log in</Link>
+              <Link to="/auth">Log in</Link>
             </Button>
             <Button variant="hero" size="sm" className="rounded-full" asChild>
-              <Link to="/dashboard">Sign up</Link>
+              <Link to="/auth" search={{ intent: "signup" } as never}>Sign up</Link>
             </Button>
           </div>
         </div>
