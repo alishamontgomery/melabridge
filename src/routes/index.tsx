@@ -14,7 +14,6 @@ import {
   ScaleIcon,
   UsersRound,
   Check,
-  Star,
   Play,
   ArrowRight,
   Briefcase,
@@ -23,8 +22,6 @@ import {
   TrendingUp,
   CalendarCheck,
   MessageSquare,
-  BarChart3,
-  MapPin,
   Zap,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
@@ -123,26 +120,7 @@ const venueBenefits = [
   "Analytics on inquiries & revenue",
 ];
 
-const testimonials = [
-  {
-    quote:
-      "MelaBridge replaced the spreadsheets, group chats and four planning tools we used to juggle. It's the calmest launch we've had.",
-    name: "Amara Okonkwo",
-    role: "Bride, Lagos",
-  },
-  {
-    quote:
-      "We run 40+ corporate events a year. MelaBridge cut planning time in half and gave our clients a dashboard they actually love.",
-    name: "David Chen",
-    role: "Head of Events, Northwind",
-  },
-  {
-    quote:
-      "The vendor marketplace alone paid for our subscription in the first month. Leads arrive already qualified.",
-    name: "Priya Menon",
-    role: "Founder, Bloom & Bough Florals",
-  },
-];
+
 
 
 const faqs = [
@@ -358,7 +336,7 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <SectionEyebrow>The MelaBridge dashboard</SectionEyebrow>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">This is the actual product.</h2>
+            <h2 className="mt-3 font-display text-4xl md:text-5xl">Your complete event workspace.</h2>
             <p className="mt-4 text-muted-foreground">
               A calm, intelligent workspace where budget, guests, vendors, tasks and your AI
               planner work together in real time.
@@ -649,48 +627,23 @@ function Landing() {
       </section>
 
 
-      {/* TESTIMONIALS */}
+      {/* EARLY ACCESS */}
       <section className="bg-secondary/40 py-28">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mx-auto max-w-2xl text-center">
-            <SectionEyebrow>Loved by the people who plan</SectionEyebrow>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">
-              Moments people won't forget.
-            </h2>
-          </div>
-          <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {testimonials.map((t) => (
-              <figure
-                key={t.name}
-                className="rounded-2xl border border-border bg-card p-7 shadow-soft"
-              >
-                <div className="mb-4 flex gap-0.5 text-gold">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <blockquote className="font-display text-lg leading-snug">"{t.quote}"</blockquote>
-                <figcaption className="mt-6 text-sm">
-                  <div className="font-semibold">{t.name}</div>
-                  <div className="text-muted-foreground">{t.role}</div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-          <div className="mx-auto mt-14 flex max-w-3xl flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
-            {[
-              { icon: BarChart3, label: "12,400+ events planned" },
-              { icon: MapPin, label: "38 countries" },
-              { icon: ShieldCheck, label: "SOC 2 aligned" },
-            ].map((s) => (
-              <div key={s.label} className="inline-flex items-center gap-2">
-                <s.icon className="h-4 w-4 text-primary" />
-                <span>{s.label}</span>
-              </div>
-            ))}
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <SectionEyebrow>Early Access</SectionEyebrow>
+          <h2 className="mt-3 font-display text-4xl md:text-5xl">
+            Now welcoming planners and vendors.
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            MelaBridge is in early access. Join the first wave of hosts, planners, and vendors — and help shape the future of event planning.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button asChild variant="hero" size="lg"><Link to="/auth">Get started free</Link></Button>
+            <Button asChild variant="outline" size="lg"><Link to="/vendors">Become a vendor</Link></Button>
           </div>
         </div>
       </section>
+
 
       {/* FAQ */}
       <section id="faq" className="mx-auto max-w-3xl px-6 py-28">

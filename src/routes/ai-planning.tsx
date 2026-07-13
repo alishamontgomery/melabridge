@@ -5,25 +5,31 @@ export const Route = createFileRoute("/ai-planning")({
   head: () => ({
     meta: [
       { title: "AI Planning — MelaBridge" },
-      { name: "description", content: "Meet MelaAssist™, MelaAssist™, and the AI systems that plan your event in minutes." },
+      { name: "description", content: "Meet MelaAssist™ — the AI planning assistant that helps you draft, review, and run every event." },
       { property: "og:title", content: "AI Planning — MelaBridge" },
-      { property: "og:description", content: "An elite AI event planner, project manager, and personal assistant in one." },
+      { property: "og:description", content: "An AI planning assistant that always asks before it acts." },
     ],
   }),
   component: () => (
     <MarketingPage
       eyebrow="AI Planning"
-      title={<>A world-class planner, <span className="text-gradient">summoned in seconds.</span></>}
-      description="MelaAssist™ guides you through a natural conversation, then autonomously builds your timeline, budget, guest strategy, and vendor shortlist."
+      title={<>MelaAssist™ — your planning <span className="text-gradient">co-pilot.</span></>}
+      description="MelaAssist guides you through a natural conversation, drafts a plan, and hands you the wheel. You review and approve — nothing is created without you."
     >
-      <h2>MelaAssist™</h2>
-      <p>Your flagship AI planning experience. Answer a few questions and receive a complete, editable event workspace in minutes.</p>
-      <h2>MelaAssist™</h2>
-      <p>The reasoning engine that continuously monitors your event and suggests optimizations across budget, tasks, and logistics.</p>
-      <h2>AI Event Simulator™</h2>
-      <p>Stress-test your plan against 10,000+ scenarios to surface risks before they surface at your event.</p>
-      <h2>Event Health Score™</h2>
-      <p>A single number that reflects your event's readiness, updated live as tasks close and decisions are made.</p>
+      <h2>Planning Assistant</h2>
+      <p>Describe your event and MelaAssist drafts a workspace — timeline, guest strategy, vendor shortlist, and budget — for your review.</p>
+      <h2>Smart Recommendations</h2>
+      <p>Contextual nudges as your event evolves — from RSVP follow-ups to budget rebalancing suggestions.</p>
+      <h2>Timeline Intelligence</h2>
+      <p>Auto-generated timelines you can edit, with prompts when key milestones are approaching.</p>
+      <h2>Budget Intelligence</h2>
+      <p>Category forecasting and drift alerts so you catch overspend early.</p>
+      <h2>Risk Detection</h2>
+      <p>MelaAssist continuously reviews your event and recommends improvements before small issues become bigger problems.</p>
+      <h2>Vendor Assistance</h2>
+      <p>Help drafting inquiries, comparing quotes, and evaluating contracts.</p>
+      <h2>Decision Support</h2>
+      <p>When you're stuck, MelaAssist lays out the trade-offs — never the decision.</p>
     </MarketingPage>
   ),
 });
