@@ -1,65 +1,48 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const PROD_HOSTS = new Set(["melabridge.com", "www.melabridge.com", "melabridge.lovable.app"]);
+// Guard: seeding is only allowed when this env var is present.
+// Unset on production, set (to any value) on dev/preview.
+function seedingAllowed(): boolean {
+  return process.env.SEED_TEST_DATA_ALLOWED === "true" || process.env.NODE_ENV !== "production";
+}
 
-const TEST_ACCOUNTS: Array<{
-  key: "planner" | "vendor" | "attendee" | "guest" | "admin";
-  email: string;
-  password: string;
-  display_name: string;
-  account_type: string;
-}> = [
+const TEST_ACCOUNTS = [
   { key: "admin",    email: "admin@test.melabridge.com",    password: "MelaTest!2026", display_name: "Test Admin",    account_type: "planner"  },
   { key: "planner",  email: "planner@test.melabridge.com",  password: "MelaTest!2026", display_name: "Test Planner",  account_type: "planner"  },
   { key: "vendor",   email: "vendor@test.melabridge.com",   password: "MelaTest!2026", display_name: "Test Vendor",   account_type: "vendor"   },
   { key: "attendee", email: "attendee@test.melabridge.com", password: "MelaTest!2026", display_name: "Test Attendee", account_type: "attendee" },
   { key: "guest",    email: "guest@test.melabridge.com",    password: "MelaTest!2026", display_name: "Test Guest",    account_type: "guest"    },
-];
+] as const;
 
+type AccountResult = { email: string; role: string; id: string; created: boolean };
 type SeedResult =
-  | { ok: true; accounts: Array<{ email: string; role: string; id: string; created: boolean }>; seedSummary: Record<string, unknown> }
+  | { ok: true; accounts: AccountResult[]; events: number; guests: number; notifications: number }
   | { ok: false; error: string };
-
-function isProductionHost(host: string | null | undefined): boolean {
-  if (!host) return false;
-  const h = host.toLowerCase().split(":")[0];
-  return PROD_HOSTS.has(h);
-}
 
 export const seedTestData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SeedResult> => {
     const { supabase, userId } = context;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rpc = supabase.rpc as any;
 
-    // 1. Admin gate (via RLS-respecting client)
-    const { data: isAdmin, error: roleErr } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isAdmin, error: roleErr } = await rpc("has_role", { _user_id: userId, _role: "admin" });
     if (roleErr || !isAdmin) return { ok: false, error: "Admin role required." };
 
-    // 2. Non-production gate
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const req = getWebRequest();
-    const host = req?.headers.get("host") ?? req?.headers.get("x-forwarded-host");
-    if (isProductionHost(host)) {
-      return { ok: false, error: "Test data seeding is disabled on production." };
-    }
+    if (!seedingAllowed()) return { ok: false, error: "Test data seeding is disabled on production." };
 
-    // 3. Admin client for auth.users management
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const results: AccountResult[] = [];
 
-    const results: Array<{ email: string; role: string; id: string; created: boolean }> = [];
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
 
     for (const acct of TEST_ACCOUNTS) {
-      // Try to find existing user
-      let userIdOut: string | null = null;
-      let created = false;
-
-      // listUsers is paginated — search by email via listUsers filter (v2 API)
-      const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
       const found = list?.users?.find((u) => u.email?.toLowerCase() === acct.email.toLowerCase());
+      let outId: string;
+      let created = false;
       if (found) {
-        userIdOut = found.id;
-        // Reset password + confirm
+        outId = found.id;
         await supabaseAdmin.auth.admin.updateUserById(found.id, {
           password: acct.password,
           email_confirm: true,
@@ -73,14 +56,13 @@ export const seedTestData = createServerFn({ method: "POST" })
           user_metadata: { display_name: acct.display_name },
         });
         if (createErr || !createRes.user) return { ok: false, error: `Create ${acct.email}: ${createErr?.message ?? "unknown error"}` };
-        userIdOut = createRes.user.id;
+        outId = createRes.user.id;
         created = true;
       }
 
-      // Ensure profile row exists (handle_new_user trigger may have created it)
       await supabaseAdmin.from("profiles").upsert(
         {
-          id: userIdOut,
+          id: outId,
           email: acct.email,
           display_name: acct.display_name,
           account_type: acct.account_type,
@@ -90,19 +72,18 @@ export const seedTestData = createServerFn({ method: "POST" })
         { onConflict: "id" },
       );
 
-      // Assign role directly (attendee doesn't come from the profile→role trigger the same way)
-      await supabaseAdmin.from("user_roles").upsert(
-        { user_id: userIdOut, role: acct.key === "admin" ? "admin" : (acct.key as any) },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin.from("user_roles") as any).upsert(
+        { user_id: outId, role: acct.key === "admin" ? "admin" : acct.key },
         { onConflict: "user_id,role" },
       );
 
-      results.push({ email: acct.email, role: acct.key, id: userIdOut, created });
+      results.push({ email: acct.email, role: acct.key, id: outId, created });
     }
 
     const ids = Object.fromEntries(results.map((r) => [r.role, r.id])) as Record<string, string>;
 
-    // 4. Call SQL seed function via RLS-respecting client (function itself re-checks admin)
-    const { data: seedSummary, error: seedErr } = await supabase.rpc("seed_test_data", {
+    const { data: seedSummary, error: seedErr } = await rpc("seed_test_data", {
       planner_id: ids.planner,
       vendor_id: ids.vendor,
       attendee_id: ids.attendee,
@@ -111,22 +92,20 @@ export const seedTestData = createServerFn({ method: "POST" })
     });
     if (seedErr) return { ok: false, error: `Seed: ${seedErr.message}` };
 
-    return { ok: true, accounts: results, seedSummary: (seedSummary as any) ?? {} };
+    const s = (seedSummary as { events?: number; guests?: number; notifications?: number } | null) ?? {};
+    return { ok: true, accounts: results, events: s.events ?? 0, guests: s.guests ?? 0, notifications: s.notifications ?? 0 };
   });
 
 export const wipeTestData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ ok: boolean; error?: string }> => {
     const { supabase, userId } = context;
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rpc = supabase.rpc as any;
+    const { data: isAdmin } = await rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) return { ok: false, error: "Admin required." };
-
-    const { getWebRequest } = await import("@tanstack/react-start/server");
-    const req = getWebRequest();
-    const host = req?.headers.get("host") ?? req?.headers.get("x-forwarded-host");
-    if (isProductionHost(host)) return { ok: false, error: "Disabled on production." };
-
-    const { error } = await supabase.rpc("wipe_test_data");
+    if (!seedingAllowed()) return { ok: false, error: "Disabled on production." };
+    const { error } = await rpc("wipe_test_data");
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   });
