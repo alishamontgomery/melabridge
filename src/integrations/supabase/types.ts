@@ -281,55 +281,115 @@ export type Database = {
       }
       events: {
         Row: {
+          balance_due_date: string | null
           budget_target: number | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
           cover_image_url: string | null
           created_at: string
+          custom_event_type: string | null
+          deposit_paid: number | null
+          deposit_required: number | null
           description: string | null
+          end_time: string | null
           event_date: string | null
+          event_notes: string | null
           event_time: string | null
           event_type: string | null
           guest_target: number | null
           id: string
           is_test_seed: boolean
+          lead_source: string | null
           location: string | null
           name: string
           owner_id: string
+          payment_status: string | null
+          preferred_contact: string | null
+          start_time: string | null
           status: Database["public"]["Enums"]["event_status"]
           updated_at: string
+          venue_city: string | null
+          venue_lat: number | null
+          venue_lng: number | null
+          venue_place_id: string | null
+          venue_state: string | null
+          venue_street: string | null
+          venue_zip: string | null
         }
         Insert: {
+          balance_due_date?: string | null
           budget_target?: number | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
+          custom_event_type?: string | null
+          deposit_paid?: number | null
+          deposit_required?: number | null
           description?: string | null
+          end_time?: string | null
           event_date?: string | null
+          event_notes?: string | null
           event_time?: string | null
           event_type?: string | null
           guest_target?: number | null
           id?: string
           is_test_seed?: boolean
+          lead_source?: string | null
           location?: string | null
           name: string
           owner_id: string
+          payment_status?: string | null
+          preferred_contact?: string | null
+          start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           updated_at?: string
+          venue_city?: string | null
+          venue_lat?: number | null
+          venue_lng?: number | null
+          venue_place_id?: string | null
+          venue_state?: string | null
+          venue_street?: string | null
+          venue_zip?: string | null
         }
         Update: {
+          balance_due_date?: string | null
           budget_target?: number | null
+          client_email?: string | null
+          client_name?: string | null
+          client_phone?: string | null
           cover_image_url?: string | null
           created_at?: string
+          custom_event_type?: string | null
+          deposit_paid?: number | null
+          deposit_required?: number | null
           description?: string | null
+          end_time?: string | null
           event_date?: string | null
+          event_notes?: string | null
           event_time?: string | null
           event_type?: string | null
           guest_target?: number | null
           id?: string
           is_test_seed?: boolean
+          lead_source?: string | null
           location?: string | null
           name?: string
           owner_id?: string
+          payment_status?: string | null
+          preferred_contact?: string | null
+          start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
           updated_at?: string
+          venue_city?: string | null
+          venue_lat?: number | null
+          venue_lng?: number | null
+          venue_place_id?: string | null
+          venue_state?: string | null
+          venue_street?: string | null
+          venue_zip?: string | null
         }
         Relationships: []
       }
@@ -1091,6 +1151,11 @@ export type Database = {
         | "confirmed"
         | "completed"
         | "archived"
+        | "inquiry"
+        | "consultation_scheduled"
+        | "quote_sent"
+        | "tentative"
+        | "cancelled"
       guest_rsvp: "pending" | "yes" | "no" | "maybe"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in_progress" | "done"
@@ -1223,7 +1288,18 @@ export const Constants = {
     Enums: {
       app_role: ["planner", "vendor", "guest", "admin", "attendee"],
       event_role: ["owner", "admin", "editor", "commenter", "viewer"],
-      event_status: ["draft", "planning", "confirmed", "completed", "archived"],
+      event_status: [
+        "draft",
+        "planning",
+        "confirmed",
+        "completed",
+        "archived",
+        "inquiry",
+        "consultation_scheduled",
+        "quote_sent",
+        "tentative",
+        "cancelled",
+      ],
       guest_rsvp: ["pending", "yes", "no", "maybe"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in_progress", "done"],
