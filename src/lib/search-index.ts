@@ -105,7 +105,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   { id: "b2", kind: "budget", title: "Catering — $14,300 projected", subtitle: "21% of budget", to: "/budget", icon: Wallet },
 
   // Conversations & decisions
-  { id: "c1", kind: "conversation", title: "AI · Rain contingency for Oct 17", subtitle: "BridgeMind™ chat", to: "/decisions", icon: Sparkles },
+  { id: "c1", kind: "conversation", title: "AI · Rain contingency for Oct 17", subtitle: "MelaAssist™ chat", to: "/decisions", icon: Sparkles },
   { id: "d1", kind: "decision", title: "Ceremony music: string quartet vs solo violin", subtitle: "Awaiting your call", to: "/decisions", icon: Lightbulb },
   { id: "d2", kind: "decision", title: "Late-night snack: pizza truck vs suya station", subtitle: "3 options weighted", to: "/decisions", icon: Lightbulb },
 

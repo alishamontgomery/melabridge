@@ -49,9 +49,9 @@ function DecisionsPage() {
         eyebrow="Decision Center™"
         icon={Lightbulb}
         title={<>Big calls, <span className="text-gradient">made together</span>.</>}
-        description="Create polls, compare vendors, vote on menus and dates. BridgeMind summarizes results and recommends the strongest option."
+        description="Create polls, compare vendors, vote on menus and dates. MelaAssist summarizes results and recommends the strongest option."
         actions={<>
-          <Button variant="outline"><Sparkles className="mr-2 h-4 w-4"/>Ask BridgeMind</Button>
+          <Button variant="outline"><Sparkles className="mr-2 h-4 w-4"/>Ask MelaAssist</Button>
           <Button variant="hero"><Plus className="mr-2 h-4 w-4"/>New decision</Button>
         </>}
       />

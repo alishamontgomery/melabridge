@@ -33,13 +33,13 @@ import {
 export const Route = createFileRoute("/concierge")({
   head: () => ({
     meta: [
-      { title: "Bridge Concierge™ — MelaBridge" },
+      { title: "MelaAssist™ — MelaBridge" },
       {
         name: "description",
         content:
-          "Bridge Concierge™ is MelaBridge's flagship AI planner. Chat naturally and it builds your entire event workspace, simulates risks, and optimizes with one click.",
+          "MelaAssist™ is MelaBridge's flagship AI planner. Chat naturally and it builds your entire event workspace, simulates risks, and optimizes with one click.",
       },
-      { property: "og:title", content: "Bridge Concierge™ — MelaBridge" },
+      { property: "og:title", content: "MelaAssist™ — MelaBridge" },
       {
         property: "og:description",
         content:
@@ -91,7 +91,7 @@ function ConciergePage() {
     {
       id: uid(),
       role: "concierge",
-      text: "Hi, I'm Bridge Concierge™ — your dedicated planner. Tell me about your event in your own words, and I'll build your entire workspace in minutes.",
+      text: "Hi, I'm MelaAssist™ — your dedicated planner. Tell me about your event in your own words, and I'll build your entire workspace in minutes.",
     },
     { id: uid(), role: "concierge", text: QUESTIONS[0].prompt },
   ]);
@@ -170,14 +170,14 @@ function ConciergePage() {
     <AppShell active="/concierge">
       <div className="space-y-6">
         <PageHeader
-          eyebrow="Bridge Concierge™"
+          eyebrow="MelaAssist™"
           title={
             <>
               Your world-class planner,{" "}
               <span className="bg-gradient-to-r from-primary to-gold bg-clip-text text-transparent">on call</span>
             </>
           }
-          description="Have a conversation. Bridge Concierge™ builds your entire event — dashboard, timeline, budget, vendors, travel, and risk plan — automatically."
+          description="Have a conversation. MelaAssist™ builds your entire event — dashboard, timeline, budget, vendors, travel, and risk plan — automatically."
           icon={Sparkles}
           actions={
             generated ? (
@@ -206,7 +206,7 @@ function ConciergePage() {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">Bridge Concierge™</p>
+                  <p className="text-sm font-semibold">MelaAssist™</p>
                   <p className="text-xs text-muted-foreground">Elite AI planner · always on</p>
                 </div>
               </div>

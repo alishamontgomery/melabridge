@@ -53,7 +53,7 @@ export const DEMO_DASHBOARD: DashboardData = {
     { who: "Lumen Studio", what: "confirmed the shoot date", when: "2m ago" },
     { who: "Estelle Catering", what: "sent a $6,400 quote", when: "1h ago" },
     { who: "Sarah", what: "voted for Napa Valley venue", when: "3h ago" },
-    { who: "BridgeMind", what: "drafted your welcome note", when: "Yesterday" },
+    { who: "MelaAssist", what: "drafted your welcome note", when: "Yesterday" },
   ],
   notifications: [
     { title: "3 new RSVPs", body: "Aunt Mira, David & Priya replied yes.", when: "just now" },
@@ -234,7 +234,7 @@ export function EventDashboardPreview({
           <Panel
             className="lg:col-span-7 border-primary/20 bg-hero-radial"
             icon={Sparkles}
-            title="BridgeMind™ AI recommendation"
+            title="MelaAssist™ AI recommendation"
             tone="primary"
           >
             <p className="text-[15px] leading-relaxed text-foreground/90">

@@ -28,7 +28,7 @@ const ACTIVITY = [
   { who:"Julien", what:"approved florist upgrade (+$800)", when:"1h" },
   { who:"Chinwe", what:"commented on Guest table 3 seating", when:"3h" },
   { who:"Amara", what:"mentioned @Marcus in ceremony script draft", when:"5h" },
-  { who:"BridgeMind", what:"summarized last week's activity and updated Health Score to 92", when:"1d" },
+  { who:"MelaAssist", what:"summarized last week's activity and updated Health Score to 92", when:"1d" },
 ];
 
 function CollabPage() {

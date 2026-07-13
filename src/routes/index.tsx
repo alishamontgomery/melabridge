@@ -446,14 +446,14 @@ function Landing() {
               An AI that plans <span className="text-gradient">with you</span>, not for you.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Bridge Concierge™ is your always-on planning partner. It drafts your timeline,
+              MelaAssist™ is your always-on planning partner. It drafts your timeline,
               suggests vendors that match your style and budget, writes guest communications and
               flags risks before they become problems.
             </p>
             <ul className="mt-8 space-y-3 text-sm">
               {[
                 "Natural-language planning — describe your vision, get a full plan back",
-                "BridgeMind™ continuously optimizes budget, tasks and logistics",
+                "MelaAssist™ continuously optimizes budget, tasks and logistics",
                 "AI Event Simulator™ stress-tests your plan against 10,000+ scenarios",
                 "Event Health Score™ reflects your event's readiness in a single number",
               ].map((line) => (

@@ -70,7 +70,7 @@ function GuestsPage() {
         eyebrow="Guest Management"
         icon={Users}
         title={<>Every guest, <span className="text-gradient">accounted for</span>.</>}
-        description={`Managing ${event.guests} expected guests · ${counts.yes} confirmed · BridgeMind is watching for RSVP gaps, dietary conflicts, and seating issues.`}
+        description={`Managing ${event.guests} expected guests · ${counts.yes} confirmed · MelaAssist is watching for RSVP gaps, dietary conflicts, and seating issues.`}
         actions={<>
           <Button variant="outline"><QrCode className="mr-2 h-4 w-4"/>Send QR invites</Button>
           <Button variant="hero"><UserPlus className="mr-2 h-4 w-4"/>Add guest</Button>
@@ -85,7 +85,7 @@ function GuestsPage() {
       </section>
 
       <section className="mt-6 rounded-3xl border border-primary/20 bg-primary/5 p-5">
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary"><Sparkles className="h-3.5 w-3.5"/>BridgeMind™ insights</div>
+        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary"><Sparkles className="h-3.5 w-3.5"/>MelaAssist™ insights</div>
         <ul className="grid gap-2 text-sm md:grid-cols-2">
           <AiRow icon={AlertTriangle} tone="warn" text="3 guests haven't RSVP'd 6 weeks out — drafts ready to send." />
           <AiRow icon={Utensils} tone="info" text="1 vegan + 1 gluten-free confirmed — catering has been notified." />
