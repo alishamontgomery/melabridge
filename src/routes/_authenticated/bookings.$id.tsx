@@ -13,7 +13,9 @@ import { Briefcase, Loader2, ArrowLeft } from "lucide-react";
 import { BookingProgressTracker } from "@/components/booking/BookingProgressTracker";
 import { BookingStageBadge } from "@/components/booking/BookingStageBadge";
 import { STAGES, stageMeta, type BookingStage } from "@/lib/booking-stages";
-import { advanceStage, cancelBooking, getBooking, recordDeposit, recordQuote } from "@/lib/bookings.functions";
+import { advanceStage, cancelBooking, getBooking, recordDeposit, recordQuote, recordSchedulePayment } from "@/lib/bookings.functions";
+import { Badge } from "@/components/ui/badge";
+import { Receipt, CalendarClock as CalendarClockIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/bookings/$id")({
   head: () => ({ meta: [{ title: "Booking — MelaBridge" }] }),
