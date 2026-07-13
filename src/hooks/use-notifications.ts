@@ -17,11 +17,7 @@ export type NotificationRow = {
   created_at: string;
 };
 
-const db = supabase as unknown as {
-  from: (t: string) => ReturnType<typeof supabase.from>;
-  channel: typeof supabase.channel;
-  removeChannel: typeof supabase.removeChannel;
-};
+const db = supabase;
 
 export function useNotifications(limit = 50) {
   const { user } = useAuth();
