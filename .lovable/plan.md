@@ -1,61 +1,81 @@
-## Messaging Center v2 — Phased Build Plan
 
-This is a very large scope (inbox management, rich compose, template library of 75+ entries, notifications matrix, BridgeMind AI, role permissions, mobile gestures, accessibility). Shipping it all in one turn would produce a shallow result across every area. I'll build it in **4 phases**, each independently usable and verifiable, on the shared `/messaging` route so every role (Planner, Vendor, Guest, Admin, Internal, and future vendor sub-roles) gets the same interface with role-gated capabilities.
+# Final Launch QA — Plan
 
-### Phase 1 — Data model + Inbox v2 (this turn)
+Scope: launch-blockers only. Not a Lighthouse tune-up or exhaustive pixel audit. Delivered in 4 batches so each is reviewable and reversible.
 
-**Database (single migration):**
-- `conversations` — id, owner_id, title, type (internal/vendor/guest/payment/system), is_pinned, is_muted, is_favorite, is_archived, archived_at, deleted_at (30-day trash), labels text[], last_message_at, unread_count
-- `conversation_participants` — conversation_id, user_id, role, joined_at
-- `messages` — id, conversation_id, sender_id, body, attachments jsonb, status (sent/delivered/read), created_at, read_at
-- `message_templates` — id, owner_id (nullable = global), category, title, body, variables text[], is_favorite, usage_count, last_used_at, is_archived
-- Extend `notification_preferences` with: category (messages/ai/event/payments/team/system), channel (in_app/push/email/sms/calendar), frequency (instant/hourly/daily/weekly/off), quiet_hours_start, quiet_hours_end
-- Seed 75+ templates covering: Guest (RSVP, save-the-date, travel, thank-you, dietary, timeline), Vendor (deposit, contract, timeline, walkthrough, load-in), Internal (mentions, weekly sync, decisions needed), Payment (invoice, receipt, past-due), Emergency (weather, venue change), Marketing (announcements), etc.
-- RLS: participants can read; owner can archive/delete; templates readable by all authenticated, editable by owner
+## Batch A — Seed test accounts + data (dev/preview only)
 
-**Inbox UI:**
-- Left rail: search with filters (Unread, Archived, Vendors, Guests, Internal, Payments, Scheduled, Attachments, Favorites), grouped by Today/Yesterday/This Week/Earlier
-- Rows: avatar, participant + role badge, last message preview, timestamp, unread count, status dot, pin/favorite/mute icons
-- Hover actions (desktop): Archive, Delete, Pin, Mark Unread, Mute, Favorite, Export
-- Swipe actions (mobile): Archive left, Delete right (via touch handlers)
-- Bulk selection mode with Archive / Delete / Mark Read-Unread / Assign Labels
-- Tabs: Inbox · Archive · Trash (30-day recovery, Restore action)
+Create a **guarded** migration + server function that seeds five accounts and realistic data. Guarded means: refuses to run unless `LOVABLE_ENV != 'production'` AND caller is admin. No test data ever lands in prod.
 
-### Phase 2 — Compose v2 + Rich Editor + Attachments
+**Accounts** (password `MelaTest!2026` for all):
+- admin@test.melabridge.com — Admin role
+- planner@test.melabridge.com — Planner
+- vendor@test.melabridge.com — Vendor (approved vendor_profile)
+- attendee@test.melabridge.com — Attendee (event guest w/ ticket)
+- guest@test.melabridge.com — Guest (RSVP only)
 
-- Recipient chip input with contact search (queries profiles + participants), To/CC/BCC (CC/BCC collapsed)
-- Reply / Reply All / Forward
-- Rich text (bold, italic, underline, bullets, numbered, links) via lightweight contenteditable — no heavy editor dep
-- Emoji picker (popover with curated set, no extra package)
-- Drag-and-drop + file input, storage bucket `message-attachments`, per-file progress + preview + validation (25MB/file, PDF/img/docx/xlsx/pptx/mp4/mp3/zip)
-- "Attach from MelaBridge" picker (contracts, invoices, timelines, seating, guest lists, galleries) — reads existing project resources
-- Schedule: calendar + time + timezone + recurrence (none/daily/weekly/monthly) + "suggested send time"
-- Save Draft / Preview / Schedule / Send Now / Cancel — all wired to backend
-- Side panel: BridgeMind AI with Draft / Rewrite / Shorten / Expand / Friendly / Professional / Luxury / Urgent / Translate (Lovable AI Gateway, google/gemini-3-flash-preview via `createServerFn`)
+**Per-account seed data**:
+- Planner: 3 events (draft/upcoming/completed), 8 guests w/ RSVPs, 5 tasks, 6 budget items, 4 timeline items, 3 files in BridgeVault, 1 conversation w/ vendor, 2 notifications, 1 active subscription (sandbox).
+- Vendor: complete vendor_profile, 2 services w/ pricing, 3 inquiries, 1 booking, 2 reviews.
+- Attendee: 1 purchased ticket (sandbox), RSVP=yes, notifications.
+- Guest: 1 pending RSVP invite.
+- Admin: view of all above (no owned data).
 
-### Phase 3 — Template Library v2 + Notifications v2
+Exposed as `/admin` button "Seed test data" (admin-only, dev-only). Also a "Wipe test data" counterpart that deletes rows tagged `is_test_seed = true` (new nullable column, defaulted false — production data unaffected).
 
-- Template library page: category tabs, search, filters, favorites, collections, recently used
-- Card shows usage count, last edited, variables, category badge; actions: Preview / Edit / Duplicate / Share / Archive / Delete / Favorite / Version History
-- BridgeMind Template Builder: prompt → generated template saved to library
-- Notifications settings redesigned into 6 category groups (Messages, AI, Event Activity, Payments, Team, System) × 5 channels (In-App, Push, Email, SMS, Calendar), each with frequency + description
-- Quiet Hours picker, Enable/Disable All, Reset to Defaults, Test Notification, notification history feed, per-event overrides, BridgeMind recommendations
+## Batch B — Playwright QA pass by role
 
-### Phase 4 — AI polish, permissions, a11y, QA
+Log in as each of the 5 accounts, crawl main routes, capture:
+- Console errors + failed network requests
+- 404s / broken links / dead buttons
+- Missing empty/loading/error states on core flows
+- Mobile viewport (390×844) layout breaks on top 15 routes
+- RLS/permission leaks (e.g. attendee hitting `/admin`)
 
-- BridgeMind assists: suggested recipients/templates/attachments, conversation summarization, action-item extraction, unanswered detection, follow-up suggestions, payment reminder nudges — all as server functions
-- Role gating via `useRole()`: Guests see only planner threads; Vendors see planner + team-authorized threads; Internal gets @mentions; Admin sees moderation surface
-- Keyboard navigation (j/k, e archive, # delete, r reply), aria roles, focus rings, contrast pass
-- Loading skeletons, empty states, success toasts, error boundaries
-- Playwright pass across role sessions to verify no dead controls
+Output: `/tmp/qa/report.md` with route × role × issue matrix + screenshots. Shared with you before Batch C.
 
-### Technical notes
+## Batch C — Fix blockers
 
-- All AI calls go through `createServerFn` + Lovable AI Gateway (`google/gemini-3-flash-preview`) — no client-side keys
-- Storage bucket `message-attachments` (private, RLS by participant)
-- Existing `scheduled_messages` and `notification_preferences` tables extended, not replaced
-- Route stays `/messaging` — same shell for all roles; permissions gate features, not the page
+From the QA report, fix in priority order:
+1. Any auth/signup/reset/verify flow breakage
+2. Any Stripe checkout/webhook/portal breakage (sandbox + live)
+3. Broken links & dead primary CTAs
+4. Missing 404 & 500 pages (add `src/routes/__root.tsx` notFound + errorComponent polish)
+5. Remaining mock data on user-facing pages
+6. Role gate leaks
+7. Mobile layout breaks on top-level routes
+8. Console errors visible in normal use
 
-### Starting now with Phase 1
+Not in scope this pass (call out in report, not fix): deep a11y (WCAG AA audit), Lighthouse ≥90 tuning, exhaustive image replacement, full timezone matrix testing, Android device testing (iOS Safari + Chrome desktop + 390px mobile viewport only).
 
-I'll ship the migration + Inbox v2 in this turn. Reply "continue" after each phase to move to the next, or tell me to reorder/skip anything.
+## Batch D — Launch verification
+
+- Verify `hello@melabridge.com` is the sender on all 6 auth email templates + any transactional templates; check email domain status.
+- Verify Stripe go-live status; if live keys present, test one live checkout end-to-end (won't charge — void the payment intent) and confirm webhook writes to `subscriptions` with `environment='live'`.
+- Confirm Terms/Privacy/Contact/Help/FAQ routes are populated (no lorem/todo).
+- Grep codebase for `TODO`, `FIXME`, `mock`, `dummy`, `lorem`, `test@example`, `Placeholder`, `console.log` in user paths.
+- Confirm seed data wipe works; seed button hidden in production build.
+- Produce final `LAUNCH_REPORT.md` at repo root: what was fixed, what's known-open, sign-off checklist.
+
+## What I'll need from you between batches
+
+- After Batch A: approve the migration (I'll surface it for review).
+- After Batch B: skim the QA report — you may want to reprioritize or expand scope.
+- After Batch D: read the launch report before hitting Publish.
+
+## Technical notes
+
+- Seed guard uses a Postgres function `public.assert_non_production()` that raises unless the env allows it; server function double-checks admin role via `has_role(auth.uid(), 'admin')`.
+- New column `is_test_seed boolean default false` added to events, guests, tasks, budget_items, timeline items, files, conversations, notifications, vendor_profiles, subscriptions, tickets — makes wipe surgical.
+- Playwright runs headless in the sandbox against `http://localhost:8080`; screenshots to `/tmp/qa/screens/`.
+- Stripe live verification uses `stripe.paymentIntents.cancel` immediately after auth, so no real charge lands.
+- No changes to `client.ts`, `types.ts`, `.env`, `supabase/config.toml`.
+
+## Estimated size
+
+- Batch A: 1 migration + 2 server functions + 1 admin UI button (~400 lines).
+- Batch B: 1 Playwright script + report (no product code).
+- Batch C: variable — will report back a fix count before starting each cluster.
+- Batch D: verification only, minimal code.
+
+Ready to start Batch A on your go-ahead.

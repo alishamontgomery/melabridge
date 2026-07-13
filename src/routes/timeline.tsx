@@ -67,6 +67,7 @@ function TimelinePage() {
         completed_at: null,
         created_at: event.created_at,
         updated_at: event.updated_at,
+        is_test_seed: false,
       });
     }
     return list.sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
