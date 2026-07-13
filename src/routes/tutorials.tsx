@@ -19,7 +19,7 @@ const TUTORIALS = [
   { t: "Building your first budget", d: "Let Concierge allocate spend intelligently.", len: "6 min", level: "Beginner" },
   { t: "Running the Event Simulator™", d: "Find issues before they happen.", len: "5 min", level: "Intermediate" },
   { t: "Booking vendors via Marketplace", d: "From match to signed contract.", len: "7 min", level: "Beginner" },
-  { t: "Setting up BridgePay™ escrow", d: "Protect every payment.", len: "5 min", level: "Intermediate" },
+  { t: "Setting up BridgePay™ milestone payments", d: "Secure payments powered by Stripe.", len: "5 min", level: "Intermediate" },
   { t: "Livestreaming with BridgeLive™", d: "Bring remote guests into the room.", len: "8 min", level: "Advanced" },
 ];
 

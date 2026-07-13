@@ -173,11 +173,11 @@ function ConciergePage() {
           eyebrow="MelaAssist™"
           title={
             <>
-              Your world-class planner,{" "}
+              Your planning co-pilot,{" "}
               <span className="bg-gradient-to-r from-primary to-gold bg-clip-text text-transparent">on call</span>
             </>
           }
-          description="Have a conversation. MelaAssist™ builds your entire event — dashboard, timeline, budget, vendors, travel, and risk plan — automatically."
+          description="Have a conversation. MelaAssist drafts your event workspace — timeline, budget, vendors, travel, and risk plan — for you to review and approve."
           icon={Sparkles}
           actions={
             generated ? (

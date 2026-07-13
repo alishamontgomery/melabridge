@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 const EVENT_TYPES = [
   "Wedding", "Birthday", "Anniversary", "Graduation", "Baby Shower", "Bridal Shower",
   "Gender Reveal", "Reunion", "Holiday Party", "Corporate Event", "Conference", "Gala",
-  "Fundraiser", "Festival", "Community Event", "Vacation", "Memorial/Funeral",
+  "Fundraiser", "Festival", "Community Event", "School Event", "Vacation",
   "Sports Event", "Concert", "Other",
 ];
 

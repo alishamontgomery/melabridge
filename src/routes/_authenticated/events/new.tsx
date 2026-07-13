@@ -21,8 +21,8 @@ export const Route = createFileRoute("/_authenticated/events/new")({
 
 const EVENT_TYPES = [
   "Wedding", "Birthday", "Baby Shower", "Graduation", "Corporate Event",
-  "Gala", "Festival", "Reunion", "Church Event", "School Event",
-  "Fundraiser", "Celebration of Life", "Other",
+  "Gala", "Festival", "Reunion", "Community Event", "School Event",
+  "Fundraiser", "Private Celebration", "Other",
 ];
 
 const STATUSES = [

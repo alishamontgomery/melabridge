@@ -10,7 +10,7 @@ export const Route = createFileRoute("/bridgepay")({
   head: () => ({
     meta: [
       { title: "BridgePay™ — MelaBridge" },
-      { name: "description", content: "Secure payments, escrow, and vendor payouts for every event." },
+      { name: "description", content: "Secure payments powered by Stripe for every event." },
     ],
   }),
   component: BridgePayPage,
@@ -22,26 +22,26 @@ function BridgePayPage() {
       <div className="space-y-6">
         <PageHeader
           eyebrow="BridgePay™"
-          title="One wallet for every event payment"
-          description="Deposits, escrow, split payments, vendor payouts, and refunds — protected end-to-end and reconciled with your budget in real time."
+          title="Secure payments for every event"
+          description="Deposits, milestone payments, vendor payouts, and refunds — powered by Stripe and reconciled with your budget in real time."
           icon={CreditCard}
-          actions={<Badge variant="secondary">Preview</Badge>}
+          actions={<Badge variant="secondary">Beta</Badge>}
         />
         <MetricRow
           metrics={[
-            { label: "In escrow", value: "—", hint: "Coming soon" },
+            { label: "Held for milestones", value: "—", hint: "Coming soon" },
             { label: "Paid to vendors", value: "—", hint: "Coming soon" },
             { label: "Pending", value: "—", hint: "Coming soon" },
-            { label: "Saved via BridgePay", value: "—", hint: "Coming soon" },
+            { label: "Processed via BridgePay", value: "—", hint: "Coming soon" },
           ]}
         />
         <ModuleGrid
           features={[
-            { icon: Lock, title: "Escrow protection", detail: "Funds release only when milestones are approved by both parties." },
+            { icon: Lock, title: "Milestone-based payments", detail: "Release funds to vendors only when agreed milestones are approved by both parties." },
             { icon: RefreshCw, title: "Split payments", detail: "Share costs across family, sponsors, or co-hosts with clear allocations." },
-            { icon: Banknote, title: "Instant vendor payouts", detail: "Vendors receive funds within hours of milestone approval." },
+            { icon: Banknote, title: "Fast vendor payouts", detail: "Vendors receive funds shortly after milestone approval, via Stripe." },
             { icon: Receipt, title: "Automatic receipts", detail: "Every transaction is receipted and mirrored into BridgeVault™." },
-            { icon: ShieldCheck, title: "Dispute mediation", detail: "In-app dispute flow with concierge support." },
+            { icon: ShieldCheck, title: "Dispute support", detail: "In-app dispute flow with concierge support." },
             { icon: PiggyBank, title: "Savings goals", detail: "Set aside recurring contributions toward event milestones." },
           ]}
         />
@@ -52,7 +52,7 @@ function BridgePayPage() {
               <div className="flex-1">
                 <p className="text-sm font-semibold">Subscriptions are live — event-wallet payments are next</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  You can already subscribe to MelaAssist™ plans with secure Stripe checkout. Escrow, split payments,
+                  You can already subscribe to MelaAssist™ plans with secure Stripe checkout. Milestone payments, split payments,
                   and vendor payouts arrive in the next release wave.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -63,7 +63,7 @@ function BridgePayPage() {
             </div>
           </Card>
         </Section>
-        <CTARow label="Get notified when BridgePay launches" note="We'll email you the moment escrow and payouts open." cta="Notify me" />
+        <CTARow label="Get notified when BridgePay launches" note="We'll email you the moment milestone payments and payouts open." cta="Notify me" />
       </div>
     </AppShell>
   );
