@@ -1,9 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { RippleFeed } from "@/components/ripple-feed";
-import { Ticket, Users } from "lucide-react";
+import { Ticket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { ModuleGrid } from "@/components/module-page";
+import { Users, CreditCard, QrCode, BarChart3, ShieldCheck, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/tickets")({
   head: () => ({
@@ -16,14 +18,7 @@ export const Route = createFileRoute("/tickets")({
   component: TicketsPage,
 });
 
-const TIERS = [
-  { name: "General admission", price: 65, sold: 184, cap: 250 },
-  { name: "VIP · Front row", price: 180, sold: 42, cap: 60 },
-  { name: "Table of 8", price: 480, sold: 12, cap: 20 },
-];
-
 function TicketsPage() {
-  const total = TIERS.reduce((a, t) => a + t.price * t.sold, 0);
   return (
     <AppShell active="/tickets">
       <PageHeader
@@ -31,49 +26,36 @@ function TicketsPage() {
         icon={Ticket}
         title={<>Sell admissions <span className="text-gradient">without leaving the plan</span>.</>}
         description="Every sale updates the guest list, budget, and Bridge Intelligence™ benchmarks."
+        actions={<Badge variant="secondary">Preview</Badge>}
       />
-      <section className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Card k="Gross sales" v={`$${total.toLocaleString()}`} />
-        <Card k="Tickets sold" v={TIERS.reduce((a, t) => a + t.sold, 0)} />
-        <Card k="Conversion" v="34.2%" />
+      <section className="mt-8">
+        <Card className="border-border/60 p-8 text-center shadow-soft">
+          <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <h3 className="font-display text-lg font-semibold">Ticketing is coming to your workspace</h3>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            Create tiers, sell online, and check guests in — all connected to your event's guest list and budget.
+            In the meantime, you can collect RSVPs and manage guests today.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <Button asChild variant="hero"><Link to="/guests">Manage guests</Link></Button>
+            <Button asChild variant="outline"><Link to="/subscription">See pricing</Link></Button>
+          </div>
+        </Card>
       </section>
-      <section className="mt-8 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="rounded-3xl border border-border bg-card">
-          <ul className="divide-y divide-border">
-            {TIERS.map((t) => {
-              const pct = Math.round((t.sold / t.cap) * 100);
-              return (
-                <li key={t.name} className="p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{t.name}</p>
-                      <p className="text-xs text-muted-foreground">${t.price} · {t.sold}/{t.cap} sold</p>
-                    </div>
-                    <Badge className="bg-primary/10 text-primary">{pct}%</Badge>
-                  </div>
-                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-accent">
-                    <div className="h-full rounded-full bg-gradient-to-r from-primary to-gold" style={{ width: `${pct}%` }} />
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <Button size="sm" variant="soft">Share link</Button>
-                    <Button size="sm" variant="ghost" className="gap-1"><Users className="h-3 w-3" /> View buyers</Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-        <RippleFeed />
+      <section className="mt-8">
+        <ModuleGrid
+          features={[
+            { icon: BarChart3, title: "Tiered pricing", detail: "Early bird, VIP, table packages, discount codes." },
+            { icon: QrCode, title: "Fast check-in", detail: "QR scanning at the door with offline mode." },
+            { icon: CreditCard, title: "Direct payouts", detail: "Funds land in your BridgePay balance automatically." },
+            { icon: Users, title: "Guest list sync", detail: "Every sale becomes a confirmed guest — no double entry." },
+            { icon: Share2, title: "Shareable pages", detail: "Beautiful event pages with your branding." },
+            { icon: ShieldCheck, title: "Fraud protection", detail: "Stripe Radar + duplicate-ticket detection." },
+          ]}
+        />
       </section>
     </AppShell>
-  );
-}
-
-function Card({ k, v }: { k: string; v: string | number }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="text-xs uppercase tracking-widest text-muted-foreground">{k}</p>
-      <p className="mt-1 font-display text-2xl font-semibold">{v}</p>
-    </div>
   );
 }

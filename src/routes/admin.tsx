@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins } from "lucide-react";
+import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock } from "lucide-react";
 import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { billingConfig, getPlansFor, formatPrice, audienceMeta, type BillingAudience } from "@/lib/billing-config";
+import { useRole } from "@/lib/use-role";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getAdminStats } from "@/lib/admin-stats.functions";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -19,6 +24,48 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
+  const { user, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading } = useRole();
+  const isAdmin = role === "admin";
+
+  const fetchStats = useServerFn(getAdminStats);
+  const stats = useQuery({
+    queryKey: ["admin-stats"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const res = await fetchStats({ data: undefined } as any);
+      if (res && "error" in res) throw new Error(res.error);
+      return res;
+    },
+  });
+
+  if (authLoading || roleLoading) {
+    return (
+      <AppShell active="/admin">
+        <Card className="p-10 text-center text-sm text-muted-foreground">Checking access…</Card>
+      </AppShell>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return (
+      <AppShell active="/admin">
+        <Card className="flex flex-col items-center gap-3 p-10 text-center">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+            <Lock className="h-5 w-5" />
+          </div>
+          <h1 className="font-display text-xl font-semibold">AdminOS™ is restricted</h1>
+          <p className="max-w-md text-sm text-muted-foreground">
+            This surface is only available to workspace administrators. If you should have access, ask your organization owner to grant the admin role.
+          </p>
+          <Button asChild variant="outline"><Link to="/dashboard">Back to dashboard</Link></Button>
+        </Card>
+      </AppShell>
+    );
+  }
+
+  const fmt = (n?: number) => (typeof n === "number" ? n.toLocaleString() : "—");
+
   return (
     <AppShell active="/admin">
       <div className="space-y-6">
@@ -30,10 +77,10 @@ function AdminPage() {
         />
         <MetricRow
           metrics={[
-            { label: "Active users", value: "1,240", hint: "+8% this week" },
-            { label: "Events in flight", value: 312 },
-            { label: "Vendor applications", value: 24, hint: "Awaiting review" },
-            { label: "Uptime · 30d", value: "99.98%" },
+            { label: "Total users", value: fmt(stats.data?.activeUsers) },
+            { label: "Events in flight", value: fmt(stats.data?.eventsInFlight) },
+            { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review" },
+            { label: "Uptime · 30d", value: "—", hint: "Coming soon" },
           ]}
         />
         <ModuleGrid
@@ -48,19 +95,9 @@ function AdminPage() {
         />
         <Section title="Queues needing attention">
           <div className="grid gap-3 md:grid-cols-3">
-            {[
-              { icon: BadgeCheck, l: "Vendor verifications", c: 24, tone: "text-primary" },
-              { icon: AlertTriangle, l: "Open reports", c: 6, tone: "text-destructive" },
-              { icon: DollarSign, l: "Refunds pending", c: 3, tone: "text-gold" },
-            ].map((q) => (
-              <Card key={q.l} className="flex items-center justify-between border-border/60 p-4 shadow-soft">
-                <div className="flex items-center gap-2">
-                  <q.icon className={`h-4 w-4 ${q.tone}`} />
-                  <span className="text-sm font-medium">{q.l}</span>
-                </div>
-                <Badge variant="secondary">{q.c}</Badge>
-              </Card>
-            ))}
+            <QueueCard icon={BadgeCheck} label="Vendor verifications" count={stats.data?.vendorApplications ?? 0} tone="text-primary" />
+            <QueueCard icon={AlertTriangle} label="Open reports" count={stats.data?.openReports ?? 0} tone="text-destructive" />
+            <QueueCard icon={DollarSign} label="Refunds pending" count={stats.data?.pendingRefunds ?? 0} tone="text-gold" />
           </div>
         </Section>
 
@@ -73,8 +110,7 @@ function AdminPage() {
                 <p className="mt-1 text-xs text-muted-foreground">
                   Every plan, price, feature, trial length, and promise across MelaBridge reads
                   from a single config. Update once — Pricing page, checkout, upgrade screens,
-                  billing portal, and marketing pages update everywhere. In production this
-                  hydrates from the <code className="rounded bg-muted px-1">billing_config</code> table.
+                  billing portal, and marketing pages update everywhere.
                 </p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <ConfigStat icon={Percent} label="Donation platform fee" value={`${billingConfig.donationPlatformFeeRate * 100}%`} note="Always zero" />
@@ -119,7 +155,6 @@ function AdminPage() {
                             <span className="ml-0.5 text-xs font-normal text-muted-foreground">{period}</span>
                           )}
                         </span>
-                        <Button variant="outline" size="sm">Edit</Button>
                       </div>
                     </div>
                   );
@@ -130,6 +165,28 @@ function AdminPage() {
         </Section>
       </div>
     </AppShell>
+  );
+}
+
+function QueueCard({
+  icon: Icon,
+  label,
+  count,
+  tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  count: number;
+  tone: string;
+}) {
+  return (
+    <Card className="flex items-center justify-between border-border/60 p-4 shadow-soft">
+      <div className="flex items-center gap-2">
+        <Icon className={`h-4 w-4 ${tone}`} />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <Badge variant="secondary">{count}</Badge>
+    </Card>
   );
 }
 
