@@ -443,6 +443,7 @@ function exportConversation(c: Conversation) {
 }
 
 function ConversationPanel({ conversationId, onPatch }: { conversationId: string | null; onPatch: (id: string, patch: Partial<Conversation>) => void }) {
+  const qcMsg = useQueryClient();
   const msgQ = useQuery({
     queryKey: ["messages", conversationId],
     enabled: !!conversationId,
@@ -452,6 +453,24 @@ function ConversationPanel({ conversationId, onPatch }: { conversationId: string
       return data ?? [];
     },
   });
+
+  useEffect(() => {
+    if (!conversationId) return;
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        () => {
+          qcMsg.invalidateQueries({ queryKey: ["messages", conversationId] });
+          qcMsg.invalidateQueries({ queryKey: ["conversations"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, qcMsg]);
 
   if (!conversationId) {
     return (
