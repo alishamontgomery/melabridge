@@ -14,9 +14,11 @@ export type BookingStage =
   | "contract_signed"
   | "deposit_paid"
   | "booked"
+  | "in_progress"
   | "completed"
   | "review_requested"
-  | "reviewed";
+  | "reviewed"
+  | "cancelled";
 
 export type ConfirmationRule =
   | "contract_only"
