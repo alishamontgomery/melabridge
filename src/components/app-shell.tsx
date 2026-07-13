@@ -39,7 +39,7 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications } from "@/hooks/use-notifications";
-import { EcosystemProvider } from "@/lib/ecosystem-store";
+
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
@@ -275,7 +275,8 @@ export function AppShell({ active, children }: { active: string; children: React
   const groups = NAV_BY_ROLE[role];
 
   return (
-    <EcosystemProvider>
+    <>
+
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-3 focus:py-1.5 focus:text-primary-foreground"
@@ -335,7 +336,7 @@ export function AppShell({ active, children }: { active: string; children: React
 
         <CommandPalette />
       </div>
-    </EcosystemProvider>
+    </>
   );
 }
 

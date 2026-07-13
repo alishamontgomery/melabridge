@@ -168,7 +168,7 @@ function BridgeWorld() {
                                     </Button>
                                   ) : m.era === "future" ? (
                                     <Button asChild size="sm" variant="hero" className="gap-1">
-                                      <Link to="/new-event">Start planning <ArrowUpRight className="h-3 w-3" /></Link>
+                                      <Link to="/events/new">Start planning <ArrowUpRight className="h-3 w-3" /></Link>
                                     </Button>
                                   ) : (
                                     <Button asChild size="sm" variant="soft" className="gap-1">
@@ -201,7 +201,7 @@ function BridgeWorld() {
               <Link to="/bridgevault">Import a memory</Link>
             </Button>
             <Button asChild variant="hero">
-              <Link to="/new-event">Plan a new event</Link>
+              <Link to="/events/new">Plan a new event</Link>
             </Button>
           </div>
         </div>
