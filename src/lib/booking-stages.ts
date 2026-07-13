@@ -1,6 +1,6 @@
 import {
   Bookmark, MessageCircle, CalendarClock, FileText, Eye,
-  ScrollText, PenSquare, Wallet, CheckCircle2, PartyPopper, Star, Trophy,
+  ScrollText, PenSquare, Wallet, CheckCircle2, PartyPopper, Star, Trophy, PlayCircle, XCircle,
   type LucideIcon,
 } from "lucide-react";
 
