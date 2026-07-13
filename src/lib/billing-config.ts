@@ -129,6 +129,7 @@ export const billingConfig: BillingConfig = {
       featured: true,
       ctaLabel: "Start 14-day free trial",
       ctaHref: "/auth",
+      priceId: "host_plus_monthly",
       features: [
         "Unlimited events",
         "Unlimited AI planning",
@@ -154,6 +155,7 @@ export const billingConfig: BillingConfig = {
       includesFromPlanId: "host_plus",
       ctaLabel: "Start 14-day free trial",
       ctaHref: "/auth",
+      priceId: "host_pro_monthly",
       features: [
         "Team collaboration",
         "Ticketing (no platform fee)",
@@ -199,6 +201,7 @@ export const billingConfig: BillingConfig = {
       visible: true,
       ctaLabel: "Start 14-day free trial",
       ctaHref: "/auth",
+      priceId: "vendor_growth_monthly",
       features: [
         "Enhanced business profile",
         "Portfolio gallery (up to 20)",
@@ -222,6 +225,7 @@ export const billingConfig: BillingConfig = {
       includesFromPlanId: "vendor_growth",
       ctaLabel: "Start 14-day free trial",
       ctaHref: "/auth",
+      priceId: "vendor_professional_monthly",
       features: [
         "Higher marketplace visibility",
         "AI recommendations to matching hosts",
@@ -269,6 +273,7 @@ export const billingConfig: BillingConfig = {
       featured: true,
       ctaLabel: "Start 14-day free trial",
       ctaHref: "/auth",
+      priceId: "planner_business_monthly",
       features: [
         "Unlimited clients",
         "Unlimited events",
