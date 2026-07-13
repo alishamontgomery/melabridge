@@ -23,7 +23,7 @@ const ExtractedSchema = z
     deposit_required: z.number().nullable().optional(),
     event_notes: z.string().nullable().optional(),
     status: z
-      .enum(["inquiry", "quote_sent", "confirmed", "draft", "in_planning"])
+      .enum(["inquiry", "quote_sent", "confirmed", "draft", "planning", "consultation_scheduled", "tentative"])
       .nullable()
       .optional(),
   })
@@ -173,12 +173,13 @@ export const updateDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => UpdateInput.parse(input))
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = { status: "edited" };
-    if (data.extracted) patch.extracted = data.extracted;
-    if (data.review_notes !== undefined) patch.review_notes = data.review_notes;
     const { data: row, error } = await context.supabase
       .from("event_drafts")
-      .update(patch)
+      .update({
+        status: "edited",
+        ...(data.extracted ? { extracted: data.extracted as never } : {}),
+        ...(data.review_notes !== undefined ? { review_notes: data.review_notes } : {}),
+      })
       .eq("id", data.id)
       .select("*")
       .single();

@@ -70,6 +70,7 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedDraftsRouteImport } from './routes/_authenticated/drafts'
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
@@ -379,6 +380,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDraftsRoute = AuthenticatedDraftsRouteImport.update({
+  id: '/drafts',
+  path: '/drafts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEventsIndexRoute =
   AuthenticatedEventsIndexRouteImport.update({
     id: '/events/',
@@ -460,6 +466,7 @@ export interface FileRoutesByFullPath {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -526,6 +533,7 @@ export interface FileRoutesByTo {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -594,6 +602,7 @@ export interface FileRoutesById {
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
+  '/_authenticated/drafts': typeof AuthenticatedDraftsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -662,6 +671,7 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/drafts'
     | '/onboarding'
     | '/vendor'
     | '/auth/callback'
@@ -728,6 +738,7 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/drafts'
     | '/onboarding'
     | '/vendor'
     | '/auth/callback'
@@ -795,6 +806,7 @@ export interface FileRouteTypes {
     | '/vendors'
     | '/vision'
     | '/workspace'
+    | '/_authenticated/drafts'
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
     | '/auth/callback'
@@ -1296,6 +1308,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/drafts': {
+      id: '/_authenticated/drafts'
+      path: '/drafts'
+      fullPath: '/drafts'
+      preLoaderRoute: typeof AuthenticatedDraftsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/events/': {
       id: '/_authenticated/events/'
       path: '/events'
@@ -1328,6 +1347,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDraftsRoute: typeof AuthenticatedDraftsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedVendorRoute: typeof AuthenticatedVendorRoute
   AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
@@ -1336,6 +1356,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDraftsRoute: AuthenticatedDraftsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedVendorRoute: AuthenticatedVendorRoute,
   AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
