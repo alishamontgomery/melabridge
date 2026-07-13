@@ -241,8 +241,7 @@ function EmptyState({
       </span>
       <p className="mx-auto mt-4 max-w-md text-sm text-muted-foreground">{message}</p>
       <Button asChild className="mt-5" variant="hero">
-        {/* @ts-expect-error dynamic route */}
-        <Link to={to} params={params}>
+        <Link to={to as never} params={params as never}>
           <UserPlus className="mr-2 h-4 w-4" />
           {cta}
         </Link>
