@@ -1419,6 +1419,180 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_booking_events: {
+        Row: {
+          actor_id: string | null
+          booking_id: string
+          id: string
+          metadata: Json
+          note: string | null
+          occurred_at: string
+          stage: Database["public"]["Enums"]["booking_stage"]
+        }
+        Insert: {
+          actor_id?: string | null
+          booking_id: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          occurred_at?: string
+          stage: Database["public"]["Enums"]["booking_stage"]
+        }
+        Update: {
+          actor_id?: string | null
+          booking_id?: string
+          id?: string
+          metadata?: Json
+          note?: string | null
+          occurred_at?: string
+          stage?: Database["public"]["Enums"]["booking_stage"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_booking_settings: {
+        Row: {
+          auto_advance: boolean
+          confirmation_rule: Database["public"]["Enums"]["booking_confirmation_rule"]
+          created_at: string
+          requires_deposit: boolean
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          auto_advance?: boolean
+          confirmation_rule?: Database["public"]["Enums"]["booking_confirmation_rule"]
+          created_at?: string
+          requires_deposit?: boolean
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          auto_advance?: boolean
+          confirmation_rule?: Database["public"]["Enums"]["booking_confirmation_rule"]
+          created_at?: string
+          requires_deposit?: boolean
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_booking_settings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_booking_settings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_bookings: {
+        Row: {
+          category: string
+          completed_at: string | null
+          confirmed_at: string | null
+          contract_sent_at: string | null
+          contract_signed_at: string | null
+          created_at: string
+          created_by: string
+          current_stage: Database["public"]["Enums"]["booking_stage"]
+          deposit_amount: number | null
+          deposit_paid_amount: number
+          deposit_paid_at: string | null
+          event_id: string | null
+          id: string
+          notes: string | null
+          planner_id: string
+          quote_amount: number | null
+          quote_sent_at: string | null
+          title: string
+          total_paid: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          confirmed_at?: string | null
+          contract_sent_at?: string | null
+          contract_signed_at?: string | null
+          created_at?: string
+          created_by: string
+          current_stage?: Database["public"]["Enums"]["booking_stage"]
+          deposit_amount?: number | null
+          deposit_paid_amount?: number
+          deposit_paid_at?: string | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          planner_id: string
+          quote_amount?: number | null
+          quote_sent_at?: string | null
+          title: string
+          total_paid?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          confirmed_at?: string | null
+          contract_sent_at?: string | null
+          contract_signed_at?: string | null
+          created_at?: string
+          created_by?: string
+          current_stage?: Database["public"]["Enums"]["booking_stage"]
+          deposit_amount?: number | null
+          deposit_paid_amount?: number
+          deposit_paid_at?: string | null
+          event_id?: string | null
+          id?: string
+          notes?: string | null
+          planner_id?: string
+          quote_amount?: number | null
+          quote_sent_at?: string | null
+          title?: string
+          total_paid?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bookings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bookings_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_profiles: {
         Row: {
           accepted_terms: boolean
@@ -1584,6 +1758,10 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      is_booking_party: {
+        Args: { _booking_id: string; _user: string }
+        Returns: boolean
+      }
       seed_test_data: {
         Args: {
           admin_id: string
@@ -1598,6 +1776,24 @@ export type Database = {
     }
     Enums: {
       app_role: "planner" | "vendor" | "guest" | "admin" | "attendee"
+      booking_confirmation_rule:
+        | "contract_only"
+        | "deposit_only"
+        | "contract_and_deposit"
+        | "manual"
+      booking_stage:
+        | "saved"
+        | "contacted"
+        | "consultation_scheduled"
+        | "quote_sent"
+        | "quote_under_review"
+        | "contract_sent"
+        | "contract_signed"
+        | "deposit_paid"
+        | "booked"
+        | "completed"
+        | "review_requested"
+        | "reviewed"
       calendar_block_reason: "day_off" | "vacation" | "travel"
       calendar_event_source: "native" | "external"
       calendar_event_status:
@@ -1765,6 +1961,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["planner", "vendor", "guest", "admin", "attendee"],
+      booking_confirmation_rule: [
+        "contract_only",
+        "deposit_only",
+        "contract_and_deposit",
+        "manual",
+      ],
+      booking_stage: [
+        "saved",
+        "contacted",
+        "consultation_scheduled",
+        "quote_sent",
+        "quote_under_review",
+        "contract_sent",
+        "contract_signed",
+        "deposit_paid",
+        "booked",
+        "completed",
+        "review_requested",
+        "reviewed",
+      ],
       calendar_block_reason: ["day_off", "vacation", "travel"],
       calendar_event_source: ["native", "external"],
       calendar_event_status: [
