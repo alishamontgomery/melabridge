@@ -43,6 +43,8 @@ export interface Plan {
   ctaHref: string;
   features: string[];
   includesFromPlanId?: PlanId; // "Everything in X, plus..."
+  /** Stripe price lookup_key. Present only for paid, self-serve plans. */
+  priceId?: string;
 }
 
 export interface BillingPromise {
