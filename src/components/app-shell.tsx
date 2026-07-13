@@ -313,13 +313,7 @@ export function AppShell({ active, children }: { active: string; children: React
               <CommandTrigger />
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              <Link
-                to="/notifications"
-                className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                aria-label="Notifications"
-              >
-                <Bell className="h-4 w-4" />
-              </Link>
+              <NotificationsBell />
               <UserMenu />
             </div>
           </div>
