@@ -206,7 +206,7 @@ export function EventDashboardPreview({
               {tasksDone}<span className="ml-1 text-xs font-normal text-muted-foreground">/ {data.tasks.length} done</span>
             </div>
             <ProgressBar value={inView ? tasksPct : 0} tone="emerald" />
-            <p className="mt-1 flex items-center gap-1 text-[11px] text-emerald-700">
+            <p className="mt-1 flex items-center gap-1 text-[11px] text-emerald-800 dark:text-emerald-300">
               <TrendingUp className="h-3 w-3" /> Ahead of schedule
             </p>
           </StatCard>
