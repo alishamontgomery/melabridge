@@ -100,8 +100,8 @@ function MelaAssistPage() {
               <StatCard icon={CalendarClock} label="Upcoming bookings" value={stats.upcomingBookings} to="/timeline" />
               <StatCard
                 icon={TrendingUp}
-                label="BridgeScore™"
-                value={stats.vendorProfile.bridge_score ?? "—"}
+                label="Profile"
+                value="View"
                 to="/profile"
               />
             </div>
