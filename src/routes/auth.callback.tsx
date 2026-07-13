@@ -24,15 +24,27 @@ function friendlyAuthError(error: unknown) {
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 async function waitForAuthenticatedUser(maxMs = 9000) {
-  const start = Date.now();
-  let lastError: unknown;
-  while (Date.now() - start < maxMs) {
-    const { data, error } = await supabase.auth.getUser();
-    if (data.user) return data.user;
-    if (error) lastError = error;
-    await wait(300);
-  }
-  throw lastError instanceof Error ? lastError : new Error("We couldn't confirm your secure session.");
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (sessionData.session?.user) return sessionData.session.user;
+  return await new Promise<User>((resolve, reject) => {
+    let settled = false;
+    const finish = (u: User | null) => {
+      if (settled) return;
+      settled = true;
+      sub.unsubscribe();
+      window.clearInterval(poll);
+      window.clearTimeout(timer);
+      if (u) resolve(u); else reject(new Error("We couldn't confirm your secure session."));
+    };
+    const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session?.user) finish(session.user);
+    });
+    const poll = window.setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) finish(data.session.user);
+    }, 300);
+    const timer = window.setTimeout(() => finish(null), maxMs);
+  });
 }
 
 async function ensureProfile(user: User) {
