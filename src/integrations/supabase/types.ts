@@ -919,7 +919,75 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vendor_profiles_public: {
+        Row: {
+          business_category: string | null
+          business_description: string | null
+          business_hours: Json | null
+          business_name: string | null
+          city: string | null
+          created_at: string | null
+          id: string | null
+          logo_url: string | null
+          mobile_service: boolean | null
+          onboarding_completed: boolean | null
+          portfolio_urls: string[] | null
+          social_links: Json | null
+          starting_price: number | null
+          state: string | null
+          travel_radius: number | null
+          updated_at: string | null
+          user_id: string | null
+          virtual_services: string | null
+          website: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          business_category?: string | null
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string | null
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          business_category?: string | null
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          id?: string | null
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       event_role_rank: {
