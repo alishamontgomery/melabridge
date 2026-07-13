@@ -1,12 +1,14 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 
 // ---------------- Types ----------------
 
 export type EventState = {
-  id: string;
+  id: string | null;
   name: string;
   type: string;
-  date: string; // ISO
+  date: string; // ISO or ""
   location: string;
   guests: number;
   rsvps: number;
@@ -30,6 +32,8 @@ export type Ripple = {
 type EcosystemValue = {
   event: EventState;
   ripples: Ripple[];
+  loading: boolean;
+  hasEvent: boolean;
   setGuests: (n: number) => void;
   confirmVendor: (name: string) => void;
   setWeatherRisk: (risk: EventState["weatherRisk"]) => void;
@@ -42,165 +46,130 @@ type EcosystemValue = {
   seatingTables: number;
 };
 
-const DEFAULT_EVENT: EventState = {
-  id: "e1",
-  name: "Amara & Julien — Wedding",
-  type: "Wedding",
-  date: "2026-10-17",
-  location: "Lake Como, Italy",
-  guests: 142,
-  rsvps: 78,
-  budget: 68000,
-  spent: 41200,
-  vendorsConfirmed: 4,
-  vendorsTotal: 5,
-  tasksDone: 42,
-  tasksTotal: 58,
-  weatherRisk: "medium",
+const EMPTY_EVENT: EventState = {
+  id: null,
+  name: "No active event",
+  type: "",
+  date: "",
+  location: "",
+  guests: 0,
+  rsvps: 0,
+  budget: 0,
+  spent: 0,
+  vendorsConfirmed: 0,
+  vendorsTotal: 0,
+  tasksDone: 0,
+  tasksTotal: 0,
+  weatherRisk: "low",
 };
 
-// ---------------- Cascade math ----------------
-
 function computeHealth(e: EventState) {
+  if (!e.id) return 0;
   const tasks = (e.tasksDone / Math.max(1, e.tasksTotal)) * 30;
   const vendors = (e.vendorsConfirmed / Math.max(1, e.vendorsTotal)) * 25;
   const rsvp = Math.min(1, e.rsvps / Math.max(1, e.guests)) * 20;
-  const budgetHealth = e.spent <= e.budget ? 20 : Math.max(0, 20 - ((e.spent - e.budget) / e.budget) * 40);
+  const budgetHealth = e.spent <= e.budget ? 20 : Math.max(0, 20 - ((e.spent - e.budget) / Math.max(1, e.budget)) * 40);
   const weather = e.weatherRisk === "low" ? 5 : e.weatherRisk === "medium" ? 3 : 0;
-  return Math.round(Math.max(0, Math.min(100, tasks + vendors + rsvp * 20 / 20 + budgetHealth + weather)));
+  return Math.round(Math.max(0, Math.min(100, tasks + vendors + rsvp + budgetHealth + weather)));
 }
 
 const EcosystemContext = createContext<EcosystemValue | null>(null);
 
 export function EcosystemProvider({ children }: { children: ReactNode }) {
-  const [event, setEvent] = useState<EventState>(DEFAULT_EVENT);
-  const [ripples, setRipples] = useState<Ripple[]>([
-    {
-      id: "r0",
-      ts: Date.now() - 1000 * 60 * 42,
-      source: "Weather forecast · Oct 17",
-      effects: [
-        "Contingency plan drafted (indoor ceremony backup)",
-        "Vendor notification queued for tent rental",
-        "Event Health Score™ recalculated to 92",
-      ],
-      tone: "warn",
-    },
-  ]);
+  const { user, loading: authLoading } = useAuth();
+  const [event, setEvent] = useState<EventState>(EMPTY_EVENT);
+  const [loading, setLoading] = useState(true);
 
-  const pushRipple = useCallback((r: Omit<Ripple, "id" | "ts">) => {
-    setRipples((prev) => [{ ...r, id: `r${prev.length + 1}`, ts: Date.now() }, ...prev].slice(0, 20));
-  }, []);
-
-  const setGuests = useCallback(
-    (n: number) => {
-      const next = Math.max(0, Math.min(1000, Math.round(n)));
-      setEvent((e) => {
-        const perGuest = e.spent / Math.max(1, e.guests);
-        const projected = Math.round(perGuest * next);
-        return { ...e, guests: next, spent: projected };
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setEvent(EMPTY_EVENT);
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data: ev } = await supabase
+        .from("events")
+        .select("*")
+        .neq("status", "archived")
+        .order("event_date", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!ev) {
+        setEvent(EMPTY_EVENT);
+        setLoading(false);
+        return;
+      }
+      const [{ data: guests }, { data: tasks }, { data: budgetItems }] = await Promise.all([
+        supabase.from("guests").select("plus_ones, rsvp_status").eq("event_id", ev.id),
+        supabase.from("tasks").select("status").eq("event_id", ev.id),
+        supabase.from("budget_items").select("estimated_amount, actual_amount, paid_amount").eq("event_id", ev.id),
+      ]);
+      if (cancelled) return;
+      const guestList = guests ?? [];
+      const taskList = tasks ?? [];
+      const items = budgetItems ?? [];
+      const guestCount = guestList.reduce((s, g: any) => s + 1 + Number(g.plus_ones ?? 0), 0);
+      const rsvpCount = guestList.filter((g: any) => g.rsvp_status === "confirmed" || g.rsvp_status === "attending").length;
+      const tasksDone = taskList.filter((t: any) => t.status === "done" || t.status === "completed").length;
+      const spent = items.reduce((s, i: any) => s + Number(i.paid_amount ?? i.actual_amount ?? 0), 0);
+      setEvent({
+        id: ev.id,
+        name: ev.name ?? "Untitled event",
+        type: ev.event_type ?? "",
+        date: ev.event_date ?? "",
+        location: ev.location ?? "",
+        guests: guestCount || Number(ev.guest_target ?? 0),
+        rsvps: rsvpCount,
+        budget: Number(ev.budget_target ?? 0),
+        spent,
+        vendorsConfirmed: 0,
+        vendorsTotal: 0,
+        tasksDone,
+        tasksTotal: taskList.length,
+        weatherRisk: "low",
       });
-      pushRipple({
-        source: `Guest count updated to ${next}`,
-        tone: "info",
-        effects: [
-          `Budget projection recalculated at $${Math.round((event.spent / Math.max(1, event.guests)) * next).toLocaleString()}`,
-          `Catering recommendation: ${Math.ceil(next * 1.05)} plates (5% overflow)`,
-          `Seating updated: ${Math.ceil(next / 10)} tables of 10`,
-          "Vendor suggestions refreshed by BridgeDNA™",
-          "Event Health Score™ recalculated",
-        ],
-      });
-    },
-    [event.spent, event.guests, pushRipple]
-  );
-
-  const confirmVendor = useCallback(
-    (name: string) => {
-      setEvent((e) => ({ ...e, vendorsConfirmed: Math.min(e.vendorsTotal, e.vendorsConfirmed + 1) }));
-      pushRipple({
-        source: `Vendor confirmed · ${name}`,
-        tone: "good",
-        effects: [
-          "Timeline updated with vendor milestones",
-          "Pending reminders removed by AI",
-          "Budget marked as committed",
-          "Collaboration feed posted an update",
-          "Event Health Score™ recalculated",
-        ],
-      });
-    },
-    [pushRipple]
-  );
-
-  const setWeatherRisk = useCallback(
-    (risk: EventState["weatherRisk"]) => {
-      setEvent((e) => ({ ...e, weatherRisk: risk }));
-      pushRipple({
-        source: `Weather risk set to ${risk}`,
-        tone: risk === "high" ? "warn" : "info",
-        effects: [
-          "Contingency recommendations drafted by AI",
-          "Vendor notifications prepared",
-          "Event Health Score™ recalculated",
-        ],
-      });
-    },
-    [pushRipple]
-  );
-
-  const completeTask = useCallback(() => {
-    setEvent((e) => ({ ...e, tasksDone: Math.min(e.tasksTotal, e.tasksDone + 1) }));
-    pushRipple({
-      source: "Task completed",
-      tone: "good",
-      effects: ["Timeline advanced", "Collaboration feed updated", "Event Health Score™ recalculated"],
-    });
-  }, [pushRipple]);
-
-  const logRsvp = useCallback(
-    (delta: number) => {
-      setEvent((e) => ({ ...e, rsvps: Math.max(0, Math.min(e.guests, e.rsvps + delta)) }));
-      pushRipple({
-        source: `RSVP updated (${delta > 0 ? "+" : ""}${delta})`,
-        tone: "info",
-        effects: ["Seating recalculated", "Catering adjusted", "Event Health Score™ recalculated"],
-      });
-    },
-    [pushRipple]
-  );
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
 
   const value: EcosystemValue = useMemo(() => {
     const health = computeHealth(event);
-    const budgetPct = Math.round((event.spent / Math.max(1, event.budget)) * 100);
-    const perGuest = Math.round(event.spent / Math.max(1, event.guests));
+    const budgetPct = event.budget > 0 ? Math.round((event.spent / event.budget) * 100) : 0;
+    const perGuest = event.guests > 0 ? Math.round(event.spent / event.guests) : 0;
     const cateringRecommendation = Math.ceil(event.guests * 1.05);
     const seatingTables = Math.ceil(event.guests / 10);
+    const noop = () => {};
     return {
       event,
-      ripples,
-      setGuests,
-      confirmVendor,
-      setWeatherRisk,
-      completeTask,
-      logRsvp,
+      ripples: [],
+      loading,
+      hasEvent: !!event.id,
+      setGuests: (n: number) => setEvent((e) => ({ ...e, guests: Math.max(0, Math.round(n)) })),
+      confirmVendor: noop,
+      setWeatherRisk: (risk) => setEvent((e) => ({ ...e, weatherRisk: risk })),
+      completeTask: noop,
+      logRsvp: noop,
       health,
       budgetPct,
       perGuest,
       cateringRecommendation,
       seatingTables,
     };
-  }, [event, ripples, setGuests, confirmVendor, setWeatherRisk, completeTask, logRsvp]);
+  }, [event, loading]);
 
   return <EcosystemContext.Provider value={value}>{children}</EcosystemContext.Provider>;
 }
 
 export function useEcosystem(): EcosystemValue {
   const ctx = useContext(EcosystemContext);
-  if (!ctx) {
-    // Fallback so components can render outside a provider (e.g. isolated stories).
-    // Real pages should be wrapped in <EcosystemProvider />.
-    throw new Error("useEcosystem must be used within <EcosystemProvider />");
-  }
+  if (!ctx) throw new Error("useEcosystem must be used within <EcosystemProvider />");
   return ctx;
 }
