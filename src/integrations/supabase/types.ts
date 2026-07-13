@@ -919,6 +919,90 @@ export type Database = {
       }
     }
     Views: {
+      vendor_profiles_for_event_owner: {
+        Row: {
+          accepted_terms: boolean | null
+          business_address: string | null
+          business_category: string | null
+          business_description: string | null
+          business_hours: Json | null
+          business_name: string | null
+          city: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          is_test_seed: boolean | null
+          logo_url: string | null
+          mobile_service: boolean | null
+          onboarding_completed: boolean | null
+          phone: string | null
+          portfolio_urls: string[] | null
+          social_links: Json | null
+          starting_price: number | null
+          state: string | null
+          travel_radius: number | null
+          updated_at: string | null
+          user_id: string | null
+          virtual_services: string | null
+          website: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          accepted_terms?: boolean | null
+          business_address?: string | null
+          business_category?: string | null
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          is_test_seed?: boolean | null
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          accepted_terms?: boolean | null
+          business_address?: string | null
+          business_category?: string | null
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          is_test_seed?: boolean | null
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: []
+      }
       vendor_profiles_public: {
         Row: {
           business_category: string | null
@@ -988,6 +1072,90 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_profiles_self: {
+        Row: {
+          accepted_terms: boolean | null
+          business_address: string | null
+          business_category: string | null
+          business_description: string | null
+          business_hours: Json | null
+          business_name: string | null
+          city: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          is_test_seed: boolean | null
+          logo_url: string | null
+          mobile_service: boolean | null
+          onboarding_completed: boolean | null
+          phone: string | null
+          portfolio_urls: string[] | null
+          social_links: Json | null
+          starting_price: number | null
+          state: string | null
+          travel_radius: number | null
+          updated_at: string | null
+          user_id: string | null
+          virtual_services: string | null
+          website: string | null
+          years_in_business: number | null
+        }
+        Insert: {
+          accepted_terms?: boolean | null
+          business_address?: string | null
+          business_category?: string | null
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          is_test_seed?: boolean | null
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Update: {
+          accepted_terms?: boolean | null
+          business_address?: string | null
+          business_category?: string | null
+          business_description?: string | null
+          business_hours?: Json | null
+          business_name?: string | null
+          city?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          is_test_seed?: boolean | null
+          logo_url?: string | null
+          mobile_service?: boolean | null
+          onboarding_completed?: boolean | null
+          phone?: string | null
+          portfolio_urls?: string[] | null
+          social_links?: Json | null
+          starting_price?: number | null
+          state?: string | null
+          travel_radius?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          virtual_services?: string | null
+          website?: string | null
+          years_in_business?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       event_role_rank: {
@@ -997,6 +1165,37 @@ export type Database = {
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
+      }
+      list_public_vendors: {
+        Args: never
+        Returns: {
+          business_category: string | null
+          business_description: string | null
+          business_hours: Json | null
+          business_name: string | null
+          city: string | null
+          created_at: string | null
+          id: string | null
+          logo_url: string | null
+          mobile_service: boolean | null
+          onboarding_completed: boolean | null
+          portfolio_urls: string[] | null
+          social_links: Json | null
+          starting_price: number | null
+          state: string | null
+          travel_radius: number | null
+          updated_at: string | null
+          user_id: string | null
+          virtual_services: string | null
+          website: string | null
+          years_in_business: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "vendor_profiles_public"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       seed_test_data: {
         Args: {
