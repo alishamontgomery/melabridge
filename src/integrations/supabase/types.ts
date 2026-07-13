@@ -1791,9 +1791,11 @@ export type Database = {
         | "contract_signed"
         | "deposit_paid"
         | "booked"
+        | "in_progress"
         | "completed"
         | "review_requested"
         | "reviewed"
+        | "cancelled"
       calendar_block_reason: "day_off" | "vacation" | "travel"
       calendar_event_source: "native" | "external"
       calendar_event_status:
@@ -1977,9 +1979,11 @@ export const Constants = {
         "contract_signed",
         "deposit_paid",
         "booked",
+        "in_progress",
         "completed",
         "review_requested",
         "reviewed",
+        "cancelled",
       ],
       calendar_block_reason: ["day_off", "vacation", "travel"],
       calendar_event_source: ["native", "external"],
