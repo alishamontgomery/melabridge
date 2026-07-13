@@ -58,6 +58,7 @@ export type Database = {
           estimated_amount: number
           event_id: string
           id: string
+          is_test_seed: boolean
           label: string
           notes: string | null
           paid_amount: number
@@ -72,6 +73,7 @@ export type Database = {
           estimated_amount?: number
           event_id: string
           id?: string
+          is_test_seed?: boolean
           label: string
           notes?: string | null
           paid_amount?: number
@@ -86,6 +88,7 @@ export type Database = {
           estimated_amount?: number
           event_id?: string
           id?: string
+          is_test_seed?: boolean
           label?: string
           notes?: string | null
           paid_amount?: number
@@ -141,6 +144,7 @@ export type Database = {
           is_favorite: boolean
           is_muted: boolean
           is_pinned: boolean
+          is_test_seed: boolean
           labels: string[]
           last_message_at: string
           last_message_preview: string | null
@@ -159,6 +163,7 @@ export type Database = {
           is_favorite?: boolean
           is_muted?: boolean
           is_pinned?: boolean
+          is_test_seed?: boolean
           labels?: string[]
           last_message_at?: string
           last_message_preview?: string | null
@@ -177,6 +182,7 @@ export type Database = {
           is_favorite?: boolean
           is_muted?: boolean
           is_pinned?: boolean
+          is_test_seed?: boolean
           labels?: string[]
           last_message_at?: string
           last_message_preview?: string | null
@@ -195,6 +201,7 @@ export type Database = {
           event_id: string
           filename: string
           id: string
+          is_test_seed: boolean
           mime_type: string | null
           notes: string | null
           size_bytes: number | null
@@ -208,6 +215,7 @@ export type Database = {
           event_id: string
           filename: string
           id?: string
+          is_test_seed?: boolean
           mime_type?: string | null
           notes?: string | null
           size_bytes?: number | null
@@ -221,6 +229,7 @@ export type Database = {
           event_id?: string
           filename?: string
           id?: string
+          is_test_seed?: boolean
           mime_type?: string | null
           notes?: string | null
           size_bytes?: number | null
@@ -281,6 +290,7 @@ export type Database = {
           event_type: string | null
           guest_target: number | null
           id: string
+          is_test_seed: boolean
           location: string | null
           name: string
           owner_id: string
@@ -297,6 +307,7 @@ export type Database = {
           event_type?: string | null
           guest_target?: number | null
           id?: string
+          is_test_seed?: boolean
           location?: string | null
           name: string
           owner_id: string
@@ -313,6 +324,7 @@ export type Database = {
           event_type?: string | null
           guest_target?: number | null
           id?: string
+          is_test_seed?: boolean
           location?: string | null
           name?: string
           owner_id?: string
@@ -329,6 +341,7 @@ export type Database = {
           full_name: string
           household: string | null
           id: string
+          is_test_seed: boolean
           meal_choice: string | null
           notes: string | null
           phone: string | null
@@ -343,6 +356,7 @@ export type Database = {
           full_name: string
           household?: string | null
           id?: string
+          is_test_seed?: boolean
           meal_choice?: string | null
           notes?: string | null
           phone?: string | null
@@ -357,6 +371,7 @@ export type Database = {
           full_name?: string
           household?: string | null
           id?: string
+          is_test_seed?: boolean
           meal_choice?: string | null
           notes?: string | null
           phone?: string | null
@@ -464,6 +479,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          is_test_seed: boolean
           read_at: string | null
           sender_id: string
           status: string
@@ -474,6 +490,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          is_test_seed?: boolean
           read_at?: string | null
           sender_id: string
           status?: string
@@ -484,6 +501,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          is_test_seed?: boolean
           read_at?: string | null
           sender_id?: string
           status?: string
@@ -562,6 +580,7 @@ export type Database = {
           href: string | null
           icon: string | null
           id: string
+          is_test_seed: boolean
           read_at: string | null
           title: string
           user_id: string
@@ -575,6 +594,7 @@ export type Database = {
           href?: string | null
           icon?: string | null
           id?: string
+          is_test_seed?: boolean
           read_at?: string | null
           title: string
           user_id: string
@@ -588,6 +608,7 @@ export type Database = {
           href?: string | null
           icon?: string | null
           id?: string
+          is_test_seed?: boolean
           read_at?: string | null
           title?: string
           user_id?: string
@@ -603,6 +624,7 @@ export type Database = {
           email: string | null
           id: string
           is_organization: boolean
+          is_test_seed: boolean
           onboarding_completed: boolean
           organization_name: string | null
           organization_type: string | null
@@ -618,6 +640,7 @@ export type Database = {
           email?: string | null
           id: string
           is_organization?: boolean
+          is_test_seed?: boolean
           onboarding_completed?: boolean
           organization_name?: string | null
           organization_type?: string | null
@@ -633,6 +656,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_organization?: boolean
+          is_test_seed?: boolean
           onboarding_completed?: boolean
           organization_name?: string | null
           organization_type?: string | null
@@ -689,6 +713,7 @@ export type Database = {
           current_period_start: string | null
           environment: string
           id: string
+          is_test_seed: boolean
           price_id: string
           product_id: string
           status: string
@@ -704,6 +729,7 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
+          is_test_seed?: boolean
           price_id: string
           product_id: string
           status?: string
@@ -719,6 +745,7 @@ export type Database = {
           current_period_start?: string | null
           environment?: string
           id?: string
+          is_test_seed?: boolean
           price_id?: string
           product_id?: string
           status?: string
@@ -739,6 +766,7 @@ export type Database = {
           due_date: string | null
           event_id: string
           id: string
+          is_test_seed: boolean
           priority: Database["public"]["Enums"]["task_priority"]
           status: Database["public"]["Enums"]["task_status"]
           title: string
@@ -753,6 +781,7 @@ export type Database = {
           due_date?: string | null
           event_id: string
           id?: string
+          is_test_seed?: boolean
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           title: string
@@ -767,6 +796,7 @@ export type Database = {
           due_date?: string | null
           event_id?: string
           id?: string
+          is_test_seed?: boolean
           priority?: Database["public"]["Enums"]["task_priority"]
           status?: Database["public"]["Enums"]["task_status"]
           title?: string
@@ -815,6 +845,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_test_seed: boolean
           logo_url: string | null
           mobile_service: boolean | null
           onboarding_completed: boolean
@@ -841,6 +872,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_test_seed?: boolean
           logo_url?: string | null
           mobile_service?: boolean | null
           onboarding_completed?: boolean
@@ -867,6 +899,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_test_seed?: boolean
           logo_url?: string | null
           mobile_service?: boolean | null
           onboarding_completed?: boolean
@@ -897,9 +930,20 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      seed_test_data: {
+        Args: {
+          admin_id: string
+          attendee_id: string
+          guest_id: string
+          planner_id: string
+          vendor_id: string
+        }
+        Returns: Json
+      }
+      wipe_test_data: { Args: never; Returns: Json }
     }
     Enums: {
-      app_role: "planner" | "vendor" | "guest" | "admin"
+      app_role: "planner" | "vendor" | "guest" | "admin" | "attendee"
       event_role: "owner" | "admin" | "editor" | "commenter" | "viewer"
       event_status:
         | "draft"
@@ -1037,7 +1081,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["planner", "vendor", "guest", "admin"],
+      app_role: ["planner", "vendor", "guest", "admin", "attendee"],
       event_role: ["owner", "admin", "editor", "commenter", "viewer"],
       event_status: ["draft", "planning", "confirmed", "completed", "archived"],
       guest_rsvp: ["pending", "yes", "no", "maybe"],
