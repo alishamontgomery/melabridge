@@ -753,29 +753,6 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["event_role"] }
         Returns: number
       }
-      has_event_access: {
-        Args: {
-          _event_id: string
-          _min: Database["public"]["Enums"]["event_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      is_conversation_participant: {
-        Args: { _conv: string; _user: string }
-        Returns: boolean
-      }
-      is_event_member: {
-        Args: { _event_id: string; _user_id: string }
-        Returns: boolean
-      }
     }
     Enums: {
       app_role: "planner" | "vendor" | "guest" | "admin"
