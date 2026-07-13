@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Store, Search, Star, MapPin, BadgeCheck, Sparkles, Filter } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MetricRow, Section } from "@/components/module-page";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/marketplace")({
   head: () => ({
@@ -17,71 +20,135 @@ export const Route = createFileRoute("/marketplace")({
   component: MarketplacePage,
 });
 
-const VENDORS = [
-  { n: "Aurora Blooms", cat: "Florist", loc: "Lagos, NG", rating: 4.9, jobs: 128, price: "$$", verified: true, tag: "Concierge match" },
-  { n: "Studio Nine Photo", cat: "Photography", loc: "Accra, GH", rating: 4.8, jobs: 214, price: "$$$", verified: true },
-  { n: "Chef Nia Kitchen", cat: "Catering", loc: "Nairobi, KE", rating: 4.9, jobs: 96, price: "$$", verified: true, tag: "Rising" },
-  { n: "The Sound Room", cat: "DJ & Live", loc: "Lagos, NG", rating: 4.7, jobs: 302, price: "$$" },
-  { n: "Threaded Weddings", cat: "Planner", loc: "Cape Town, ZA", rating: 5.0, jobs: 48, price: "$$$", verified: true },
-  { n: "GoldLeaf Décor", cat: "Décor", loc: "Abuja, NG", rating: 4.6, jobs: 174, price: "$" },
-];
+type VendorRow = {
+  id: string;
+  business_name: string;
+  business_category: string;
+  city: string | null;
+  state: string | null;
+  starting_price: number | null;
+  logo_url: string | null;
+  onboarding_completed: boolean;
+};
 
 function MarketplacePage() {
+  const [query, setQuery] = useState("");
+
+  const vendorsQ = useQuery({
+    queryKey: ["marketplace-vendors"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("vendor_profiles")
+        .select("id, business_name, business_category, city, state, starting_price, logo_url, onboarding_completed")
+        .eq("onboarding_completed", true)
+        .order("created_at", { ascending: false })
+        .limit(60);
+      if (error) throw error;
+      return (data ?? []) as VendorRow[];
+    },
+  });
+
+  const vendors = vendorsQ.data ?? [];
+  const filtered = useMemo(() => {
+    const s = query.trim().toLowerCase();
+    if (!s) return vendors;
+    return vendors.filter(
+      (v) =>
+        v.business_name.toLowerCase().includes(s) ||
+        v.business_category.toLowerCase().includes(s) ||
+        (v.city ?? "").toLowerCase().includes(s),
+    );
+  }, [vendors, query]);
+
   return (
     <AppShell active="/marketplace">
       <div className="space-y-6">
         <PageHeader
           eyebrow="Marketplace"
           title="Vetted vendors, matched to you"
-          description="Search 12,000+ verified vendors across catering, florals, photography, planning, entertainment, and more."
+          description="Search verified vendors across catering, florals, photography, planning, entertainment, and more."
           icon={Store}
         />
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search vendors, categories, cities…" className="pl-9" />
+            <Input
+              placeholder="Search vendors, categories, cities…"
+              className="pl-9"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
           </div>
           <Button variant="outline" className="gap-2"><Filter className="h-4 w-4" /> Filters</Button>
-          <Button className="gap-2 bg-gradient-to-r from-primary to-gold text-primary-foreground"><Sparkles className="h-4 w-4" /> AI match</Button>
+          <Button className="gap-2 bg-gradient-to-r from-primary to-gold text-primary-foreground" asChild>
+            <Link to="/concierge"><Sparkles className="h-4 w-4" /> AI match</Link>
+          </Button>
         </div>
         <MetricRow
           metrics={[
-            { label: "Vetted vendors", value: "12,480" },
-            { label: "Verified", value: "9,203", hint: "BridgeCheck™" },
-            { label: "Avg. response", value: "1.4h" },
-            { label: "Booked via MelaBridge", value: "48k" },
+            { label: "Listed vendors", value: vendors.length.toLocaleString() },
+            { label: "Verification", value: "BridgeCheck™", hint: "In review" },
+            { label: "Avg. response", value: "—", hint: "Coming soon" },
+            { label: "Booked via MelaBridge", value: "—", hint: "Coming soon" },
           ]}
         />
-        <Section title="Recommended for your event" description="Ranked by fit, availability, and past events like yours.">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {VENDORS.map((v) => (
-              <Card key={v.n} className="overflow-hidden border-border/60 shadow-soft transition hover:shadow-elegant">
-                <div className="h-24 bg-gradient-to-br from-primary/20 via-gold/20 to-transparent" />
-                <div className="space-y-2 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="flex items-center gap-1.5 text-sm font-semibold">
-                        {v.n}
-                        {v.verified && <BadgeCheck className="h-3.5 w-3.5 text-primary" />}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{v.cat} · {v.price}</p>
-                    </div>
-                    {v.tag && <Badge variant="secondary" className="text-[10px]">{v.tag}</Badge>}
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><Star className="h-3 w-3 fill-gold text-gold" /> {v.rating} · {v.jobs} jobs</span>
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> {v.loc}</span>
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <Button variant="outline" size="sm" className="flex-1">View</Button>
-                    <Button size="sm" className="flex-1">Request quote</Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+        <Section title="Available vendors" description="Ranked by recency. Reviews, availability, and AI matching are rolling out.">
+          {vendorsQ.isLoading ? (
+            <Card className="p-10 text-center text-sm text-muted-foreground">Loading vendors…</Card>
+          ) : filtered.length === 0 ? (
+            <Card className="p-10 text-center">
+              <p className="font-display text-lg font-semibold">No vendors yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {vendors.length === 0
+                  ? "Be one of the first — invite vendors or set up your own vendor profile."
+                  : "No vendors match that search."}
+              </p>
+              <div className="mt-4 flex justify-center gap-2">
+                <Button asChild variant="hero"><Link to="/vendor-portal">Become a vendor</Link></Button>
+                <Button asChild variant="outline"><Link to="/vendors">Invite vendors</Link></Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((v) => (
+                <VendorCard key={v.id} v={v} />
+              ))}
+            </div>
+          )}
         </Section>
       </div>
     </AppShell>
+  );
+}
+
+function VendorCard({ v }: { v: VendorRow }) {
+  const location = [v.city, v.state].filter(Boolean).join(", ");
+  return (
+    <Card className="overflow-hidden border-border/60 shadow-soft transition hover:shadow-elegant">
+      <div
+        className="h-24 bg-gradient-to-br from-primary/20 via-gold/20 to-transparent bg-cover bg-center"
+        style={v.logo_url ? { backgroundImage: `url(${v.logo_url})` } : undefined}
+      />
+      <div className="space-y-2 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="flex items-center gap-1.5 text-sm font-semibold">
+              {v.business_name}
+              <BadgeCheck className="h-3.5 w-3.5 text-primary" />
+            </p>
+            <p className="text-xs text-muted-foreground">{v.business_category}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          {location && (
+            <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{location}</span>
+          )}
+          {v.starting_price != null && (
+            <span className="inline-flex items-center gap-1"><Star className="h-3 w-3" />From ${v.starting_price.toLocaleString()}</span>
+          )}
+        </div>
+        <Button variant="outline" size="sm" className="w-full">View profile</Button>
+      </div>
+    </Card>
   );
 }

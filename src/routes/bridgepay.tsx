@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { CreditCard, Wallet, ShieldCheck, Receipt, RefreshCw, Banknote, PiggyBank, Lock } from "lucide-react";
+import { CreditCard, ShieldCheck, Receipt, RefreshCw, Banknote, PiggyBank, Lock, Sparkles } from "lucide-react";
 import { ModuleGrid, MetricRow, Section, CTARow } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/bridgepay")({
   head: () => ({
@@ -24,13 +25,14 @@ function BridgePayPage() {
           title="One wallet for every event payment"
           description="Deposits, escrow, split payments, vendor payouts, and refunds — protected end-to-end and reconciled with your budget in real time."
           icon={CreditCard}
+          actions={<Badge variant="secondary">Preview</Badge>}
         />
         <MetricRow
           metrics={[
-            { label: "In escrow", value: "$12,450", hint: "Released on milestones" },
-            { label: "Paid to vendors", value: "$8,920" },
-            { label: "Pending", value: "$1,800", hint: "2 invoices" },
-            { label: "Saved via BridgePay", value: "$640", hint: "Fee waivers" },
+            { label: "In escrow", value: "—", hint: "Coming soon" },
+            { label: "Paid to vendors", value: "—", hint: "Coming soon" },
+            { label: "Pending", value: "—", hint: "Coming soon" },
+            { label: "Saved via BridgePay", value: "—", hint: "Coming soon" },
           ]}
         />
         <ModuleGrid
@@ -43,28 +45,25 @@ function BridgePayPage() {
             { icon: PiggyBank, title: "Savings goals", detail: "Set aside recurring contributions toward event milestones." },
           ]}
         />
-        <Section title="Recent activity">
-          <Card className="divide-y divide-border/60 border-border/60 shadow-soft">
-            {[
-              { d: "Deposit — Garden Venue", a: "-$2,500", s: "Escrow", tone: "text-foreground" },
-              { d: "Milestone released — Florist", a: "-$1,200", s: "Paid", tone: "text-foreground" },
-              { d: "Split contribution — Family", a: "+$800", s: "Received", tone: "text-primary" },
-              { d: "Refund — Cancelled add-on", a: "+$150", s: "Refunded", tone: "text-primary" },
-            ].map((r) => (
-              <div key={r.d} className="flex items-center justify-between p-4 text-sm">
-                <div className="flex items-center gap-3">
-                  <Wallet className="h-4 w-4 text-muted-foreground" />
-                  <span>{r.d}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className="text-[10px]">{r.s}</Badge>
-                  <span className={`font-medium ${r.tone}`}>{r.a}</span>
+        <Section title="Payments today">
+          <Card className="border-border/60 p-6 shadow-soft">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold">Subscriptions are live — event-wallet payments are next</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  You can already subscribe to MelaAssist™ plans with secure Stripe checkout. Escrow, split payments,
+                  and vendor payouts arrive in the next release wave.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button asChild variant="hero" size="sm"><Link to="/subscription">Manage subscription</Link></Button>
+                  <Button asChild variant="outline" size="sm"><Link to="/budget">Track budget</Link></Button>
                 </div>
               </div>
-            ))}
+            </div>
           </Card>
         </Section>
-        <CTARow label="Connect your payout account" note="Verify once — used across every event." cta="Verify account" />
+        <CTARow label="Get notified when BridgePay launches" note="We'll email you the moment escrow and payouts open." cta="Notify me" />
       </div>
     </AppShell>
   );
