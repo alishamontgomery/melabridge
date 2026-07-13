@@ -38,6 +38,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotifications } from "@/hooks/use-notifications";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { useAuth, signOut } from "@/lib/auth";
@@ -313,13 +314,7 @@ export function AppShell({ active, children }: { active: string; children: React
               <CommandTrigger />
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              <Link
-                to="/notifications"
-                className="grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                aria-label="Notifications"
-              >
-                <Bell className="h-4 w-4" />
-              </Link>
+              <NotificationsBell />
               <UserMenu />
             </div>
           </div>
@@ -376,4 +371,22 @@ export function PageHeader({
 
 export function RipplePanel() {
   return null;
+}
+
+function NotificationsBell() {
+  const { unreadCount } = useNotifications(20);
+  return (
+    <Link
+      to="/notifications"
+      className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-foreground"
+      aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"}
+    >
+      <Bell className="h-4 w-4" />
+      {unreadCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-[1rem] place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      )}
+    </Link>
+  );
 }

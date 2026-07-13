@@ -175,6 +175,22 @@ function MessagingPage() {
     (db.from("conversations") as any).delete().lt("deleted_at", cutoff).then(() => {});
   }, [tab, user]);
 
+  // Realtime: refresh conversation list on any change to user's conversations
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel(`conversations:${user.id}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "conversations", filter: `owner_id=eq.${user.id}` },
+        () => qc.invalidateQueries({ queryKey: ["conversations"] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, qc]);
+
   const roleHelper = {
     planner: "You have full messaging: draft with AI, schedule sends, manage templates, and coordinate every vendor and guest.",
     vendor: "Message planners and authorized collaborators. Templates and scheduling are yours to use.",
@@ -443,6 +459,7 @@ function exportConversation(c: Conversation) {
 }
 
 function ConversationPanel({ conversationId, onPatch }: { conversationId: string | null; onPatch: (id: string, patch: Partial<Conversation>) => void }) {
+  const qcMsg = useQueryClient();
   const msgQ = useQuery({
     queryKey: ["messages", conversationId],
     enabled: !!conversationId,
@@ -452,6 +469,24 @@ function ConversationPanel({ conversationId, onPatch }: { conversationId: string
       return data ?? [];
     },
   });
+
+  useEffect(() => {
+    if (!conversationId) return;
+    const channel = supabase
+      .channel(`messages:${conversationId}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "*", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        () => {
+          qcMsg.invalidateQueries({ queryKey: ["messages", conversationId] });
+          qcMsg.invalidateQueries({ queryKey: ["conversations"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId, qcMsg]);
 
   if (!conversationId) {
     return (
