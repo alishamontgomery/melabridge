@@ -76,11 +76,6 @@ import { Route as AuthenticatedSettingsCalendarRouteImport } from './routes/_aut
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
-import { Route as ApiPublicCalendarTokenRouteImport } from './routes/api/public/calendar.$token'
-import { Route as ApiOauthOutlookCalendarStartRouteImport } from './routes/api/oauth/outlook-calendar.start'
-import { Route as ApiOauthOutlookCalendarCallbackRouteImport } from './routes/api/oauth/outlook-calendar.callback'
-import { Route as ApiOauthGoogleCalendarStartRouteImport } from './routes/api/oauth/google-calendar.start'
-import { Route as ApiOauthGoogleCalendarCallbackRouteImport } from './routes/api/oauth/google-calendar.callback'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
   id: '/workspace',
@@ -420,35 +415,6 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicCalendarTokenRoute = ApiPublicCalendarTokenRouteImport.update({
-  id: '/api/public/calendar/$token',
-  path: '/api/public/calendar/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiOauthOutlookCalendarStartRoute =
-  ApiOauthOutlookCalendarStartRouteImport.update({
-    id: '/api/oauth/outlook-calendar/start',
-    path: '/api/oauth/outlook-calendar/start',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiOauthOutlookCalendarCallbackRoute =
-  ApiOauthOutlookCalendarCallbackRouteImport.update({
-    id: '/api/oauth/outlook-calendar/callback',
-    path: '/api/oauth/outlook-calendar/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiOauthGoogleCalendarStartRoute =
-  ApiOauthGoogleCalendarStartRouteImport.update({
-    id: '/api/oauth/google-calendar/start',
-    path: '/api/oauth/google-calendar/start',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiOauthGoogleCalendarCallbackRoute =
-  ApiOauthGoogleCalendarCallbackRouteImport.update({
-    id: '/api/oauth/google-calendar/callback',
-    path: '/api/oauth/google-calendar/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -516,11 +482,6 @@ export interface FileRoutesByFullPath {
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
-  '/api/oauth/google-calendar/callback': typeof ApiOauthGoogleCalendarCallbackRoute
-  '/api/oauth/google-calendar/start': typeof ApiOauthGoogleCalendarStartRoute
-  '/api/oauth/outlook-calendar/callback': typeof ApiOauthOutlookCalendarCallbackRoute
-  '/api/oauth/outlook-calendar/start': typeof ApiOauthOutlookCalendarStartRoute
-  '/api/public/calendar/$token': typeof ApiPublicCalendarTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -589,11 +550,6 @@ export interface FileRoutesByTo {
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/events': typeof AuthenticatedEventsIndexRoute
-  '/api/oauth/google-calendar/callback': typeof ApiOauthGoogleCalendarCallbackRoute
-  '/api/oauth/google-calendar/start': typeof ApiOauthGoogleCalendarStartRoute
-  '/api/oauth/outlook-calendar/callback': typeof ApiOauthOutlookCalendarCallbackRoute
-  '/api/oauth/outlook-calendar/start': typeof ApiOauthOutlookCalendarStartRoute
-  '/api/public/calendar/$token': typeof ApiPublicCalendarTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -664,11 +620,6 @@ export interface FileRoutesById {
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
-  '/api/oauth/google-calendar/callback': typeof ApiOauthGoogleCalendarCallbackRoute
-  '/api/oauth/google-calendar/start': typeof ApiOauthGoogleCalendarStartRoute
-  '/api/oauth/outlook-calendar/callback': typeof ApiOauthOutlookCalendarCallbackRoute
-  '/api/oauth/outlook-calendar/start': typeof ApiOauthOutlookCalendarStartRoute
-  '/api/public/calendar/$token': typeof ApiPublicCalendarTokenRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -739,11 +690,6 @@ export interface FileRouteTypes {
     | '/events/new'
     | '/settings/calendar'
     | '/events/'
-    | '/api/oauth/google-calendar/callback'
-    | '/api/oauth/google-calendar/start'
-    | '/api/oauth/outlook-calendar/callback'
-    | '/api/oauth/outlook-calendar/start'
-    | '/api/public/calendar/$token'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -812,11 +758,6 @@ export interface FileRouteTypes {
     | '/events/new'
     | '/settings/calendar'
     | '/events'
-    | '/api/oauth/google-calendar/callback'
-    | '/api/oauth/google-calendar/start'
-    | '/api/oauth/outlook-calendar/callback'
-    | '/api/oauth/outlook-calendar/start'
-    | '/api/public/calendar/$token'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -886,11 +827,6 @@ export interface FileRouteTypes {
     | '/_authenticated/events/new'
     | '/_authenticated/settings/calendar'
     | '/_authenticated/events/'
-    | '/api/oauth/google-calendar/callback'
-    | '/api/oauth/google-calendar/start'
-    | '/api/oauth/outlook-calendar/callback'
-    | '/api/oauth/outlook-calendar/start'
-    | '/api/public/calendar/$token'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -953,11 +889,6 @@ export interface RootRouteChildren {
   VisionRoute: typeof VisionRoute
   WorkspaceRoute: typeof WorkspaceRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
-  ApiOauthGoogleCalendarCallbackRoute: typeof ApiOauthGoogleCalendarCallbackRoute
-  ApiOauthGoogleCalendarStartRoute: typeof ApiOauthGoogleCalendarStartRoute
-  ApiOauthOutlookCalendarCallbackRoute: typeof ApiOauthOutlookCalendarCallbackRoute
-  ApiOauthOutlookCalendarStartRoute: typeof ApiOauthOutlookCalendarStartRoute
-  ApiPublicCalendarTokenRoute: typeof ApiPublicCalendarTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -1432,41 +1363,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/calendar/$token': {
-      id: '/api/public/calendar/$token'
-      path: '/api/public/calendar/$token'
-      fullPath: '/api/public/calendar/$token'
-      preLoaderRoute: typeof ApiPublicCalendarTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/oauth/outlook-calendar/start': {
-      id: '/api/oauth/outlook-calendar/start'
-      path: '/api/oauth/outlook-calendar/start'
-      fullPath: '/api/oauth/outlook-calendar/start'
-      preLoaderRoute: typeof ApiOauthOutlookCalendarStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/oauth/outlook-calendar/callback': {
-      id: '/api/oauth/outlook-calendar/callback'
-      path: '/api/oauth/outlook-calendar/callback'
-      fullPath: '/api/oauth/outlook-calendar/callback'
-      preLoaderRoute: typeof ApiOauthOutlookCalendarCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/oauth/google-calendar/start': {
-      id: '/api/oauth/google-calendar/start'
-      path: '/api/oauth/google-calendar/start'
-      fullPath: '/api/oauth/google-calendar/start'
-      preLoaderRoute: typeof ApiOauthGoogleCalendarStartRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/oauth/google-calendar/callback': {
-      id: '/api/oauth/google-calendar/callback'
-      path: '/api/oauth/google-calendar/callback'
-      fullPath: '/api/oauth/google-calendar/callback'
-      preLoaderRoute: typeof ApiOauthGoogleCalendarCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -1562,11 +1458,6 @@ const rootRouteChildren: RootRouteChildren = {
   VisionRoute: VisionRoute,
   WorkspaceRoute: WorkspaceRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
-  ApiOauthGoogleCalendarCallbackRoute: ApiOauthGoogleCalendarCallbackRoute,
-  ApiOauthGoogleCalendarStartRoute: ApiOauthGoogleCalendarStartRoute,
-  ApiOauthOutlookCalendarCallbackRoute: ApiOauthOutlookCalendarCallbackRoute,
-  ApiOauthOutlookCalendarStartRoute: ApiOauthOutlookCalendarStartRoute,
-  ApiPublicCalendarTokenRoute: ApiPublicCalendarTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
