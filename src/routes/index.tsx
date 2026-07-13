@@ -14,7 +14,6 @@ import {
   ScaleIcon,
   UsersRound,
   Check,
-  Star,
   Play,
   ArrowRight,
   Briefcase,
@@ -23,8 +22,6 @@ import {
   TrendingUp,
   CalendarCheck,
   MessageSquare,
-  BarChart3,
-  MapPin,
   Zap,
 } from "lucide-react";
 import { SiteFooter } from "@/components/site-footer";
@@ -123,7 +120,7 @@ const venueBenefits = [
   "Analytics on inquiries & revenue",
 ];
 
-const testimonials: { quote: string; name: string; role: string }[] = [];
+
 
 
 const faqs = [
