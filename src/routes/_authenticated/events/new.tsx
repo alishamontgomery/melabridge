@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
+import { useServerFn } from "@tanstack/react-start";
+import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
 
 export const Route = createFileRoute("/_authenticated/events/new")({
   head: () => ({ meta: [{ title: "New event — MelaBridge" }] }),
