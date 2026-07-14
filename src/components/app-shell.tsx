@@ -175,9 +175,9 @@ const ADMIN_NAV: NavGroup[] = [
 ];
 
 export const NAV_BY_ROLE: Record<AppRole, NavGroup[]> = {
-  planner: PLANNER_NAV,
+  personal: PLANNER_NAV,
+  organization: PLANNER_NAV,
   vendor: VENDOR_NAV,
-  guest: GUEST_NAV,
   admin: ADMIN_NAV,
 };
 
