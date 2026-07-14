@@ -649,7 +649,7 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
                       </Select>
                     </td>
                     <td className="px-3 py-2 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => remove(g.id)} aria-label="Delete guest"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setPendingDelete(g)} aria-label="Delete guest"><Trash2 className="h-4 w-4" /></Button>
                     </td>
                   </tr>
                 ))}
@@ -658,6 +658,16 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Remove this guest?"
+        description={<p>&ldquo;{pendingDelete?.full_name}&rdquo; will be removed from your guest list.</p>}
+        confirmLabel="Remove guest"
+        onConfirm={async () => { if (pendingDelete) await remove(pendingDelete.id); }}
+      />
     </div>
   );
 }
