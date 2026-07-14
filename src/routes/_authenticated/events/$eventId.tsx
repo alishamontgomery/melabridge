@@ -236,10 +236,10 @@ function EventDetailPage() {
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex w-full flex-wrap gap-1 sm:w-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks ({tasks.length})</TabsTrigger>
+            <TabsTrigger value="overview">Dashboard</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks{tasks.length > 0 ? ` (${tasks.length})` : ""}</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
-            <TabsTrigger value="guests">Guests ({guests.length})</TabsTrigger>
+            <TabsTrigger value="guests">Guests{guests.length > 0 ? ` (${guests.length})` : ""}</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
           </TabsList>
 
