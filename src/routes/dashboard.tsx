@@ -17,7 +17,7 @@ import { CelebrateProgress } from "@/components/dashboard/celebrate-progress";
 import { AIConcierge } from "@/components/dashboard/ai-concierge";
 import { AISavings } from "@/components/dashboard/ai-savings";
 import { SmartPredictions } from "@/components/dashboard/smart-predictions";
-import { InspirationFeed } from "@/components/dashboard/inspiration-feed";
+
 import {
   computeCountdown,
   computeHealthScore,
@@ -124,7 +124,6 @@ function DashboardPage() {
                 <TodaysFocus focus={derived.focus} onCompleted={() => qc.invalidateQueries({ queryKey: ["dashboard-companion", event.id] })} />
                 <TodaysBrief items={derived.brief} />
                 <AIConcierge />
-                <InspirationFeed eventType={event.event_type} />
               </div>
               <div className="space-y-6">
                 <EventHealthScore health={derived.health} />
