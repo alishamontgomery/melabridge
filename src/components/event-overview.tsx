@@ -119,7 +119,7 @@ export function EventOverview({
     if (countdown !== null && countdown < 14 && countdown >= 0) recs.push({
       icon: Zap, title: "Under two weeks out",
       body: "Confirm vendor arrival times, finalize seating, and prep a day-of runsheet.",
-      action: () => onOpenTab("tasks"), label: "Plan runsheet",
+      action: () => onOpenTab("runsheet"), label: "Plan runsheet",
     });
     if (recs.length === 0) recs.push({
       icon: Sparkles, title: "You're in great shape",
