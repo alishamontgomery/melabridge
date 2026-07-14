@@ -233,7 +233,15 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
     const plan = aiPlan ?? templateToPlan(template, totalBudget);
     const usedFallback = aiPlan === null;
 
-    const baseStart = event.event_time ?? event.start_time ?? null;
+    // Prefer the explicit ceremony start (when the "main event" actually
+    // begins). Fall back to event_time / start_time. This is what runsheet
+    // offsets are anchored to: negative offsets are setup BEFORE, offset 0
+    // is the main event.
+    const baseStart =
+      (event as { ceremony_start_time?: string | null }).ceremony_start_time ??
+      event.event_time ??
+      event.start_time ??
+      null;
 
     // TASKS
     let tasksInserted = 0;
@@ -279,6 +287,7 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
         owner: r.owner ?? null,
         notes: r.notes ?? null,
         sort_order: idx,
+        ai_generated: true,
         created_by: userId,
       }));
       const { error, count } = await supabase.from("event_runsheet_items").insert(rows, { count: "exact" });
