@@ -146,7 +146,7 @@ async function ensureProfile(user: User, displayName?: string) {
   if (error) throw new Error(`Your account was created, but workspace setup failed: ${error.message}`);
 }
 
-type SignupAccountType = "planner" | "vendor" | "guest";
+type SignupAccountType = "planner" | "vendor";
 
 async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor"> {
   const { data } = await supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle();
@@ -185,8 +185,10 @@ function AuthPage() {
   const passwordError = password.length === 0 ? "Password is required" : passwordSchema.safeParse(password).success ? null : "Use at least 8 characters";
   const confirmPasswordError = confirmPassword.length === 0 ? "Confirm your password" : password === confirmPassword ? null : "Passwords must match";
   const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+  const passwordTooWeak = password.length > 0 && passwordStrength.score < 3;
   const isSigninValid = !emailError && password.length > 0;
-  const isSignupValid = !nameError && !emailError && !passwordError && !confirmPasswordError;
+  const isSignupValid = !nameError && !emailError && !passwordError && !confirmPasswordError && !passwordTooWeak;
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -289,23 +291,33 @@ function AuthPage() {
       });
       if (error) throw error;
       if (!data.session) {
-        setStatusMessage("Confirming your secure session...");
-        const { data: signIn, error: siErr } = await supabase.auth.signInWithPassword({
-          email: em,
-          password: pw,
-        });
-        if (siErr || !signIn.session) {
-          toast.success("Check your email to confirm your account before signing in.");
-          setTab("signin");
-          return;
-        }
-        await ensureProfile(signIn.session.user, nm);
-      } else {
-        setStatusMessage("Setting up your workspace...");
-        await ensureProfile(data.session.user, nm);
+        // Email verification required — do NOT silently sign in. Show a clear pending state.
+        setPendingVerificationEmail(em);
+        setTab("signin");
+        toast.success("Check your email to verify your account before signing in.");
+        return;
       }
+      setStatusMessage("Setting up your workspace...");
+      await ensureProfile(data.session.user, nm);
       toast.success("Account created — welcome to MelaBridge");
       navigate({ to: "/onboarding", search: { type: accountType } });
+    });
+  }
+
+  async function resendVerification() {
+    const targetEmail = pendingVerificationEmail ?? email;
+    if (!emailSchema.safeParse(targetEmail).success) {
+      setAuthError("Enter the email address you signed up with, then resend.");
+      return;
+    }
+    await runAuthOperation("signup", "Resending your verification email...", async () => {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: targetEmail,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      });
+      if (error) throw error;
+      toast.success("Verification email sent. Check your inbox.");
     });
   }
 
