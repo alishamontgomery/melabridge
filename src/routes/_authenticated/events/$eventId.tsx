@@ -156,6 +156,8 @@ function EventDetailPage() {
             <TabsTrigger value="tasks">Tasks{tasks.length > 0 ? ` (${tasks.length})` : ""}</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="guests">Guests{guests.length > 0 ? ` (${guests.length})` : ""}</TabsTrigger>
+            <TabsTrigger value="runsheet">Runsheet</TabsTrigger>
+            <TabsTrigger value="vendors">Vendors</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
           </TabsList>
 
@@ -173,8 +175,15 @@ function EventDetailPage() {
           <TabsContent value="guests" className="mt-6">
             <GuestsTab eventId={eventId} guests={guests} reload={reload} />
           </TabsContent>
+          <TabsContent value="runsheet" className="mt-6">
+            <RunsheetTab eventId={eventId} />
+          </TabsContent>
+          <TabsContent value="vendors" className="mt-6">
+            <VendorNeedsTab eventId={eventId} />
+          </TabsContent>
           <TabsContent value="details" className="mt-6">
             <DetailsTab event={event} onSaved={reload} />
+
           </TabsContent>
         </Tabs>
       </div>
