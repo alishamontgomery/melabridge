@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import {
-  ArrowLeft, Calendar, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
+  ArrowLeft, Calendar, Clock, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
   Loader2, Sparkles, ClipboardList, PartyPopper, Save, Pencil, Upload, Download,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/app-shell";
@@ -23,7 +23,6 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { EventDashboardPreview, type DashboardData } from "@/components/event-dashboard-preview";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
