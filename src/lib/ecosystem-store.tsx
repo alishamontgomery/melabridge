@@ -98,6 +98,7 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
         .from("events")
         .select("*")
         .neq("status", "archived")
+        .is("deleted_at", null)
         .order("event_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(1)
@@ -109,9 +110,9 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
         return;
       }
       const [{ data: guests }, { data: tasks }, { data: budgetItems }] = await Promise.all([
-        supabase.from("guests").select("plus_ones, rsvp_status").eq("event_id", ev.id),
-        supabase.from("tasks").select("status").eq("event_id", ev.id),
-        supabase.from("budget_items").select("estimated_amount, actual_amount, paid_amount").eq("event_id", ev.id),
+        supabase.from("guests").select("plus_ones, rsvp_status").eq("event_id", ev.id).is("deleted_at", null),
+        supabase.from("tasks").select("status").eq("event_id", ev.id).is("deleted_at", null),
+        supabase.from("budget_items").select("estimated_amount, actual_amount, paid_amount").eq("event_id", ev.id).is("deleted_at", null),
       ]);
       if (cancelled) return;
       const guestList = guests ?? [];

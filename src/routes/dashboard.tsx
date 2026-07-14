@@ -47,9 +47,9 @@ function DashboardPage() {
     queryFn: async () => {
       const eventId = event!.id;
       const [g, t, b] = await Promise.all([
-        supabase.from("guests").select("id, plus_ones, rsvp_status").eq("event_id", eventId),
-        supabase.from("tasks").select("id, title, status, due_date, completed_at").eq("event_id", eventId).order("due_date", { ascending: true }).limit(6),
-        supabase.from("budget_items").select("estimated_amount, actual_amount, paid_amount").eq("event_id", eventId),
+        supabase.from("guests").select("id, plus_ones, rsvp_status").eq("event_id", eventId).is("deleted_at", null),
+        supabase.from("tasks").select("id, title, status, due_date, completed_at").eq("event_id", eventId).is("deleted_at", null).order("due_date", { ascending: true }).limit(6),
+        supabase.from("budget_items").select("estimated_amount, actual_amount, paid_amount").eq("event_id", eventId).is("deleted_at", null),
       ]);
       return {
         guests: g.data ?? [],

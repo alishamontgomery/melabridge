@@ -38,6 +38,7 @@ function TimelinePage() {
       .from("tasks")
       .select("*")
       .eq("event_id", event.id)
+      .is("deleted_at", null)
       .not("due_date", "is", null)
       .order("due_date", { ascending: true })
       .then(({ data, error }) => {
