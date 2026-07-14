@@ -171,6 +171,7 @@ function AuthPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const timedOutRef = useRef(false);
   const callbackHandledRef = useRef(false);
+  const googleDisabled = useMemo(() => isPreviewEnvironment(), []);
 
   const busy = activeOperation !== null;
 
