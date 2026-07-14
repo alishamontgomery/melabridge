@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
-export type AppRole = "planner" | "vendor" | "guest" | "admin";
+export type AppRole = "personal" | "organization" | "vendor" | "admin";
 
 /**
  * Resolves the current user's primary role.
  *
  * Priority: user_roles table (RBAC source of truth) →
  * profiles.account_type fallback (for users who onboarded before RBAC) →
- * "planner" default.
+ * "personal" default.
  */
 export function useRole(): { role: AppRole; loading: boolean } {
   const { user, loading: authLoading } = useAuth();
@@ -19,7 +19,7 @@ export function useRole(): { role: AppRole; loading: boolean } {
     enabled: !!user,
     staleTime: 60_000,
     queryFn: async (): Promise<AppRole> => {
-      if (!user) return "planner";
+      if (!user) return "personal";
 
       const [rolesRes, profileRes] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", user.id),
@@ -28,17 +28,17 @@ export function useRole(): { role: AppRole; loading: boolean } {
 
       const roles = (rolesRes.data ?? []).map((r) => r.role as AppRole);
       if (roles.includes("admin")) return "admin";
-      if (roles.includes("planner")) return "planner";
+      if (roles.includes("organization")) return "organization";
       if (roles.includes("vendor")) return "vendor";
-      if (roles.includes("guest")) return "guest";
+      if (roles.includes("personal")) return "personal";
 
       const acct = profileRes.data?.account_type as AppRole | null | undefined;
-      if (acct === "planner" || acct === "vendor" || acct === "guest" || acct === "admin") {
+      if (acct === "personal" || acct === "organization" || acct === "vendor" || acct === "admin") {
         return acct;
       }
-      return "planner";
+      return "personal";
     },
   });
 
-  return { role: data ?? "planner", loading: authLoading || isLoading };
+  return { role: data ?? "personal", loading: authLoading || isLoading };
 }

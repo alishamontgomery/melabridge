@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/invite")({
   component: AdminInvitePage,
 });
 
-type Role = "planner" | "vendor" | "guest" | "admin";
+type Role = "personal" | "organization" | "vendor" | "admin";
 
 function AdminInvitePage() {
   const navigate = useNavigate();
@@ -29,7 +29,7 @@ function AdminInvitePage() {
   const isAdmin = role === "admin";
 
   const [email, setEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("planner");
+  const [inviteRole, setInviteRole] = useState<Role>("personal");
   const [message, setMessage] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
 
@@ -107,9 +107,9 @@ function AdminInvitePage() {
               <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as Role)}>
                 <SelectTrigger id="invite-role"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="planner">Planner</SelectItem>
+                  <SelectItem value="personal">Personal</SelectItem>
+                  <SelectItem value="organization">Organization</SelectItem>
                   <SelectItem value="vendor">Vendor</SelectItem>
-                  <SelectItem value="guest">Guest</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
               </Select>

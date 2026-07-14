@@ -192,12 +192,12 @@ function MessagingPage() {
     };
   }, [user, qc]);
 
-  const roleHelper = {
-    planner: "You have full messaging: draft with AI, schedule sends, manage templates, and coordinate every vendor and guest.",
+  const roleHelper: string = ({
+    personal: "You have full messaging: draft with AI, schedule sends, manage templates, and coordinate every vendor and guest.",
+    organization: "Coordinate your whole team's messaging: templates, scheduling, and vendor threads in one place.",
     vendor: "Message planners and authorized collaborators. Templates and scheduling are yours to use.",
-    guest: "Reply to your planner and confirm details. Some tools are hidden to keep things simple.",
     admin: "Full messaging plus moderation. Archive/restore on any thread you own.",
-  }[role];
+  } as Record<string, string>)[role] ?? "Manage every conversation for your events in one place.";
 
   return (
     <AppShell active="/messaging">
@@ -207,7 +207,7 @@ function MessagingPage() {
         title={<>One inbox for <span className="text-gradient">everyone</span> planning with you.</>}
         description={roleHelper}
         actions={<>
-          {role !== "guest" && (
+          {(role === "personal" || role === "organization" || role === "admin") && (
             <Button variant="outline" onClick={() => setCompose({ ...emptyCompose, open: true, subject: "Announcement" })}>
               <Megaphone className="mr-2 h-4 w-4"/>Announcement
             </Button>

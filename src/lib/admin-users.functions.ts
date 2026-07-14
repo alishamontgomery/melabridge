@@ -72,7 +72,7 @@ export const listAdminUsers = createServerFn({ method: "POST" })
 
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; role: "planner" | "vendor" | "guest" | "admin" }) => d)
+  .inputValidator((d: { userId: string; role: "personal" | "organization" | "vendor" | "admin" }) => d)
   .handler(async ({ data, context }) => {
     try { await assertAdmin(context); } catch { return { ok: false, error: "Forbidden" }; }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -98,7 +98,7 @@ export const setUserBanned = createServerFn({ method: "POST" })
 
 export const inviteAdminUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { email: string; role: "planner" | "vendor" | "guest" | "admin"; message?: string }) => d)
+  .inputValidator((d: { email: string; role: "personal" | "organization" | "vendor" | "admin"; message?: string }) => d)
   .handler(async ({ data, context }) => {
     try { await assertAdmin(context); } catch { return { ok: false, error: "Forbidden" }; }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(data.email)) return { ok: false, error: "Invalid email" };
