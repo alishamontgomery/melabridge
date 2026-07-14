@@ -310,6 +310,12 @@ function AuthPage() {
   }
 
   async function handleGoogle() {
+    if (googleDisabled) {
+      const msg = "Google sign-in is temporarily unavailable in this preview. Please use email/password, or try the published site.";
+      setAuthError(msg);
+      toast.error(msg);
+      return;
+    }
     window.sessionStorage.setItem("melabridge.auth.next", "/events");
     await runAuthOperation("google", "Opening Google sign-in...", async () => {
       const result = await lovable.auth.signInWithOAuth("google", {
