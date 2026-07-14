@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { format } from "date-fns";
 import {
-  Sparkles, ArrowRight, ArrowLeft, CalendarIcon, PartyPopper, Store, UserCheck,
+  Sparkles, ArrowRight, ArrowLeft, CalendarIcon, PartyPopper, Store,
   Check, Upload, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,10 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
-type AccountType = "planner" | "vendor" | "guest";
+type AccountType = "personal" | "organization" | "vendor";
 
 const searchSchema = z.object({
-  type: z.enum(["planner", "vendor", "guest"]).optional(),
+  type: z.enum(["personal", "organization", "vendor"]).optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -88,12 +88,10 @@ function OnboardingPage() {
         <WelcomeHeader />
         {!accountType ? (
           <AccountTypePicker onSelect={setAccountType} />
-        ) : accountType === "planner" ? (
-          <PlannerFlow onBack={() => setAccountType(null)} />
         ) : accountType === "vendor" ? (
           <VendorFlow onBack={() => setAccountType(null)} />
         ) : (
-          <GuestFlow onBack={() => setAccountType(null)} />
+          <PlannerFlow accountType={accountType} onBack={() => setAccountType(null)} />
         )}
       </div>
     </div>
@@ -150,9 +148,9 @@ function MelaAssistCard() {
 
 function AccountTypePicker({ onSelect }: { onSelect: (t: AccountType) => void }) {
   const options: Array<{ type: AccountType; icon: typeof PartyPopper; title: string; sub: string }> = [
-    { type: "planner", icon: PartyPopper, title: "Plan an Event", sub: "I'm organizing one or more events." },
+    { type: "personal", icon: PartyPopper, title: "Plan a Personal Event", sub: "Weddings, birthdays, celebrations — just me and my collaborators." },
+    { type: "organization", icon: Building2, title: "Plan for an Organization", sub: "Company events, conferences, fundraisers — with a team." },
     { type: "vendor", icon: Store, title: "Join as a Vendor", sub: "I provide products or services for events." },
-    { type: "guest", icon: UserCheck, title: "Join an Event", sub: "I received an invitation to an event." },
   ];
   return (
     <div className="space-y-4">
@@ -208,8 +206,8 @@ function OptionalLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ============== PLANNER FLOW ============== */
-function PlannerFlow({ onBack }: { onBack: () => void }) {
+/* ============== PLANNER FLOW (Personal + Organization) ============== */
+function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organization"; onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -228,7 +226,7 @@ function PlannerFlow({ onBack }: { onBack: () => void }) {
     try {
       const { error: profErr } = await supabase
         .from("profiles")
-        .update({ account_type: "planner", onboarding_completed: true })
+        .update({ account_type: accountType, onboarding_completed: true })
         .eq("id", user.id);
       if (profErr) throw profErr;
 
@@ -590,81 +588,7 @@ function VendorFlow({ onBack }: { onBack: () => void }) {
   );
 }
 
-/* ============== GUEST FLOW ============== */
-function GuestFlow({ onBack }: { onBack: () => void }) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function join() {
-    if (!user) return;
-    const trimmed = code.trim();
-    if (!trimmed) {
-      toast.error("Enter your invitation code");
-      return;
-    }
-    setBusy(true);
-    try {
-      await supabase
-        .from("profiles")
-        .update({ account_type: "guest", onboarding_completed: true })
-        .eq("id", user.id);
-      // Placeholder — invitation lookup will be wired to real invites table later.
-      toast.success("Looking for your event…");
-      navigate({ to: "/events" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <Card className="border-primary/30 bg-primary/5 p-4 shadow-soft">
-        <div className="flex items-start gap-3">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
-            <UserCheck className="h-4 w-4" />
-          </div>
-          <div className="text-sm">
-            <p className="font-medium">Join an event in seconds.</p>
-            <p className="mt-1 text-muted-foreground">
-              Enter the invitation code your host shared with you, or scan the QR code from your invite.
-            </p>
-          </div>
-        </div>
-      </Card>
-      <Card className="border-border/60 p-6 shadow-soft">
-        <StepIndicator step={1} total={1} />
-        <div className="mt-4 space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="invite-code">Invitation code</Label>
-            <Input
-              id="invite-code"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="ABCD-1234"
-              className="text-center text-lg tracking-widest"
-              autoFocus
-            />
-          </div>
-          <Button type="button" variant="outline" className="w-full" disabled>
-            <Building2 className="mr-2 h-4 w-4" /> Scan QR code (coming soon)
-          </Button>
-          <div className="flex justify-between gap-2 pt-2">
-            <Button variant="ghost" onClick={onBack} disabled={busy}>
-              <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-            </Button>
-            <Button onClick={join} disabled={busy || !code.trim()}>
-              {busy ? "Joining…" : "Join event"} <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-}
+/* Guest flow removed — guests only join via invitation links, not through onboarding. */
 
 // Silence unused import lint when useMemo is not used later.
 void useMemo;
