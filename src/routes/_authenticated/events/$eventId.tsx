@@ -356,6 +356,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
   const [actual, setActual] = useState("");
   const [paid, setPaid] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<BudgetItem | null>(null);
 
   const over = target !== null && totals.act > target;
 
@@ -376,6 +377,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
       });
       if (error) throw error;
       setLabel(""); setEstimated(""); setActual(""); setPaid("");
+      toast.success("Budget item added");
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add item");
@@ -383,8 +385,15 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
   }
 
   async function remove(id: string) {
-    const { error } = await supabase.from("budget_items").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase
+      .from("budget_items")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Budget item removed");
     await reload();
   }
 
@@ -507,7 +516,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
                     <td className="px-3 py-2 text-right">${Number(it.actual_amount).toLocaleString()}</td>
                     <td className="px-3 py-2 text-right">${Number(it.paid_amount).toLocaleString()}</td>
                     <td className="px-3 py-2 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => remove(it.id)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setPendingDelete(it)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
                     </td>
                   </tr>
                 ))}
@@ -516,6 +525,16 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Delete this budget item?"
+        description={<p>&ldquo;{pendingDelete?.label}&rdquo; will be removed from your budget.</p>}
+        confirmLabel="Delete item"
+        onConfirm={async () => { if (pendingDelete) await remove(pendingDelete.id); }}
+      />
     </div>
   );
 }
