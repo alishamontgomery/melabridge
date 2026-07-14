@@ -26,6 +26,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { EventOverview } from "@/components/event-overview";
 import { RunsheetTab } from "@/components/runsheet-tab";
 import { VendorNeedsTab } from "@/components/vendor-needs-tab";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -48,10 +49,10 @@ function EventDetailPage() {
 
   async function reload() {
     const [ev, t, b, g] = await Promise.all([
-      supabase.from("events").select("*").eq("id", eventId).maybeSingle(),
-      supabase.from("tasks").select("*").eq("event_id", eventId).order("created_at"),
-      supabase.from("budget_items").select("*").eq("event_id", eventId).order("created_at"),
-      supabase.from("guests").select("*").eq("event_id", eventId).order("created_at"),
+      supabase.from("events").select("*").eq("id", eventId).is("deleted_at", null).maybeSingle(),
+      supabase.from("tasks").select("*").eq("event_id", eventId).is("deleted_at", null).order("created_at"),
+      supabase.from("budget_items").select("*").eq("event_id", eventId).is("deleted_at", null).order("created_at"),
+      supabase.from("guests").select("*").eq("event_id", eventId).is("deleted_at", null).order("created_at"),
     ]);
     if (ev.error) toast.error(ev.error.message);
     setEvent(ev.data ?? null);
@@ -75,16 +76,25 @@ function EventDetailPage() {
 
   async function handleDelete() {
     if (!event) return;
-    const { error } = await supabase.from("events").delete().eq("id", event.id);
-    if (error) return toast.error(error.message);
-    toast.success("Event deleted");
+    const { error } = await supabase
+      .from("events")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", event.id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Moved to Trash", { description: "You can restore it within 30 days." });
     navigate({ to: "/events" });
   }
 
   async function handleArchive() {
     if (!event) return;
     const { error } = await supabase.from("events").update({ status: "archived" }).eq("id", event.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
     toast.success("Event archived");
     navigate({ to: "/events" });
   }
@@ -125,7 +135,9 @@ function EventDetailPage() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Archive this event?</AlertDialogTitle>
-                <AlertDialogDescription>You can restore it later from settings.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  &ldquo;{event.name}&rdquo; will be hidden from Active events but kept for future reference. You can restore it anytime from the Archived tab.
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -140,11 +152,13 @@ function EventDetailPage() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete this event?</AlertDialogTitle>
-                <AlertDialogDescription>This permanently removes the event and all its tasks, budget items, and guests. This cannot be undone.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  You&rsquo;re about to delete &ldquo;{event.name}&rdquo;. This event will be moved to Trash and can be restored for 30 days. After that it&rsquo;s permanently removed along with its tasks, budget, guests, runsheet, and files.
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete permanently</AlertDialogAction>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Move to Trash</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -210,6 +224,7 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
   const [dueDate, setDueDate] = useState("");
   const [filter, setFilter] = useState<"all" | Task["status"]>("all");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
 
   const filtered = filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
 
@@ -228,6 +243,7 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
       });
       if (error) throw error;
       setTitle(""); setDueDate("");
+      toast.success("Task added");
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add task");
@@ -245,8 +261,15 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
   }
 
   async function removeTask(id: string) {
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase
+      .from("tasks")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Task removed");
     await reload();
   }
 
@@ -297,13 +320,28 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
                   {t.due_date && <span>Due {new Date(t.due_date).toLocaleDateString()}</span>}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => removeTask(t.id)} aria-label="Delete task">
+              <Button variant="ghost" size="icon" onClick={() => setPendingDelete(t)} aria-label="Delete task">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </Card>
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Delete this task?"
+        description={
+          <>
+            <p>&ldquo;{pendingDelete?.title}&rdquo; will be removed from your task list.</p>
+            <p className="mt-1 text-xs text-muted-foreground">You can undo this by asking MelaAssist to re-add it.</p>
+          </>
+        }
+        confirmLabel="Delete task"
+        onConfirm={async () => { if (pendingDelete) await removeTask(pendingDelete.id); }}
+      />
     </div>
   );
 }
@@ -318,6 +356,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
   const [actual, setActual] = useState("");
   const [paid, setPaid] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<BudgetItem | null>(null);
 
   const over = target !== null && totals.act > target;
 
@@ -338,6 +377,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
       });
       if (error) throw error;
       setLabel(""); setEstimated(""); setActual(""); setPaid("");
+      toast.success("Budget item added");
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add item");
@@ -345,8 +385,15 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
   }
 
   async function remove(id: string) {
-    const { error } = await supabase.from("budget_items").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase
+      .from("budget_items")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Budget item removed");
     await reload();
   }
 
@@ -469,7 +516,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
                     <td className="px-3 py-2 text-right">${Number(it.actual_amount).toLocaleString()}</td>
                     <td className="px-3 py-2 text-right">${Number(it.paid_amount).toLocaleString()}</td>
                     <td className="px-3 py-2 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => remove(it.id)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setPendingDelete(it)} aria-label="Delete"><Trash2 className="h-4 w-4" /></Button>
                     </td>
                   </tr>
                 ))}
@@ -478,6 +525,16 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Delete this budget item?"
+        description={<p>&ldquo;{pendingDelete?.label}&rdquo; will be removed from your budget.</p>}
+        confirmLabel="Delete item"
+        onConfirm={async () => { if (pendingDelete) await remove(pendingDelete.id); }}
+      />
     </div>
   );
 }
@@ -488,6 +545,7 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
   const [email, setEmail] = useState("");
   const [household, setHousehold] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Guest | null>(null);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -503,6 +561,7 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
       });
       if (error) throw error;
       setName(""); setEmail(""); setHousehold("");
+      toast.success("Guest added");
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add guest");
@@ -516,10 +575,18 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
   }
 
   async function remove(id: string) {
-    const { error } = await supabase.from("guests").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase
+      .from("guests")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Guest removed");
     await reload();
   }
+
 
   function exportCsv() {
     const rows = [["Name", "Email", "Household", "RSVP", "Plus ones", "Meal"]];
@@ -582,7 +649,7 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
                       </Select>
                     </td>
                     <td className="px-3 py-2 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => remove(g.id)} aria-label="Delete guest"><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => setPendingDelete(g)} aria-label="Delete guest"><Trash2 className="h-4 w-4" /></Button>
                     </td>
                   </tr>
                 ))}
@@ -591,6 +658,16 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
           </div>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Remove this guest?"
+        description={<p>&ldquo;{pendingDelete?.full_name}&rdquo; will be removed from your guest list.</p>}
+        confirmLabel="Remove guest"
+        onConfirm={async () => { if (pendingDelete) await remove(pendingDelete.id); }}
+      />
     </div>
   );
 }

@@ -41,6 +41,7 @@ function BudgetPage() {
         .from("budget_items")
         .select("id, category, label, estimated_amount, actual_amount, paid_amount, vendor_name")
         .eq("event_id", event.id!)
+        .is("deleted_at", null)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as BudgetItem[];

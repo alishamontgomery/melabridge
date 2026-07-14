@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useEcosystem } from "@/lib/ecosystem-store";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/files")({
   head: () => ({
@@ -59,6 +60,7 @@ function FilesPage() {
   const qc = useQueryClient();
   const [category, setCategory] = useState<Category>("contracts");
   const [uploading, setUploading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<EventFile | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const filesQ = useQuery({
@@ -69,6 +71,7 @@ function FilesPage() {
         .from("event_files")
         .select("*")
         .eq("event_id", event.id!)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as EventFile[];
@@ -124,12 +127,17 @@ function FilesPage() {
 
   const remove = useMutation({
     mutationFn: async (f: EventFile) => {
-      await supabase.storage.from(BUCKET).remove([f.storage_path]);
-      const del = await db.from("event_files").delete().eq("id", f.id);
+      // Soft-delete: keep the storage object until the row is purged, so restore
+      // is possible. Hard delete happens in a follow-up sweep alongside the
+      // events trash purge.
+      const del = await db
+        .from("event_files")
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id", f.id);
       if (del.error) throw del.error;
     },
     onSuccess: () => {
-      toast.success("File deleted");
+      toast.success("Document moved to Trash");
       qc.invalidateQueries({ queryKey: ["event-files", event.id] });
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Delete failed"),
@@ -288,9 +296,7 @@ function FilesPage() {
                           size="sm"
                           variant="ghost"
                           disabled={remove.isPending}
-                          onClick={() => {
-                            if (confirm(`Delete ${f.filename}?`)) remove.mutate(f);
-                          }}
+                          onClick={() => setPendingDelete(f)}
                         >
                           <Trash2 className="h-3.5 w-3.5 text-rose-600" />
                         </Button>
@@ -303,6 +309,17 @@ function FilesPage() {
           </Card>
         )}
       </div>
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Delete this document?"
+        description={
+          <p>&ldquo;{pendingDelete?.filename}&rdquo; will be moved to Trash and permanently removed after 30 days.</p>
+        }
+        confirmLabel="Move to Trash"
+        onConfirm={async () => { if (pendingDelete) await remove.mutateAsync(pendingDelete); }}
+      />
     </AppShell>
   );
 }

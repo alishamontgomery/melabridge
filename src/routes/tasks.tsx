@@ -59,6 +59,7 @@ function TasksPage() {
       .from("tasks")
       .select("*")
       .eq("event_id", event.id)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (cancelled) return;

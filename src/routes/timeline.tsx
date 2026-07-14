@@ -38,6 +38,7 @@ function TimelinePage() {
       .from("tasks")
       .select("*")
       .eq("event_id", event.id)
+      .is("deleted_at", null)
       .not("due_date", "is", null)
       .order("due_date", { ascending: true })
       .then(({ data, error }) => {
@@ -69,6 +70,7 @@ function TimelinePage() {
         updated_at: event.updated_at,
         is_test_seed: false,
         is_sample: false,
+        deleted_at: null,
       });
     }
     return list.sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));

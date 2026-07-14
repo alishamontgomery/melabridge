@@ -33,6 +33,7 @@ export function useActiveEvent(): State {
         .from("events")
         .select("*")
         .neq("status", "archived")
+        .is("deleted_at", null)
         .order("event_date", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false })
         .limit(1);
