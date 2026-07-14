@@ -19,6 +19,8 @@ export type EventState = {
   tasksDone: number;
   tasksTotal: number;
   weatherRisk: "low" | "medium" | "high";
+  isSample: boolean;
+  bannerUrl: string | null;
 };
 
 export type Ripple = {
@@ -61,6 +63,8 @@ const EMPTY_EVENT: EventState = {
   tasksDone: 0,
   tasksTotal: 0,
   weatherRisk: "low",
+  isSample: false,
+  bannerUrl: null,
 };
 
 function computeHealth(e: EventState) {
@@ -132,6 +136,8 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
         tasksDone,
         tasksTotal: taskList.length,
         weatherRisk: "low",
+        isSample: Boolean((ev as { is_sample?: boolean }).is_sample),
+        bannerUrl: (ev as { banner_url?: string | null }).banner_url ?? null,
       });
       setLoading(false);
     })();
