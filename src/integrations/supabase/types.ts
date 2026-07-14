@@ -1906,13 +1906,7 @@ export type Database = {
         Returns: boolean
       }
       seed_test_data: {
-        Args: {
-          admin_id: string
-          attendee_id: string
-          guest_id: string
-          planner_id: string
-          vendor_id: string
-        }
+        Args: { admin_id: string; planner_id: string; vendor_id: string }
         Returns: Json
       }
       wipe_test_data: { Args: never; Returns: Json }
