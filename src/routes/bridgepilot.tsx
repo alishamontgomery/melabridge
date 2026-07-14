@@ -128,9 +128,9 @@ function MelaAssistPage() {
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 h-5 w-5 text-primary" />
                 <div className="text-sm">
-                  <p className="font-semibold">AI-assisted quoting, proposals & follow-ups are coming soon.</p>
+                  <p className="font-semibold">MelaAssist™ is helping you win more work.</p>
                   <p className="mt-1 text-muted-foreground">
-                    We're wiring up MelaAssist™ AI features. In the meantime, use your inbox and tasks to run your business — everything you do here will carry over.
+                    Use your inbox, tasks, and calendar to run your business end-to-end. AI proposal drafting expands into every reply this quarter.
                   </p>
                 </div>
               </div>

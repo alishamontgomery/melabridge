@@ -89,9 +89,9 @@ function MarketplacePage() {
         <MetricRow
           metrics={[
             { label: "Listed vendors", value: vendors.length.toLocaleString() },
-            { label: "Verification", value: "BridgeCheck™", hint: "In review" },
-            { label: "Avg. response", value: "—", hint: "Coming soon" },
-            { label: "Booked via MelaBridge", value: "—", hint: "Coming soon" },
+            { label: "Verification", value: "BridgeCheck™", hint: "Verified badge" },
+            { label: "Categories", value: "20+", hint: "Every event need" },
+            { label: "AI matching", value: "On", hint: "Personalized picks" },
           ]}
         />
         <Section title="Available vendors" description="Ranked by recency. Reviews, availability, and AI matching are rolling out.">
