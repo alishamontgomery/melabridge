@@ -220,11 +220,7 @@ function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organ
 function WelcomeDashboard({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const seedSample = useServerFn(
-    // Lazy import via inline require to keep bundle lean
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("@/lib/sample-workspace.functions").seedSampleWorkspace,
-  );
+  const seedSample = useServerFn(seedSampleWorkspace);
   const [busy, setBusy] = useState<"create" | "sample" | "tour" | null>(null);
 
   async function markOnboarded() {
