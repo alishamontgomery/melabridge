@@ -69,6 +69,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminInviteRouteImport } from './routes/admin.invite'
 import { Route as AuthenticatedVendorSettingsRouteImport } from './routes/_authenticated/vendor-settings'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -389,6 +390,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminInviteRoute = AdminInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AuthenticatedVendorSettingsRoute =
   AuthenticatedVendorSettingsRouteImport.update({
     id: '/vendor-settings',
@@ -564,6 +570,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
+  '/admin/invite': typeof AdminInviteRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -644,6 +651,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
+  '/admin/invite': typeof AdminInviteRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -727,6 +735,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
   '/_authenticated/vendor-settings': typeof AuthenticatedVendorSettingsRoute
+  '/admin/invite': typeof AdminInviteRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -810,6 +819,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/vendor'
     | '/vendor-settings'
+    | '/admin/invite'
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
@@ -890,6 +900,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/vendor'
     | '/vendor-settings'
+    | '/admin/invite'
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
@@ -972,6 +983,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
     | '/_authenticated/vendor-settings'
+    | '/admin/invite'
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
@@ -1479,6 +1491,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/invite': {
+      id: '/admin/invite'
+      path: '/invite'
+      fullPath: '/admin/invite'
+      preLoaderRoute: typeof AdminInviteRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_authenticated/vendor-settings': {
       id: '/_authenticated/vendor-settings'
       path: '/vendor-settings'
@@ -1675,10 +1694,12 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface AdminRouteChildren {
+  AdminInviteRoute: typeof AdminInviteRoute
   AdminUsersRoute: typeof AdminUsersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminInviteRoute: AdminInviteRoute,
   AdminUsersRoute: AdminUsersRoute,
 }
 
