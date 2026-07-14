@@ -19,6 +19,8 @@ export type EventState = {
   tasksDone: number;
   tasksTotal: number;
   weatherRisk: "low" | "medium" | "high";
+  isSample: boolean;
+  bannerUrl: string | null;
 };
 
 export type Ripple = {
