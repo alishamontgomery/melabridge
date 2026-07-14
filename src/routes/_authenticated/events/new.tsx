@@ -31,6 +31,7 @@ type Form = {
   type: string;
   customType: string;
   date: string;
+  startTime: string;
   addressText: string; street: string; city: string; state: string; zip: string;
   lat: number | null; lng: number | null; placeId: string;
   guests: string;
@@ -48,7 +49,7 @@ function NewEventPage() {
     tasks: 0, budget: 0, runsheet: 0, vendors: 0,
   });
   const [f, setF] = useState<Form>({
-    name: "", type: "Wedding", customType: "", date: "",
+    name: "", type: "Wedding", customType: "", date: "", startTime: "",
     addressText: "", street: "", city: "", state: "", zip: "", lat: null, lng: null, placeId: "",
     guests: "", budget: "",
   });
@@ -68,6 +69,8 @@ function NewEventPage() {
         event_type: eventType,
         custom_event_type: f.type === "Other" ? f.customType.trim() || null : null,
         event_date: f.date || null,
+        event_time: f.startTime || null,
+        ceremony_start_time: f.startTime || null,
         location: f.addressText || [f.street, f.city, f.state].filter(Boolean).join(", ") || null,
         venue_street: f.street || null,
         venue_city: f.city || null,
