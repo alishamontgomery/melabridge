@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
 
 type AccountType = "personal" | "organization" | "vendor";
 
@@ -210,6 +212,7 @@ function OptionalLabel({ children }: { children: React.ReactNode }) {
 function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organization"; onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const bootstrap = useServerFn(bootstrapEventPlan);
   const [busy, setBusy] = useState(false);
   const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState("Wedding");
@@ -242,7 +245,10 @@ function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organ
         .single();
       if (evErr) throw evErr;
 
-      toast.success("Your event is ready — MelaAssist™ is standing by");
+      toast.success("Your event is ready — MelaAssist™ is drafting your plan");
+      void bootstrap({ data: { event_id: created.id, only_if_empty: true } } as never).catch(() => {
+        /* Silent on failure; user can regenerate from the workspace. */
+      });
       navigate({ to: "/events/$eventId", params: { eventId: created.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
