@@ -45,8 +45,8 @@ function CollabPage() {
 
         <Card className="border-primary/20 bg-primary/5 p-5">
           <p className="text-sm">
-            <span className="font-semibold">Coming soon: </span>
-            Shared notes, approval workflows, activity feed, and AI meeting summaries.
+            <span className="font-semibold">Roadmap: </span>
+            Shared notes, approval workflows, activity feed, and AI meeting summaries are on our near-term roadmap. Vote on features in the Help Center.
           </p>
         </Card>
       </div>

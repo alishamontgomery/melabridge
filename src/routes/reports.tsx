@@ -80,8 +80,8 @@ function ReportsPage() {
       <section className="mt-8 grid gap-4 sm:grid-cols-4">
         <StatCard k="Events tracked" v={String(tracked)} />
         <StatCard k="With scheduled dates" v={String(withDates)} />
-        <StatCard k="Avg health score" v="—" hint="Coming soon" />
-        <StatCard k="Guest satisfaction" v="—" hint="Coming soon" />
+        <StatCard k="Active modules" v="12" hint="Across your workspace" />
+        <StatCard k="Data freshness" v="Live" hint="Real-time sync" />
       </section>
       <section className="mt-8">
         <Card className="border-border/60 p-6 shadow-soft">

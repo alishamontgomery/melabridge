@@ -456,9 +456,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" onClick={scrollToForm} className="gap-1.5"><Plus className="h-4 w-4" /> Add Budget Item</Button>
-        <Button size="sm" variant="outline" onClick={() => toast.info("Import coming soon — export a CSV to see the format.")} className="gap-1.5"><Upload className="h-4 w-4" /> Import Budget</Button>
-        <Button size="sm" variant="outline" onClick={exportCsv} disabled={items.length === 0} className="gap-1.5"><Download className="h-4 w-4" /> Export</Button>
-        <Button size="sm" variant="outline" onClick={() => toast.info("AI budget suggestions are on the way.")} className="gap-1.5"><Sparkles className="h-4 w-4" /> AI Budget Suggestions</Button>
+        <Button size="sm" variant="outline" onClick={exportCsv} disabled={items.length === 0} className="gap-1.5"><Download className="h-4 w-4" /> Export CSV</Button>
       </div>
 
       <Card id="budget-add-form" className="border-border/60 p-4 shadow-soft">

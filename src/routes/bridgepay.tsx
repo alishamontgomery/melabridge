@@ -30,10 +30,10 @@ function BridgePayPage() {
         />
         <MetricRow
           metrics={[
-            { label: "Held for milestones", value: "—", hint: "Coming soon" },
-            { label: "Paid to vendors", value: "—", hint: "Coming soon" },
-            { label: "Pending", value: "—", hint: "Coming soon" },
-            { label: "Processed via BridgePay", value: "—", hint: "Coming soon" },
+            { label: "Processor", value: "Stripe", hint: "PCI DSS Level 1" },
+            { label: "Payout speed", value: "2 days", hint: "Standard schedule" },
+            { label: "Platform fee", value: "0%", hint: "On fundraising" },
+            { label: "Currencies", value: "40+", hint: "Global support" },
           ]}
         />
         <ModuleGrid

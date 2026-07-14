@@ -84,7 +84,6 @@ const PLANNER_NAV: NavGroup[] = [
     items: [
       { to: "/invitations", label: "Create Invitation", icon: Palette },
       { to: "/inspiration", label: "Inspiration Studio", icon: Star },
-      { to: "/messaging", label: "Guest Messaging", icon: Mail },
       { to: "/notifications", label: "Scheduled Reminders", icon: BellRing },
     ],
   },
@@ -143,8 +142,7 @@ const GUEST_NAV: NavGroup[] = [
   {
     label: "Your Event",
     items: [
-      { to: "/guest-portal", label: "Event Details", icon: Calendar },
-      { to: "/guest-portal", label: "RSVP", icon: CreditCard },
+      { to: "/guest-portal", label: "Event & RSVP", icon: Calendar },
       { to: "/timeline", label: "Schedule", icon: Calendar },
       { to: "/travel", label: "Travel", icon: Boxes },
       { to: "/messaging", label: "Messages", icon: MessageSquare },

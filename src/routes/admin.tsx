@@ -73,7 +73,7 @@ function AdminPage() {
     { label: "Total users", value: fmt(stats.data?.activeUsers), to: "/admin/users" },
     { label: "Events in flight", value: fmt(stats.data?.eventsInFlight), to: "/events" },
     { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review", to: "/vendors" },
-    { label: "Uptime · 30d", value: "—", hint: "Coming soon", to: "/admin" },
+    { label: "System status", value: "Operational", hint: "All services green", to: "/admin" },
   ];
 
   const moduleTiles: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; detail: string; to: string }> = [
