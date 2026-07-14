@@ -142,7 +142,19 @@ function NewEventPage() {
         payment_status: f.paymentStatus || "unpaid",
       }).select("id").single();
       if (error) throw error;
-      toast.success("Event created");
+      toast.success("Event created — MelaAssist is drafting your plan");
+      // Fire-and-forget: don't block navigation on AI latency.
+      void bootstrap({ data: { event_id: data.id, only_if_empty: true } } as never)
+        .then((r: { tasksInserted?: number; budgetInserted?: number; skipped?: boolean } | undefined) => {
+          if (r && !r.skipped) {
+            toast.success(
+              `MelaAssist added ${r.tasksInserted ?? 0} tasks and ${r.budgetInserted ?? 0} budget items`,
+            );
+          }
+        })
+        .catch(() => {
+          /* Silent: the event still exists; user can retry generation from the workspace. */
+        });
       navigate({ to: "/events/$eventId", params: { eventId: data.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create event");
