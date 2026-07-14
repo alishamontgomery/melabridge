@@ -210,6 +210,20 @@ function NewEventPage() {
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="startTime">Ceremony / main event start time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={f.startTime}
+                onChange={(e) => set("startTime", e.target.value)}
+                placeholder="18:00"
+              />
+              <p className="text-xs text-muted-foreground">
+                MelaAssist schedules vendor arrival, setup, hair &amp; makeup, and guest arrival <em>before</em> this time.
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="guests">Estimated guests</Label>
