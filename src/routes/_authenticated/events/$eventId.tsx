@@ -545,6 +545,7 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
   const [email, setEmail] = useState("");
   const [household, setHousehold] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Guest | null>(null);
 
   async function add(e: React.FormEvent) {
     e.preventDefault();
@@ -560,6 +561,7 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
       });
       if (error) throw error;
       setName(""); setEmail(""); setHousehold("");
+      toast.success("Guest added");
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add guest");
@@ -573,10 +575,18 @@ function GuestsTab({ eventId, guests, reload }: { eventId: string; guests: Guest
   }
 
   async function remove(id: string) {
-    const { error } = await supabase.from("guests").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase
+      .from("guests")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Guest removed");
     await reload();
   }
+
 
   function exportCsv() {
     const rows = [["Name", "Email", "Household", "RSVP", "Plus ones", "Meal"]];
