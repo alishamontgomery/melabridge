@@ -61,6 +61,7 @@ type Form = {
 function NewEventPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const bootstrap = useServerFn(bootstrapEventPlan);
   const [busy, setBusy] = useState(false);
   const [f, setF] = useState<Form>({
     name: "", type: "Wedding", customType: "",
