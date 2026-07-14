@@ -834,6 +834,112 @@ export type Database = {
           },
         ]
       }
+      event_runsheet_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          duration_min: number
+          event_id: string
+          id: string
+          is_sample: boolean
+          notes: string | null
+          owner: string | null
+          sort_order: number
+          start_time: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          event_id: string
+          id?: string
+          is_sample?: boolean
+          notes?: string | null
+          owner?: string | null
+          sort_order?: number
+          start_time?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          duration_min?: number
+          event_id?: string
+          id?: string
+          is_sample?: boolean
+          notes?: string | null
+          owner?: string | null
+          sort_order?: number
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_runsheet_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_vendor_needs: {
+        Row: {
+          booked_vendor_id: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          event_id: string
+          id: string
+          is_sample: boolean
+          notes: string | null
+          priority: number
+          sort_order: number
+          status: Database["public"]["Enums"]["vendor_need_status"]
+          updated_at: string
+        }
+        Insert: {
+          booked_vendor_id?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          id?: string
+          is_sample?: boolean
+          notes?: string | null
+          priority?: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["vendor_need_status"]
+          updated_at?: string
+        }
+        Update: {
+          booked_vendor_id?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          id?: string
+          is_sample?: boolean
+          notes?: string | null
+          priority?: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["vendor_need_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_vendor_needs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           balance_due_date: string | null
@@ -2023,6 +2129,7 @@ export type Database = {
       payment_schedule_status: "pending" | "paid" | "overdue" | "waived"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in_progress" | "done"
+      vendor_need_status: "required" | "recommended" | "optional"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2222,6 +2329,7 @@ export const Constants = {
       payment_schedule_status: ["pending", "paid", "overdue", "waived"],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in_progress", "done"],
+      vendor_need_status: ["required", "recommended", "optional"],
     },
   },
 } as const

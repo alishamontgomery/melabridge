@@ -27,14 +27,15 @@ const EVENT_TYPES = [
   "Fundraiser", "Private Celebration", "Other",
 ];
 
+// Cancelled and Completed are intentionally omitted here — those statuses
+// only make sense after an event exists, and are available from the event
+// details page.
 const STATUSES = [
   { value: "inquiry", label: "Inquiry" },
   { value: "consultation_scheduled", label: "Consultation Scheduled" },
   { value: "quote_sent", label: "Quote Sent" },
   { value: "tentative", label: "Tentative" },
   { value: "confirmed", label: "Confirmed" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
 ] as const;
 
 const CONTACT_METHODS = ["Phone", "Email", "Text", "In-app"] as const;
