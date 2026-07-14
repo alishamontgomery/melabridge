@@ -88,12 +88,10 @@ function OnboardingPage() {
         <WelcomeHeader />
         {!accountType ? (
           <AccountTypePicker onSelect={setAccountType} />
-        ) : accountType === "planner" ? (
-          <PlannerFlow onBack={() => setAccountType(null)} />
         ) : accountType === "vendor" ? (
           <VendorFlow onBack={() => setAccountType(null)} />
         ) : (
-          <GuestFlow onBack={() => setAccountType(null)} />
+          <PlannerFlow accountType={accountType} onBack={() => setAccountType(null)} />
         )}
       </div>
     </div>
