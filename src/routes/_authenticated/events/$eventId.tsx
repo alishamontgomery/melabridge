@@ -2,10 +2,10 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import {
-  ArrowLeft, Calendar, Clock, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
-  Loader2, Sparkles, ClipboardList, PartyPopper, Save, Pencil, Upload, Download,
+  ArrowLeft, Calendar, Wallet, Trash2, Plus, Check, Circle,
+  Loader2, Sparkles, Save, Upload, Download,
 } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
