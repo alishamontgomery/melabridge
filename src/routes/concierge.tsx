@@ -364,7 +364,7 @@ function ConciergePage() {
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-primary" />
                 <p className="text-sm font-semibold">AI Event Simulator™</p>
-                <Badge variant="secondary">Ran 10,000 scenarios</Badge>
+                <Badge variant="secondary">Scenario preview</Badge>
               </div>
               <p className="text-xs text-muted-foreground">
                 {simulation.risks.filter((r) => !r.resolved).length} open ·{" "}
