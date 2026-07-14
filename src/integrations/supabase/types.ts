@@ -1604,6 +1604,7 @@ export type Database = {
       }
       vendor_bookings: {
         Row: {
+          cancelled_at: string | null
           category: string
           completed_at: string | null
           confirmed_at: string | null
@@ -1617,16 +1618,24 @@ export type Database = {
           deposit_paid_at: string | null
           event_id: string | null
           id: string
+          in_progress_at: string | null
+          lost_at: string | null
+          no_response_at: string | null
           notes: string | null
           planner_id: string
+          quote_accepted_at: string | null
           quote_amount: number | null
           quote_sent_at: string | null
+          quote_viewed_at: string | null
+          review_requested_at: string | null
+          reviewed_at: string | null
           title: string
           total_paid: number
           updated_at: string
           vendor_id: string
         }
         Insert: {
+          cancelled_at?: string | null
           category: string
           completed_at?: string | null
           confirmed_at?: string | null
@@ -1640,16 +1649,24 @@ export type Database = {
           deposit_paid_at?: string | null
           event_id?: string | null
           id?: string
+          in_progress_at?: string | null
+          lost_at?: string | null
+          no_response_at?: string | null
           notes?: string | null
           planner_id: string
+          quote_accepted_at?: string | null
           quote_amount?: number | null
           quote_sent_at?: string | null
+          quote_viewed_at?: string | null
+          review_requested_at?: string | null
+          reviewed_at?: string | null
           title: string
           total_paid?: number
           updated_at?: string
           vendor_id: string
         }
         Update: {
+          cancelled_at?: string | null
           category?: string
           completed_at?: string | null
           confirmed_at?: string | null
@@ -1663,10 +1680,17 @@ export type Database = {
           deposit_paid_at?: string | null
           event_id?: string | null
           id?: string
+          in_progress_at?: string | null
+          lost_at?: string | null
+          no_response_at?: string | null
           notes?: string | null
           planner_id?: string
+          quote_accepted_at?: string | null
           quote_amount?: number | null
           quote_sent_at?: string | null
+          quote_viewed_at?: string | null
+          review_requested_at?: string | null
+          reviewed_at?: string | null
           title?: string
           total_paid?: number
           updated_at?: string
@@ -1899,6 +1923,10 @@ export type Database = {
         | "review_requested"
         | "reviewed"
         | "cancelled"
+        | "quote_viewed"
+        | "quote_accepted"
+        | "no_response"
+        | "lost"
       calendar_block_reason: "day_off" | "vacation" | "travel"
       calendar_event_source: "native" | "external"
       calendar_event_status:
@@ -2089,6 +2117,10 @@ export const Constants = {
         "review_requested",
         "reviewed",
         "cancelled",
+        "quote_viewed",
+        "quote_accepted",
+        "no_response",
+        "lost",
       ],
       calendar_block_reason: ["day_off", "vacation", "travel"],
       calendar_event_source: ["native", "external"],
