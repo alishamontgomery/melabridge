@@ -191,19 +191,6 @@ function StatCard({ icon: Icon, label, children }: { icon: React.ComponentType<{
   );
 }
 
-function KeyFact({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex min-w-0 items-start gap-2.5">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <dt className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</dt>
-        <dd className="truncate text-sm font-medium text-foreground">{children}</dd>
-      </div>
-    </div>
-  );
-}
 
 // ============= TASKS =============
 function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; reload: () => Promise<void> }) {
