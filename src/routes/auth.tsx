@@ -394,7 +394,22 @@ function AuthPage() {
                 )}
               </AlertDescription>
             </Alert>
+
+          {pendingVerificationEmail && (
+            <Alert className="mb-5 border-primary/30 bg-primary/5">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <AlertTitle>Verify your email</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>
+                  We sent a verification link to <strong>{pendingVerificationEmail}</strong>. Confirm your email to activate your account, then sign in.
+                </p>
+                <Button type="button" variant="outline" size="sm" onClick={resendVerification} disabled={busy}>
+                  Resend verification email
+                </Button>
+              </AlertDescription>
+            </Alert>
           )}
+
 
           {busy && (
             <div className="mb-5 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary" role="status" aria-live="polite">
