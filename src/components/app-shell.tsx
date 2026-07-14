@@ -78,7 +78,10 @@ const PLANNER_NAV: NavGroup[] = [
   },
   {
     label: "Resources",
-    items: [{ to: "/files", label: "Files", icon: FolderOpen }],
+    items: [
+      { to: "/inspiration", label: "Inspiration Studio", icon: Star },
+      { to: "/files", label: "Files", icon: FolderOpen },
+    ],
   },
   {
     label: "Account",
