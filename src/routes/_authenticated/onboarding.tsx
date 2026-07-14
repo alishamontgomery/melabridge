@@ -206,8 +206,8 @@ function OptionalLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ============== PLANNER FLOW ============== */
-function PlannerFlow({ onBack }: { onBack: () => void }) {
+/* ============== PLANNER FLOW (Personal + Organization) ============== */
+function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organization"; onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -226,7 +226,7 @@ function PlannerFlow({ onBack }: { onBack: () => void }) {
     try {
       const { error: profErr } = await supabase
         .from("profiles")
-        .update({ account_type: "planner", onboarding_completed: true })
+        .update({ account_type: accountType, onboarding_completed: true })
         .eq("id", user.id);
       if (profErr) throw profErr;
 
