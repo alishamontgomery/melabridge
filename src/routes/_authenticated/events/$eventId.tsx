@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import {
-  ArrowLeft, Calendar, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
+  ArrowLeft, Calendar, Clock, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
   Loader2, Sparkles, ClipboardList, PartyPopper, Save, Pencil, Upload, Download,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/app-shell";
@@ -23,7 +23,6 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { EventDashboardPreview, type DashboardData } from "@/components/event-dashboard-preview";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -86,68 +85,14 @@ function EventDetailPage() {
     return counts;
   }, [guests]);
 
-  const dashboardData = useMemo<DashboardData | null>(() => {
-    if (!event) return null;
-    const actualBudget = budgetTotals.act || budgetTotals.est || 0;
-    const totalBudget = event.budget_target ? Number(event.budget_target) : Math.max(actualBudget, 1);
-    const visibleTasks = tasks.length
-      ? tasks.slice(0, 5).map((task) => ({
-          id: task.id,
-          title: task.title,
-          done: task.status === "done",
-          due: task.due_date ? new Date(task.due_date).toLocaleDateString(undefined, { month: "short", day: "2-digit" }) : undefined,
-        }))
-      : [{ id: "first-task", title: "Add your first planning task", done: false }];
-    const vendorsFromBudget = budget
-      .filter((item) => item.vendor_name || item.category)
-      .slice(0, 4)
-      .map((item) => ({
-        name: item.vendor_name || item.label,
-        role: item.category,
-        status: Number(item.paid_amount) > 0 ? "confirmed" as const : Number(item.estimated_amount) > 0 ? "quoted" as const : "pending" as const,
-      }));
-    const timeline = [
-      { date: "Start", label: "Event created", done: true },
-      { date: "Plan", label: "Tasks drafted", done: tasks.length > 0 },
-      { date: "Invite", label: "Guests added", done: guests.length > 0 },
-      { date: "Book", label: "Vendors tracked", done: budget.length > 0 },
-      { date: "Live", label: "Event day", done: countdown !== null && countdown <= 0 },
-    ];
-    return {
-      eventName: event.name,
-      eventType: event.event_type || "Event",
-      location: event.location || "Location to be confirmed",
-      daysRemaining: Math.max(0, countdown ?? 0),
-      guests: {
-        invited: Math.max(guests.length, event.guest_target ?? guests.length, 1),
-        confirmed: rsvpCounts.yes,
-        pending: rsvpCounts.pending + rsvpCounts.maybe,
-        declined: rsvpCounts.no,
-      },
-      budget: { spent: actualBudget, total: Math.max(totalBudget, actualBudget, 1) },
-      tasks: visibleTasks,
-      vendors: vendorsFromBudget.length
-        ? vendorsFromBudget
-        : [{ name: "Add vendor quotes", role: "Planning", status: "pending" as const }],
-      aiRecommendation:
-        tasks.filter((task) => task.status !== "done").length > 0
-          ? "Focus on the next open task, then update guests and vendor quotes so your plan stays current."
-          : "Your core task list is clear. Add budget items, guests, and vendors to unlock richer planning guidance.",
-      activity: [
-        { who: "MelaBridge", what: "synced this dashboard from your event workspace", when: "now" },
-        ...tasks.slice(0, 2).map((task) => ({ who: task.status === "done" ? "Task completed" : "Open task", what: task.title, when: task.due_date ? new Date(task.due_date).toLocaleDateString() : "unscheduled" })),
-      ],
-      notifications: [
-        { title: `${tasks.filter((task) => task.status !== "done").length} open tasks`, body: "Your live planning board is tracking the next steps.", when: "live" },
-        { title: `${rsvpCounts.pending + rsvpCounts.maybe} RSVP follow-ups`, body: "Guest responses update automatically as you add people.", when: "live" },
-      ],
-      timeline,
-      decisions: [
-        { title: "Planning priorities", options: Math.max(tasks.length, 1), votes: tasks.filter((task) => task.status === "done").length },
-        { title: "Budget choices", options: Math.max(budget.length, 1), votes: budget.filter((item) => Number(item.paid_amount) > 0).length },
-      ],
-    };
-  }, [budget, budgetTotals.act, budgetTotals.est, countdown, event, guests.length, rsvpCounts.maybe, rsvpCounts.no, rsvpCounts.pending, rsvpCounts.yes, tasks]);
+  const countdownLabel = useMemo(() => {
+    if (countdown === null) return "No date set";
+    if (countdown === 0) return "Today";
+    if (countdown === 1) return "Tomorrow";
+    if (countdown > 1) return `${countdown} days to go`;
+    if (countdown === -1) return "Yesterday";
+    return `${Math.abs(countdown)} days ago`;
+  }, [countdown]);
 
   async function handleDelete() {
     if (!event) return;
@@ -234,9 +179,26 @@ function EventDetailPage() {
           }
         />
 
+        <Card className="border-border/60 p-4 shadow-soft">
+          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <KeyFact icon={Calendar} label="Date">
+              {event.event_date ? new Date(event.event_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "To be set"}
+            </KeyFact>
+            <KeyFact icon={Clock} label="Time">
+              {event.event_time ? event.event_time.slice(0, 5) : "—"}
+            </KeyFact>
+            <KeyFact icon={MapPin} label="Location">
+              {event.location || "—"}
+            </KeyFact>
+            <KeyFact icon={Users} label="Guests">
+              {event.guest_target ? `${event.guest_target} expected` : `${guests.length} added`}
+            </KeyFact>
+          </dl>
+        </Card>
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex w-full flex-wrap gap-1 sm:w-auto">
-            <TabsTrigger value="overview">Dashboard</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks{tasks.length > 0 ? ` (${tasks.length})` : ""}</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="guests">Guests{guests.length > 0 ? ` (${guests.length})` : ""}</TabsTrigger>
@@ -244,15 +206,9 @@ function EventDetailPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
-            {dashboardData && (
-              <div className="mb-6">
-                <EventDashboardPreview data={dashboardData} />
-              </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard icon={Calendar} label="Countdown">
-                {countdown === null ? "No date set" : countdown < 0 ? "Past" : `${countdown} day${countdown === 1 ? "" : "s"}`}
+                <span className="text-xl sm:text-2xl">{countdownLabel}</span>
               </StatCard>
               <StatCard icon={ClipboardList} label="Task progress">
                 {taskProgress}% <Progress value={taskProgress} className="mt-2" />
@@ -330,6 +286,20 @@ function StatCard({ icon: Icon, label, children }: { icon: React.ComponentType<{
       </div>
       <div className="font-display text-2xl font-semibold">{children}</div>
     </Card>
+  );
+}
+
+function KeyFact({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-w-0 items-start gap-2.5">
+      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <dt className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</dt>
+        <dd className="truncate text-sm font-medium text-foreground">{children}</dd>
+      </div>
+    </div>
   );
 }
 
