@@ -85,68 +85,14 @@ function EventDetailPage() {
     return counts;
   }, [guests]);
 
-  const dashboardData = useMemo<DashboardData | null>(() => {
-    if (!event) return null;
-    const actualBudget = budgetTotals.act || budgetTotals.est || 0;
-    const totalBudget = event.budget_target ? Number(event.budget_target) : Math.max(actualBudget, 1);
-    const visibleTasks = tasks.length
-      ? tasks.slice(0, 5).map((task) => ({
-          id: task.id,
-          title: task.title,
-          done: task.status === "done",
-          due: task.due_date ? new Date(task.due_date).toLocaleDateString(undefined, { month: "short", day: "2-digit" }) : undefined,
-        }))
-      : [{ id: "first-task", title: "Add your first planning task", done: false }];
-    const vendorsFromBudget = budget
-      .filter((item) => item.vendor_name || item.category)
-      .slice(0, 4)
-      .map((item) => ({
-        name: item.vendor_name || item.label,
-        role: item.category,
-        status: Number(item.paid_amount) > 0 ? "confirmed" as const : Number(item.estimated_amount) > 0 ? "quoted" as const : "pending" as const,
-      }));
-    const timeline = [
-      { date: "Start", label: "Event created", done: true },
-      { date: "Plan", label: "Tasks drafted", done: tasks.length > 0 },
-      { date: "Invite", label: "Guests added", done: guests.length > 0 },
-      { date: "Book", label: "Vendors tracked", done: budget.length > 0 },
-      { date: "Live", label: "Event day", done: countdown !== null && countdown <= 0 },
-    ];
-    return {
-      eventName: event.name,
-      eventType: event.event_type || "Event",
-      location: event.location || "Location to be confirmed",
-      daysRemaining: Math.max(0, countdown ?? 0),
-      guests: {
-        invited: Math.max(guests.length, event.guest_target ?? guests.length, 1),
-        confirmed: rsvpCounts.yes,
-        pending: rsvpCounts.pending + rsvpCounts.maybe,
-        declined: rsvpCounts.no,
-      },
-      budget: { spent: actualBudget, total: Math.max(totalBudget, actualBudget, 1) },
-      tasks: visibleTasks,
-      vendors: vendorsFromBudget.length
-        ? vendorsFromBudget
-        : [{ name: "Add vendor quotes", role: "Planning", status: "pending" as const }],
-      aiRecommendation:
-        tasks.filter((task) => task.status !== "done").length > 0
-          ? "Focus on the next open task, then update guests and vendor quotes so your plan stays current."
-          : "Your core task list is clear. Add budget items, guests, and vendors to unlock richer planning guidance.",
-      activity: [
-        { who: "MelaBridge", what: "synced this dashboard from your event workspace", when: "now" },
-        ...tasks.slice(0, 2).map((task) => ({ who: task.status === "done" ? "Task completed" : "Open task", what: task.title, when: task.due_date ? new Date(task.due_date).toLocaleDateString() : "unscheduled" })),
-      ],
-      notifications: [
-        { title: `${tasks.filter((task) => task.status !== "done").length} open tasks`, body: "Your live planning board is tracking the next steps.", when: "live" },
-        { title: `${rsvpCounts.pending + rsvpCounts.maybe} RSVP follow-ups`, body: "Guest responses update automatically as you add people.", when: "live" },
-      ],
-      timeline,
-      decisions: [
-        { title: "Planning priorities", options: Math.max(tasks.length, 1), votes: tasks.filter((task) => task.status === "done").length },
-        { title: "Budget choices", options: Math.max(budget.length, 1), votes: budget.filter((item) => Number(item.paid_amount) > 0).length },
-      ],
-    };
-  }, [budget, budgetTotals.act, budgetTotals.est, countdown, event, guests.length, rsvpCounts.maybe, rsvpCounts.no, rsvpCounts.pending, rsvpCounts.yes, tasks]);
+  const countdownLabel = useMemo(() => {
+    if (countdown === null) return "No date set";
+    if (countdown === 0) return "Today";
+    if (countdown === 1) return "Tomorrow";
+    if (countdown > 1) return `${countdown} days to go`;
+    if (countdown === -1) return "Yesterday";
+    return `${Math.abs(countdown)} days ago`;
+  }, [countdown]);
 
   async function handleDelete() {
     if (!event) return;
