@@ -148,9 +148,9 @@ function MelaAssistCard() {
 
 function AccountTypePicker({ onSelect }: { onSelect: (t: AccountType) => void }) {
   const options: Array<{ type: AccountType; icon: typeof PartyPopper; title: string; sub: string }> = [
-    { type: "planner", icon: PartyPopper, title: "Plan an Event", sub: "I'm organizing one or more events." },
+    { type: "personal", icon: PartyPopper, title: "Plan a Personal Event", sub: "Weddings, birthdays, celebrations — just me and my collaborators." },
+    { type: "organization", icon: Building2, title: "Plan for an Organization", sub: "Company events, conferences, fundraisers — with a team." },
     { type: "vendor", icon: Store, title: "Join as a Vendor", sub: "I provide products or services for events." },
-    { type: "guest", icon: UserCheck, title: "Join an Event", sub: "I received an invitation to an event." },
   ];
   return (
     <div className="space-y-4">
