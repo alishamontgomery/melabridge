@@ -558,7 +558,7 @@ function AuthPage() {
             </div>
           )}
 
-          {!googleDisabled ? (
+          {!googleDisabled && (
             <>
               <div className="my-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
@@ -570,11 +570,6 @@ function AuthPage() {
                 {activeOperation === "google" ? "Opening Google…" : "Continue with Google"}
               </Button>
             </>
-          ) : (
-            <p className="mt-6 rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs text-muted-foreground">
-              Google sign-in is unavailable in the Lovable preview. Use email &amp; password here, or try Google on the{" "}
-              <a href="https://melabridge.com/auth" className="underline">published site</a>.
-            </p>
           )}
         </Card>
 
