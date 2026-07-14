@@ -74,6 +74,26 @@ function friendlyAuthError(error: unknown) {
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+/**
+ * The Lovable preview environment (id-preview--*.lovable.app and the editor iframe)
+ * intercepts fetch requests to Supabase auth endpoints, which causes Google OAuth
+ * POST /auth/v1/token to hang indefinitely. Google sign-in works correctly on the
+ * published site and custom domains — we only hide the button in the preview.
+ */
+function isPreviewEnvironment() {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  if (host.includes("id-preview--")) return true;
+  if (host.endsWith(".lovableproject.com")) return true;
+  try {
+    if (window.self !== window.top) return true;
+  } catch {
+    // Cross-origin iframe access throws — that itself means we're framed.
+    return true;
+  }
+  return false;
+}
+
 function safeNextPath() {
   const stored = window.sessionStorage.getItem("melabridge.auth.next");
   window.sessionStorage.removeItem("melabridge.auth.next");
@@ -151,6 +171,7 @@ function AuthPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const timedOutRef = useRef(false);
   const callbackHandledRef = useRef(false);
+  const googleDisabled = useMemo(() => isPreviewEnvironment(), []);
 
   const busy = activeOperation !== null;
 
@@ -289,6 +310,12 @@ function AuthPage() {
   }
 
   async function handleGoogle() {
+    if (googleDisabled) {
+      const msg = "Google sign-in is temporarily unavailable in this preview. Please use email/password, or try the published site.";
+      setAuthError(msg);
+      toast.error(msg);
+      return;
+    }
     window.sessionStorage.setItem("melabridge.auth.next", "/events");
     await runAuthOperation("google", "Opening Google sign-in...", async () => {
       const result = await lovable.auth.signInWithOAuth("google", {
@@ -526,15 +553,24 @@ function AuthPage() {
             </div>
           )}
 
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-widest text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
+          {!googleDisabled ? (
+            <>
+              <div className="my-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs uppercase tracking-widest text-muted-foreground">or</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
 
-          <Button type="button" variant="outline" className="w-full transition hover:-translate-y-0.5 hover:shadow-soft" disabled={busy} onClick={handleGoogle}>
-            {activeOperation === "google" ? "Opening Google…" : "Continue with Google"}
-          </Button>
+              <Button type="button" variant="outline" className="w-full transition hover:-translate-y-0.5 hover:shadow-soft" disabled={busy} onClick={handleGoogle}>
+                {activeOperation === "google" ? "Opening Google…" : "Continue with Google"}
+              </Button>
+            </>
+          ) : (
+            <p className="mt-6 rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs text-muted-foreground">
+              Google sign-in is unavailable in the Lovable preview. Use email &amp; password here, or try Google on the{" "}
+              <a href="https://melabridge.com/auth" className="underline">published site</a>.
+            </p>
+          )}
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
