@@ -442,7 +442,7 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
 function BudgetTab({ eventId, items, totals, target, reload }: {
   eventId: string; items: BudgetItem[]; totals: { est: number; act: number; paid: number }; target: number | null; reload: () => Promise<void>;
 }) {
-  const [category, setCategory] = useState("Venue");
+  const [category, setCategory] = useState("");
   const [label, setLabel] = useState("");
   const [estimated, setEstimated] = useState("");
   const [actual, setActual] = useState("");
