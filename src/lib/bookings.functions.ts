@@ -97,44 +97,89 @@ export const getBooking = createServerFn({ method: "GET" })
     return { booking, events: events ?? [], invoices: invoices ?? [], schedule: schedule ?? [] };
   });
 
-const ALLOWED_MANUAL: BookingStage[] = [
-  "contacted", "consultation_scheduled", "quote_sent", "quote_under_review",
-  "contract_sent", "contract_signed", "deposit_paid", "in_progress", "completed",
-  "review_requested", "reviewed", "cancelled",
-];
+/** Only exception transitions are accepted from the client. Normal stages are derived from timestamps. */
+const EXCEPTION_STAGES: BookingStage[] = ["cancelled", "no_response", "lost"];
 
-export const advanceStage = createServerFn({ method: "POST" })
+export const markException = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { bookingId: string; stage: BookingStage; note?: string }) => data)
+  .inputValidator((data: { bookingId: string; stage: "cancelled" | "no_response" | "lost"; note?: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    if (data.stage === "booked") {
-      // Only allowed under manual confirmation rule
-      const { data: b } = await supabase
-        .from("vendor_bookings")
-        .select("vendor_id")
-        .eq("id", data.bookingId)
-        .maybeSingle();
-      if (!b) throw new Error("Booking not found");
-      const { data: settings } = await supabase
-        .from("vendor_booking_settings")
-        .select("confirmation_rule")
-        .eq("vendor_id", b.vendor_id)
-        .maybeSingle();
-      if (settings?.confirmation_rule !== "manual") {
-        throw new Error("Bookings can only be confirmed automatically once the vendor's requirements are met.");
-      }
-      await supabase.from("vendor_bookings")
-        .update({ current_stage: "booked", confirmed_at: new Date().toISOString() })
-        .eq("id", data.bookingId);
-    } else if (!ALLOWED_MANUAL.includes(data.stage) && data.stage !== "saved") {
-      throw new Error("Invalid stage");
-    }
+    if (!EXCEPTION_STAGES.includes(data.stage)) throw new Error("Invalid exception stage");
     const { error } = await supabase.from("vendor_booking_events").insert({
       booking_id: data.bookingId,
       stage: data.stage,
       actor_id: userId,
       note: data.note ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const reopenBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Clear terminal timestamps; the recompute trigger will re-derive the correct stage.
+    const { error: uErr } = await supabase
+      .from("vendor_bookings")
+      .update({ cancelled_at: null, no_response_at: null, lost_at: null })
+      .eq("id", data.bookingId);
+    if (uErr) throw new Error(uErr.message);
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId,
+      stage: "contacted",
+      actor_id: userId,
+      note: "Booking reopened",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const markQuoteViewed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId, stage: "quote_viewed", actor_id: userId, note: "Client opened the quote",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const markQuoteAccepted = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId, stage: "quote_accepted", actor_id: userId, note: "Client accepted the quote",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const requestReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId, stage: "review_requested", actor_id: userId, note: "Review request sent",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const submitReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { bookingId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase.from("vendor_booking_events").insert({
+      booking_id: data.bookingId, stage: "reviewed", actor_id: userId, note: "Review submitted",
     });
     if (error) throw new Error(error.message);
     return { ok: true };
