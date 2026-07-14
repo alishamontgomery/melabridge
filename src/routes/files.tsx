@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useEcosystem } from "@/lib/ecosystem-store";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/files")({
   head: () => ({
@@ -59,6 +60,7 @@ function FilesPage() {
   const qc = useQueryClient();
   const [category, setCategory] = useState<Category>("contracts");
   const [uploading, setUploading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<EventFile | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const filesQ = useQuery({
@@ -294,9 +296,7 @@ function FilesPage() {
                           size="sm"
                           variant="ghost"
                           disabled={remove.isPending}
-                          onClick={() => {
-                            if (confirm(`Delete ${f.filename}?`)) remove.mutate(f);
-                          }}
+                          onClick={() => setPendingDelete(f)}
                         >
                           <Trash2 className="h-3.5 w-3.5 text-rose-600" />
                         </Button>
