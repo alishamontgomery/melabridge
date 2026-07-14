@@ -69,6 +69,22 @@ function AdminPage() {
 
   const fmt = (n?: number) => (typeof n === "number" ? n.toLocaleString() : "—");
 
+  const metricCards: Array<{ label: string; value: string; hint?: string; to: string }> = [
+    { label: "Total users", value: fmt(stats.data?.activeUsers), to: "/admin/users" },
+    { label: "Events in flight", value: fmt(stats.data?.eventsInFlight), to: "/events" },
+    { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review", to: "/vendors" },
+    { label: "Uptime · 30d", value: "—", hint: "Coming soon", to: "/admin" },
+  ];
+
+  const moduleTiles: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; detail: string; to: string }> = [
+    { icon: Users, title: "User management", detail: "Search, filter, edit roles, suspend or reactivate.", to: "/admin/users" },
+    { icon: BadgeCheck, title: "Vendor verification", detail: "Review documents, KYC, and grant BridgeCheck™ badges.", to: "/vendors" },
+    { icon: Flag, title: "Trust & safety", detail: "Reports queue, auto-mod, and appeals workflow.", to: "/reports" },
+    { icon: DollarSign, title: "Billing & payouts", detail: "Subscription revenue, refunds, and vendor payout audits.", to: "/bridgepay" },
+    { icon: Server, title: "System health", detail: "Realtime status of AI, payments, messaging, and data pipelines.", to: "/analytics" },
+    { icon: Activity, title: "Audit log", detail: "Immutable log of every privileged action across the platform.", to: "/reports" },
+  ];
+
   return (
     <AppShell active="/admin">
       <div className="space-y-6">
@@ -77,30 +93,42 @@ function AdminPage() {
           title="Enterprise controls, in one calm surface"
           description="Manage users, vendors, safety, subscriptions, and platform health across your organization."
           icon={ShieldCheck}
+          actions={<Button asChild size="sm"><Link to="/admin/invite">Invite users</Link></Button>}
         />
-        <MetricRow
-          metrics={[
-            { label: "Total users", value: fmt(stats.data?.activeUsers) },
-            { label: "Events in flight", value: fmt(stats.data?.eventsInFlight) },
-            { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review" },
-            { label: "Uptime · 30d", value: "—", hint: "Coming soon" },
-          ]}
-        />
-        <ModuleGrid
-          features={[
-            { icon: Users, title: "User management", detail: "Roles, SSO, workspace transfers, and impersonation." },
-            { icon: BadgeCheck, title: "Vendor verification", detail: "Review documents, KYC, and grant BridgeCheck™ badges." },
-            { icon: Flag, title: "Trust & safety", detail: "Reports queue, auto-mod, and appeals workflow." },
-            { icon: DollarSign, title: "Billing & payouts", detail: "Subscription revenue, refunds, and vendor payout audits." },
-            { icon: Server, title: "System health", detail: "Realtime status of AI, payments, messaging, and data pipelines." },
-            { icon: Activity, title: "Audit log", detail: "Immutable log of every privileged action across the platform." },
-          ]}
-        />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {metricCards.map((m) => (
+            <Link
+              key={m.label}
+              to={m.to as "/admin/users"}
+              className="rounded-2xl border border-border/60 bg-card p-4 shadow-soft transition hover:border-primary/40 hover:shadow-elegant"
+            >
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{m.label}</p>
+              <p className="mt-1 font-display text-2xl font-semibold">{m.value}</p>
+              {m.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{m.hint}</p>}
+            </Link>
+          ))}
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {moduleTiles.map((t) => (
+            <Link
+              key={t.title}
+              to={t.to as "/admin/users"}
+              className="group rounded-2xl border border-border/60 bg-card p-5 shadow-soft transition hover:border-primary/40 hover:shadow-elegant"
+            >
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
+                <t.icon className="h-4 w-4" />
+              </span>
+              <p className="mt-3 text-sm font-semibold">{t.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t.detail}</p>
+              <p className="mt-3 text-xs text-primary opacity-0 transition group-hover:opacity-100">Open →</p>
+            </Link>
+          ))}
+        </div>
         <Section title="Queues needing attention">
           <div className="grid gap-3 md:grid-cols-3">
-            <QueueCard icon={BadgeCheck} label="Vendor verifications" count={stats.data?.vendorApplications ?? 0} tone="text-primary" />
-            <QueueCard icon={AlertTriangle} label="Open reports" count={stats.data?.openReports ?? 0} tone="text-destructive" />
-            <QueueCard icon={DollarSign} label="Refunds pending" count={stats.data?.pendingRefunds ?? 0} tone="text-gold" />
+            <QueueCard icon={BadgeCheck} label="Vendor verifications" count={stats.data?.vendorApplications ?? 0} tone="text-primary" to="/vendors" />
+            <QueueCard icon={AlertTriangle} label="Open reports" count={stats.data?.openReports ?? 0} tone="text-destructive" to="/reports" />
+            <QueueCard icon={DollarSign} label="Refunds pending" count={stats.data?.pendingRefunds ?? 0} tone="text-gold" to="/bridgepay" />
           </div>
         </Section>
 
