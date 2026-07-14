@@ -206,20 +206,24 @@ function QueueCard({
   label,
   count,
   tone,
+  to,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   count: number;
   tone: string;
+  to: string;
 }) {
   return (
-    <Card className="flex items-center justify-between border-border/60 p-4 shadow-soft">
-      <div className="flex items-center gap-2">
-        <Icon className={`h-4 w-4 ${tone}`} />
-        <span className="text-sm font-medium">{label}</span>
-      </div>
-      <Badge variant="secondary">{count}</Badge>
-    </Card>
+    <Link to={to as "/admin/users"} className="block">
+      <Card className="flex items-center justify-between border-border/60 p-4 shadow-soft transition hover:border-primary/40 hover:shadow-elegant">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-4 w-4 ${tone}`} />
+          <span className="text-sm font-medium">{label}</span>
+        </div>
+        <Badge variant="secondary">{count}</Badge>
+      </Card>
+    </Link>
   );
 }
 
