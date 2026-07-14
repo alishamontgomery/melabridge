@@ -1881,6 +1881,15 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["event_role"] }
         Returns: number
       }
+      fn_compute_booking_stage: {
+        Args: { _booking_id: string }
+        Returns: Database["public"]["Enums"]["booking_stage"]
+      }
+      fn_recompute_booking_stage: {
+        Args: { _booking_id: string }
+        Returns: undefined
+      }
+      fn_recompute_time_based_stages: { Args: never; Returns: number }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
