@@ -309,6 +309,17 @@ function FilesPage() {
           </Card>
         )}
       </div>
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Delete this document?"
+        description={
+          <p>&ldquo;{pendingDelete?.filename}&rdquo; will be moved to Trash and permanently removed after 30 days.</p>
+        }
+        confirmLabel="Move to Trash"
+        onConfirm={async () => { if (pendingDelete) await remove.mutateAsync(pendingDelete); }}
+      />
     </AppShell>
   );
 }
