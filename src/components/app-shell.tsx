@@ -207,7 +207,7 @@ function UserMenu() {
     navigate({ to: "/auth", replace: true });
   }
 
-  const home = role === "vendor" ? "/vendor" : role === "guest" ? "/guest-portal" : role === "admin" ? "/admin" : "/dashboard";
+  const home = role === "vendor" ? "/vendor" : role === "admin" ? "/admin" : "/dashboard";
 
   return (
     <DropdownMenu>
