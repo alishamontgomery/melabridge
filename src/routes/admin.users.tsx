@@ -27,7 +27,7 @@ export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
 });
 
-type Role = "planner" | "vendor" | "guest" | "admin";
+type Role = "personal" | "organization" | "vendor" | "admin";
 
 function AdminUsersPage() {
   const { user, loading: authLoading } = useRequireAuth();

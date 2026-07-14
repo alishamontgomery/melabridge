@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/invite")({
   component: AdminInvitePage,
 });
 
-type Role = "planner" | "vendor" | "guest" | "admin";
+type Role = "personal" | "organization" | "vendor" | "admin";
 
 function AdminInvitePage() {
   const navigate = useNavigate();
