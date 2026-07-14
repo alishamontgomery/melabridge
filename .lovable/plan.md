@@ -1,86 +1,39 @@
-# AI Automation Overhaul — Plan
+# Dashboard Companion Redesign
 
-The user wants MelaBridge to plan the event **for** the user. Creating an event must instantly produce a full editable workspace (tasks, budget, timeline, runsheet, vendor needs, reminders) — not blank pages with "Generate" buttons.
+Transform `/dashboard` from a stats grid into a personalized, AI-first daily briefing. All work stays in frontend/presentation (no schema changes) and reuses existing event, task, guest, budget, vendor, and runsheet data already loaded there.
 
-This is a large scope. I'll ship it in one focused pass, prioritizing the automation backbone over cosmetic polish so the whole surface works, then iterate.
+## New dashboard layout (top → bottom)
 
-## Approach
+1. **AI Welcome Header** — "Good morning/afternoon/evening, {firstName} ☀️", event name, live countdown ("56 Days Away"), on-track % (computed from tasks complete + budget delta + RSVP rate), rotating daily motivational line (deterministic by date so it stays stable within a day, rotates across a pool of ~15).
+2. **Live Countdown strip** — animated Days / Hours / Minutes until event date, milestone chip when 100/50/30/7/1 days away.
+3. **Daily Check-In card** — shown at most once every 3 days (tracked in `localStorage: melabridge:lastMoodCheckin`). 5 mood options. Selected mood stored in `localStorage: melabridge:mood` and drives the tone of Today's Focus + Brief copy.
+4. **Today's Brief** — dynamic bullet list generated from real data: new RSVPs in last 24h, overdue/high-priority tasks, upcoming payments, budget status, next runsheet milestone, weather-friendly note if event is outdoor. Never empty — falls back to planning tips.
+5. **Today's Focus** — single recommended task card (highest priority upcoming task, or a suggested next step if none). Shows "Why this matters" + estimated time + "Complete Now" button that marks it done inline.
+6. **Event Health Score** — computed 0–100 with 5 sub-scores rendered as star ratings: Budget, Guests, Timeline, Vendors, Contracts. Deterministic pure function from loaded data.
+7. **Celebrate Progress** — milestone banner that appears when a threshold is hit (venue booked, 50% RSVPs, under budget, N days left). Uses `canvas-confetti` for the confetti burst (already permitted; ~3KB). Dismissible, and once dismissed for a given milestone key it's remembered in localStorage.
+8. **AI Concierge card** — prominent gradient card with 7 action buttons routing to existing flows (timeline, vendors, reminders, invitations, seating, budget, quotes).
+9. **AI Savings Center** — up to 3 heuristic suggestions derived from budget items (over-target categories, un-booked vendors near event date).
+10. **Smart Predictions** — 2–3 data-driven predictive tips (RSVP pace vs. days remaining, budget burn rate, vendor booking urgency).
+11. **Inspiration Feed** — rotating horizontally-scrollable cards (curated static list keyed to event type). "Save to event" writes to existing files/notes table already used elsewhere, or a new local favorite list — will reuse `search_favorites` table already present.
 
-Single AI call at event creation produces the entire plan. Deterministic scaffolding fills gaps so the workspace is **never** blank even if the AI call fails.
-
-### 1. Extend `bootstrapEventPlan` server function
-Currently generates tasks + budget only. Extend to also produce:
-- **Runsheet** (event-day minute-by-minute schedule) — stored as tasks with a `runsheet` marker/tag and specific times, or as a new `event_runsheet_items` table.
-- **Vendor needs** — categories with Required/Recommended/Optional status → new `event_vendor_needs` table.
-- **Timeline milestones** — already covered by tasks with due_date; group in UI.
-
-AI prompt is upgraded to accept event_type and return a plan sized to the event (birthday ≈ 20 tasks, wedding ≈ 100). Falls back to a deterministic template per event type when AI fails or is unavailable.
-
-### 2. New DB tables (one migration)
-- `event_runsheet_items` (event_id, time, title, duration_min, owner, sort_order, notes, is_sample)
-- `event_vendor_needs` (event_id, category, status enum: required/recommended/optional, priority, notes, booked_vendor_id nullable, sort_order)
-
-Both with GRANTs + RLS (owner via events.owner_id, same pattern as tasks/budget).
-
-### 3. Deterministic templates
-`src/lib/event-templates.ts` — per-event-type task/budget/vendor/runsheet templates. Used:
-- As fallback when AI fails
-- As the "starter shape" the AI is asked to expand upon
-- Ships with birthday, wedding, baby shower, engagement, bridal shower, anniversary, graduation, corporate, fundraiser, reunion, community, school defaults
-
-### 4. Event creation flow (`events/new.tsx`)
-- Simplify Step 2 form to only: name, type, date, location, guest count, budget (optional). Remove notes field.
-- Step 3 runs `bootstrapEventPlan` which now populates **everything** (tasks + budget + runsheet + vendor needs).
-- Progress tiles show all 4 categories populating.
-
-### 5. UI wiring
-- **Tasks page**: group by time bucket (This Week, Month Before, Week Of, Day Before, Event Day, After).
-- **Budget page**: already renders items; verify not empty state when items exist.
-- **Timeline page**: already shows tasks with due_dates.
-- **Runsheet**: new route `/runsheet` (or reuse timeline day-of view) that lists `event_runsheet_items`. Wire the dead "Plan Runsheet" button.
-- **Vendors page**: show `event_vendor_needs` at the top with Required/Recommended/Optional badges.
-- **Event Health Score**: compute in `ecosystem-store` from tasks done %, vendor needs met, budget status, RSVP progress, overdue payments. Show missing-items list on dashboard.
-- Remove dead "Explore Sample Workspace" button (or wire it to load sample).
-- Hide Cancelled/Completed status options in the create flow.
-- Remove duplicate "Create Event" CTAs.
-
-### 6. Payment wording
-Rename budget-item payment fields in the UI:
-- "Deposit Required", "Deposit Received", "Remaining Balance", "Final Payment Due", "Status" (auto-computed: Pending Deposit / Partially Paid / Paid in Full / Overdue).
-
-### 7. Proactive MelaAssist alerts
-Compute on dashboard/event overview: missing essential vendors, budget over-allocation, RSVP timing, overdue tasks. Each alert has a one-click action link.
-
-## Scope trade-offs
-
-To keep this shippable in one turn:
-- **Deep 100+ task wedding template**: I'll ship a solid 30-40 task wedding template + rely on AI to expand. Not literally 100 hand-written tasks per event type.
-- **Weather/venue-capacity/cake-timing detection**: covered by generic alert framework, not each specific rule.
-- **Runsheet drag-reorder / export**: I'll ship the populated runsheet + edit + add. Export/reorder deferred.
-- **Vendor auto-matching to marketplace**: needs shows the category; matching to real vendors uses existing vendor search — I won't rebuild that flow.
+## No-empty-states rule
+Every card has a fallback content path: planning tip, milestone preview, or educational blurb keyed off event type. No "No activity" strings anywhere.
 
 ## Files
+- **New:** `src/components/dashboard/welcome-header.tsx`, `countdown-strip.tsx`, `daily-checkin.tsx`, `todays-brief.tsx`, `todays-focus.tsx`, `event-health-score.tsx`, `celebrate-progress.tsx`, `ai-concierge.tsx`, `ai-savings.tsx`, `smart-predictions.tsx`, `inspiration-feed.tsx`.
+- **New:** `src/lib/dashboard-intelligence.ts` — pure functions: `computeHealthScore`, `buildDailyBrief`, `pickTodaysFocus`, `getDailyMessage`, `computePredictions`, `computeSavings`, `getMilestones`.
+- **Edit:** `src/routes/dashboard.tsx` — replace stats-grid layout with the composed sections above; keep existing data queries (events, tasks, guests, budget, vendors) and pass into the new components. Preserve deleted_at filters and current data-loading behavior.
+- **Add dep:** `canvas-confetti` + `@types/canvas-confetti`.
 
-**New**
-- `supabase/migrations/<ts>_runsheet_vendor_needs.sql`
-- `src/lib/event-templates.ts` (deterministic per-type templates)
-- `src/routes/_authenticated/runsheet.tsx` (or extend timeline)
-- `src/components/event-health-card.tsx`
-- `src/components/proactive-alerts.tsx`
+## Design tokens
+Use existing semantic tokens (`--primary`, `--accent`, gradients already in `styles.css`). Add 2 subtle new utility classes if needed for the header gradient and the health-score ring — via `styles.css`, no hardcoded hex in components.
 
-**Edited**
-- `src/lib/event-bootstrap.functions.ts` (expand output, add fallback)
-- `src/routes/_authenticated/events/new.tsx` (simplify form, remove notes, hide cancelled/completed)
-- `src/routes/tasks.tsx` (time-bucket grouping)
-- `src/routes/budget.tsx` (payment wording)
-- `src/routes/vendors.tsx` (needs section at top)
-- `src/lib/ecosystem-store.tsx` (health score inputs)
-- `src/routes/_authenticated/events/$eventId.tsx` (health card + alerts + wire Plan Runsheet button)
-- Any page currently showing "Explore Sample Workspace" — wire or remove.
+## Out of scope (not touched this sprint)
+- No schema/DB changes.
+- No changes to other routes (tasks, guests, budget, timeline, events, files).
+- No AI gateway calls — brief/focus/predictions are computed client-side from already-loaded data (deterministic, instant, free). We can layer real LLM copy in a future sprint.
+- No new backend endpoints.
 
 ## Verification
 - `bunx tsgo --noEmit`
-- Playwright: sign in, create a birthday event with 30 guests / $2k, open each page, screenshot proof each is populated.
-- Check dead buttons (Plan Runsheet, Explore Sample Workspace) now do something.
-
-Confirm and I'll build it in one pass.
+- Playwright: load `/dashboard`, screenshot desktop + mobile viewports, confirm all sections render with real event data and empty-event fallbacks.

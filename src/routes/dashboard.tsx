@@ -1,109 +1,98 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
-import { EventDashboardPreview, type DashboardData } from "@/components/event-dashboard-preview";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useActiveEvent } from "@/lib/use-active-event";
 import { Sparkles, Plus, LayoutDashboard, Loader2 } from "lucide-react";
+import { WelcomeHeader } from "@/components/dashboard/welcome-header";
+import { CountdownStrip } from "@/components/dashboard/countdown-strip";
+import { DailyCheckIn } from "@/components/dashboard/daily-checkin";
+import { TodaysBrief } from "@/components/dashboard/todays-brief";
+import { TodaysFocus } from "@/components/dashboard/todays-focus";
+import { EventHealthScore } from "@/components/dashboard/event-health-score";
+import { CelebrateProgress } from "@/components/dashboard/celebrate-progress";
+import { AIConcierge } from "@/components/dashboard/ai-concierge";
+import { AISavings } from "@/components/dashboard/ai-savings";
+import { SmartPredictions } from "@/components/dashboard/smart-predictions";
+import { InspirationFeed } from "@/components/dashboard/inspiration-feed";
+import {
+  computeCountdown,
+  computeHealthScore,
+  buildDailyBrief,
+  pickTodaysFocus,
+  computePredictions,
+  computeSavings,
+  getMilestones,
+} from "@/lib/dashboard-intelligence";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard — MelaBridge" },
-      {
-        name: "description",
-        content: "Your live event dashboard: countdown, guests, budget, tasks and vendor activity in one place.",
-      },
+      { name: "description", content: "Your AI planning companion: personalized brief, health score, and today's focus." },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: DashboardPage,
 });
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-function fmtDue(iso?: string | null) {
-  if (!iso) return undefined;
-  const d = new Date(iso);
-  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
-}
-
-function daysBetween(from: Date, iso?: string | null) {
-  if (!iso) return 0;
-  const then = new Date(iso);
-  return Math.max(0, Math.ceil((then.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)));
+function firstNameFromUser(user: { email?: string | null; user_metadata?: Record<string, unknown> } | null): string {
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  const raw = (meta.full_name as string) || (meta.name as string) || (meta.first_name as string) || "";
+  const trimmed = raw.trim();
+  if (trimmed) return trimmed.split(/\s+/)[0];
+  const email = user?.email ?? "";
+  if (!email) return "there";
+  const local = email.split("@")[0].split(/[._-]/)[0];
+  return local ? local[0].toUpperCase() + local.slice(1) : "there";
 }
 
 function DashboardPage() {
   const { user } = useRequireAuth();
   const { event, loading } = useActiveEvent();
+  const qc = useQueryClient();
 
   const dashQ = useQuery({
-    queryKey: ["dashboard", event?.id],
+    queryKey: ["dashboard-companion", event?.id],
     enabled: !!event?.id,
     queryFn: async () => {
       const eventId = event!.id;
       const [g, t, b] = await Promise.all([
-        supabase.from("guests").select("id, plus_ones, rsvp_status").eq("event_id", eventId).is("deleted_at", null),
-        supabase.from("tasks").select("id, title, status, due_date, completed_at").eq("event_id", eventId).is("deleted_at", null).order("due_date", { ascending: true }).limit(6),
-        supabase.from("budget_items").select("estimated_amount, actual_amount, paid_amount").eq("event_id", eventId).is("deleted_at", null),
+        supabase.from("guests").select("id, plus_ones, rsvp_status, created_at").eq("event_id", eventId).is("deleted_at", null),
+        supabase.from("tasks").select("id, title, status, priority, due_date, completed_at").eq("event_id", eventId).is("deleted_at", null),
+        supabase.from("budget_items").select("id, category, estimated_amount, actual_amount, paid_amount, vendor_name").eq("event_id", eventId).is("deleted_at", null),
       ]);
-      return {
-        guests: g.data ?? [],
-        tasks: t.data ?? [],
-        budgetItems: b.data ?? [],
-      };
+      return { guests: g.data ?? [], tasks: t.data ?? [], budget: b.data ?? [] };
     },
   });
 
-  const dashboardData: DashboardData | null = useMemo(() => {
+  const derived = useMemo(() => {
     if (!event) return null;
-    const guests = dashQ.data?.guests ?? [];
-    const tasks = dashQ.data?.tasks ?? [];
-    const items = dashQ.data?.budgetItems ?? [];
-    const invited = guests.reduce((s: number, g: any) => s + 1 + Number(g.plus_ones ?? 0), 0);
-    const confirmed = guests.filter((g: any) => g.rsvp_status === "confirmed" || g.rsvp_status === "attending").length;
-    const pending = guests.filter((g: any) => g.rsvp_status === "pending" || g.rsvp_status == null).length;
-    const declined = guests.filter((g: any) => g.rsvp_status === "declined").length;
-    const spent = items.reduce((s: number, i: any) => s + Number(i.paid_amount ?? i.actual_amount ?? 0), 0);
-    const total = Number(event.budget_target ?? 0);
-    const today = new Date();
-    return {
-      eventName: event.name ?? "Untitled event",
-      eventType: event.event_type ?? "Event",
-      location: event.location ?? "—",
-      daysRemaining: daysBetween(today, event.event_date),
-      guests: { invited, confirmed, pending, declined },
-      budget: { spent, total },
-      tasks: tasks.length
-        ? tasks.map((t: any) => ({
-            id: t.id,
-            title: t.title,
-            done: t.status === "done" || t.status === "completed" || !!t.completed_at,
-            due: fmtDue(t.due_date),
-          }))
-        : [],
-      vendors: [],
-      aiRecommendation: tasks.length
-        ? "Focus on the earliest due tasks first — small wins compound. MelaAssist will nudge collaborators when a task is at risk."
-        : "Add your first tasks to unlock timeline suggestions and AI nudges tailored to your event.",
-      activity: [],
-      notifications: [],
-      timeline: [],
-      decisions: [],
-    };
+    const guests = (dashQ.data?.guests ?? []) as any[];
+    const tasks = (dashQ.data?.tasks ?? []) as any[];
+    const budget = (dashQ.data?.budget ?? []) as any[];
+    const countdown = computeCountdown(event.event_date);
+    const health = computeHealthScore({ event, guests, tasks, budget });
+    const brief = buildDailyBrief({ event, guests, tasks, budget, countdown });
+    const focus = pickTodaysFocus({ event, tasks, guests, budget, countdown });
+    const predictions = computePredictions({ event, guests, budget, countdown });
+    const savings = computeSavings({ event, budget, countdown });
+    const milestones = getMilestones({ event, guests, budget, tasks, countdown });
+    return { countdown, health, brief, focus, predictions, savings, milestones };
   }, [event, dashQ.data]);
+
+  const firstName = firstNameFromUser(user);
 
   return (
     <AppShell active="/dashboard">
       <PageHeader
         eyebrow="Dashboard"
         icon={LayoutDashboard}
-        title={<>Your event, <span className="text-gradient">at a glance</span>.</>}
-        description="Live signals from every module — guests, budget, tasks — in one calm view."
+        title={<>Your planning <span className="text-gradient">companion</span>.</>}
+        description="A calm, personalized command center — refreshed every time you visit."
         actions={
           <Button asChild variant="hero">
             <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />New event</Link>
@@ -111,30 +100,54 @@ function DashboardPage() {
         }
       />
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
         {!user || loading || dashQ.isLoading ? (
           <div className="grid min-h-[360px] place-items-center rounded-3xl border border-border bg-card">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : !event ? (
-          <EmptyDashboard />
-        ) : dashboardData ? (
-          <EventDashboardPreview data={dashboardData} chrome={false} />
-        ) : null}
+        ) : !event || !derived ? (
+          <EmptyDashboard firstName={firstName} />
+        ) : (
+          <>
+            <WelcomeHeader
+              firstName={firstName}
+              eventLabel={event.name ?? "Your event"}
+              daysAway={derived.countdown.days}
+              onTrack={derived.health.overall}
+            />
+            <CountdownStrip eventDate={event.event_date} />
+            <CelebrateProgress milestones={derived.milestones} />
+            <DailyCheckIn />
+
+            <div className="grid gap-6 lg:grid-cols-3">
+              <div className="lg:col-span-2 space-y-6">
+                <TodaysFocus focus={derived.focus} onCompleted={() => qc.invalidateQueries({ queryKey: ["dashboard-companion", event.id] })} />
+                <TodaysBrief items={derived.brief} />
+                <AIConcierge />
+                <InspirationFeed eventType={event.event_type} />
+              </div>
+              <div className="space-y-6">
+                <EventHealthScore health={derived.health} />
+                <SmartPredictions items={derived.predictions} />
+                <AISavings items={derived.savings.items} total={derived.savings.total} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </AppShell>
   );
 }
 
-function EmptyDashboard() {
+function EmptyDashboard({ firstName }: { firstName: string }) {
   return (
     <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
       <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
         <Sparkles className="h-5 w-5" />
       </span>
-      <h2 className="mt-4 font-display text-xl font-semibold">Create your first event to see your dashboard</h2>
+      <h2 className="mt-4 font-display text-xl font-semibold">Welcome, {firstName} — let's plan something beautiful</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Once you create an event, this page fills with real-time signals from your guests, budget, tasks and vendors.
+        Create an event and MelaAssist will prepare a personalized brief, focus task, and health score every time you sign in.
       </p>
       <Button asChild className="mt-5" variant="hero">
         <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create an event</Link>
