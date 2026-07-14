@@ -478,9 +478,8 @@ function AuthPage() {
                   <Label>I want to…</Label>
                   <div className="grid gap-2">
                     {([
-                      { v: "planner", t: "Plan an Event", d: "I'm organizing one or more events." },
+                      { v: "planner", t: "Plan an Event", d: "I'm organizing one or more personal events." },
                       { v: "vendor", t: "Join as a Vendor", d: "I provide products or services for events." },
-                      { v: "guest", t: "Join an Event", d: "I received an invitation to an event." },
                     ] as const).map((opt) => (
                       <label
                         key={opt.v}
