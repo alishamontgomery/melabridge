@@ -100,10 +100,8 @@ const VENDOR_NAV: NavGroup[] = [
     items: [
       { to: "/calendar", label: "Calendar", icon: Calendar },
       { to: "/calendar/requests", label: "Requests", icon: Inbox },
-      { to: "/vendor-portal", label: "Leads", icon: Inbox },
+      { to: "/vendor-portal", label: "Leads & Contracts", icon: Briefcase },
       { to: "/bookings", label: "Bookings", icon: Briefcase },
-      { to: "/bridgepay", label: "Payments", icon: Wallet },
-      { to: "/vendor-portal", label: "Contracts", icon: ScrollText },
       { to: "/vendor-settings", label: "Booking Rules", icon: SettingsIcon },
     ],
   },
@@ -119,7 +117,7 @@ const VENDOR_NAV: NavGroup[] = [
     label: "Account",
     items: [
       { to: "/profile", label: "Business Profile", icon: Building2 },
-      { to: "/vendor-portal", label: "Reviews", icon: Star },
+      { to: "/subscription", label: "Subscription", icon: Crown },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
       { to: "/help", label: "Help", icon: LifeBuoy },
     ],
@@ -155,7 +153,6 @@ const ADMIN_NAV: NavGroup[] = [
       { to: "/vendors", label: "Vendors", icon: Store },
       { to: "/events", label: "Events", icon: Calendar },
       { to: "/marketplace", label: "Marketplace", icon: Store },
-      { to: "/bridgepay", label: "Payments", icon: Wallet },
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
       { to: "/reports", label: "Reports", icon: FileBarChart },
     ],
