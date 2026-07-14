@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useServerFn } from "@tanstack/react-start";
+import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
 
 type AccountType = "personal" | "organization" | "vendor";
 
