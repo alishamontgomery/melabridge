@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { format } from "date-fns";
 import {
-  Sparkles, ArrowRight, ArrowLeft, CalendarIcon, PartyPopper, Store, UserCheck,
+  Sparkles, ArrowRight, ArrowLeft, CalendarIcon, PartyPopper, Store,
   Check, Upload, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,10 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 
-type AccountType = "planner" | "vendor" | "guest";
+type AccountType = "personal" | "organization" | "vendor";
 
 const searchSchema = z.object({
-  type: z.enum(["planner", "vendor", "guest"]).optional(),
+  type: z.enum(["personal", "organization", "vendor"]).optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
