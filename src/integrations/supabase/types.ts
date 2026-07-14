@@ -158,6 +158,7 @@ export type Database = {
           category: string
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           estimated_amount: number
           event_id: string
           id: string
@@ -174,6 +175,7 @@ export type Database = {
           category: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           estimated_amount?: number
           event_id: string
           id?: string
@@ -190,6 +192,7 @@ export type Database = {
           category?: string
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           estimated_amount?: number
           event_id?: string
           id?: string
@@ -747,6 +750,7 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          deleted_at: string | null
           event_id: string
           filename: string
           id: string
@@ -762,6 +766,7 @@ export type Database = {
         Insert: {
           category?: string
           created_at?: string
+          deleted_at?: string | null
           event_id: string
           filename: string
           id?: string
@@ -777,6 +782,7 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          deleted_at?: string | null
           event_id?: string
           filename?: string
           id?: string
@@ -967,6 +973,7 @@ export type Database = {
           cover_image_url: string | null
           created_at: string
           custom_event_type: string | null
+          deleted_at: string | null
           deposit_paid: number | null
           deposit_required: number | null
           description: string | null
@@ -1009,6 +1016,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           custom_event_type?: string | null
+          deleted_at?: string | null
           deposit_paid?: number | null
           deposit_required?: number | null
           description?: string | null
@@ -1051,6 +1059,7 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string
           custom_event_type?: string | null
+          deleted_at?: string | null
           deposit_paid?: number | null
           deposit_required?: number | null
           description?: string | null
@@ -1095,6 +1104,7 @@ export type Database = {
       guests: {
         Row: {
           created_at: string
+          deleted_at: string | null
           email: string | null
           event_id: string
           full_name: string
@@ -1111,6 +1121,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           event_id: string
           full_name: string
@@ -1127,6 +1138,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           event_id?: string
           full_name?: string
@@ -1611,6 +1623,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           description: string | null
           due_date: string | null
           event_id: string
@@ -1627,6 +1640,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           description?: string | null
           due_date?: string | null
           event_id: string
@@ -1643,6 +1657,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           description?: string | null
           due_date?: string | null
           event_id?: string
@@ -2074,6 +2089,7 @@ export type Database = {
         Args: { _booking_id: string; _user: string }
         Returns: boolean
       }
+      purge_trashed_events: { Args: never; Returns: number }
       seed_test_data: {
         Args: { admin_id: string; planner_id: string; vendor_id: string }
         Returns: Json
