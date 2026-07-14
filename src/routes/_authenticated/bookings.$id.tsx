@@ -8,14 +8,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { Briefcase, Loader2, ArrowLeft } from "lucide-react";
+import { Briefcase, Loader2, ArrowLeft, MoreHorizontal, Receipt, CalendarClock as CalendarClockIcon } from "lucide-react";
 import { BookingProgressTracker } from "@/components/booking/BookingProgressTracker";
 import { BookingStageBadge } from "@/components/booking/BookingStageBadge";
-import { STAGES, stageMeta, type BookingStage } from "@/lib/booking-stages";
-import { advanceStage, cancelBooking, getBooking, recordDeposit, recordQuote, recordSchedulePayment } from "@/lib/bookings.functions";
-import { Badge } from "@/components/ui/badge";
-import { Receipt, CalendarClock as CalendarClockIcon } from "lucide-react";
+import { stageMeta, type BookingStage } from "@/lib/booking-stages";
+import {
+  cancelBooking, getBooking, recordDeposit, recordQuote, recordSchedulePayment,
+  markException, reopenBooking, markQuoteViewed, markQuoteAccepted, requestReview, submitReview,
+} from "@/lib/bookings.functions";
 
 export const Route = createFileRoute("/_authenticated/bookings/$id")({
   head: () => ({ meta: [{ title: "Booking — MelaBridge" }] }),
@@ -24,18 +30,18 @@ export const Route = createFileRoute("/_authenticated/bookings/$id")({
   notFoundComponent: () => <div className="p-8">Booking not found.</div>,
 });
 
-const ACTION_STAGES: BookingStage[] = [
-  "contacted", "consultation_scheduled", "quote_under_review",
-  "contract_sent", "contract_signed", "in_progress", "completed", "review_requested", "reviewed",
-];
-
 function BookingDetail() {
   const { id } = Route.useParams();
   const getFn = useServerFn(getBooking);
-  const advance = useServerFn(advanceStage);
   const quote = useServerFn(recordQuote);
   const deposit = useServerFn(recordDeposit);
   const cancelFn = useServerFn(cancelBooking);
+  const exceptionFn = useServerFn(markException);
+  const reopenFn = useServerFn(reopenBooking);
+  const markViewed = useServerFn(markQuoteViewed);
+  const markAccepted = useServerFn(markQuoteAccepted);
+  const askReview = useServerFn(requestReview);
+  const submitReviewFn = useServerFn(submitReview);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -60,12 +66,6 @@ function BookingDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const advanceM = useMutation({
-    mutationFn: (stage: BookingStage) => advance({ data: { bookingId: id, stage } }),
-    onSuccess: () => { toast.success("Stage updated"); invalidate(); },
-    onError: (e: any) => toast.error(e.message ?? "Failed"),
-  });
-
   const [quoteAmt, setQuoteAmt] = useState("");
   const [depositReq, setDepositReq] = useState("");
   const [depositAmt, setDepositAmt] = useState("");
@@ -83,10 +83,34 @@ function BookingDetail() {
   });
 
   const cancelM = useMutation({
-    mutationFn: () => cancelFn({ data: { bookingId: id } }),
+    mutationFn: (reason?: string) => cancelFn({ data: { bookingId: id, reason } }),
     onSuccess: () => { toast.success("Booking cancelled"); invalidate(); },
     onError: (e: any) => toast.error(e.message ?? "Failed"),
   });
+
+  const exceptionM = useMutation({
+    mutationFn: (stage: "no_response" | "lost") => exceptionFn({ data: { bookingId: id, stage } }),
+    onSuccess: (_r, stage) => { toast.success(stage === "lost" ? "Marked as lost" : "Marked as no response"); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
+  const reopenM = useMutation({
+    mutationFn: () => reopenFn({ data: { bookingId: id } }),
+    onSuccess: () => { toast.success("Booking reopened"); invalidate(); },
+    onError: (e: any) => toast.error(e.message ?? "Failed"),
+  });
+
+  const simpleAction = (fn: (args: { data: { bookingId: string } }) => Promise<unknown>, label: string) =>
+    useMutation({
+      mutationFn: () => fn({ data: { bookingId: id } }),
+      onSuccess: () => { toast.success(label); invalidate(); },
+      onError: (e: any) => toast.error(e.message ?? "Failed"),
+    });
+  // Note: useMutation isn't conditionally used, so it's safe to call the helper at top-level render.
+  const viewedM = simpleAction(markViewed, "Quote marked viewed");
+  const acceptedM = simpleAction(markAccepted, "Quote marked accepted");
+  const reviewReqM = simpleAction(askReview, "Review requested");
+  const reviewedM = simpleAction(submitReviewFn, "Review recorded");
 
   if (isLoading || !data) {
     return (
@@ -100,12 +124,42 @@ function BookingDetail() {
 
   const b = data.booking;
   const events = data.events;
+  const stage = b.current_stage as BookingStage;
+  const isTerminal = stage === "cancelled" || stage === "no_response" || stage === "lost" || stage === "completed" || stage === "reviewed";
   const waiting =
-    !b.confirmed_at && b.current_stage === "contract_signed" && !b.deposit_paid_at
-      ? "Waiting for Deposit"
-      : !b.confirmed_at && b.current_stage === "deposit_paid" && !b.contract_signed_at
-      ? "Waiting for Contract Signature"
+    !b.confirmed_at && stage === "contract_signed" && !b.deposit_paid_at
+      ? "Waiting for deposit"
+      : !b.confirmed_at && stage === "deposit_paid" && !b.contract_signed_at
+      ? "Waiting for contract signature"
       : null;
+
+  const timestamps: Partial<Record<BookingStage, string | null | undefined>> = {
+    quote_sent: b.quote_sent_at,
+    quote_viewed: (b as any).quote_viewed_at,
+    quote_accepted: (b as any).quote_accepted_at,
+    contract_sent: b.contract_sent_at,
+    contract_signed: b.contract_signed_at,
+    deposit_paid: b.deposit_paid_at,
+    booked: b.confirmed_at,
+    in_progress: (b as any).in_progress_at,
+    completed: b.completed_at,
+    review_requested: (b as any).review_requested_at,
+    reviewed: (b as any).reviewed_at,
+  };
+
+  // --- Payment summary math (fixes "Paid so far: $800 of $99") ---
+  const quoteAmount = Number(b.quote_amount ?? 0);
+  const depositRequired = Number(b.deposit_amount ?? 0);
+  const depositPaid = Number(b.deposit_paid_amount ?? 0);
+  const depositTarget = depositRequired > 0
+    ? Math.max(depositRequired, depositPaid)   // never let denominator be smaller than the paid amount
+    : depositPaid;                              // no deposit required — just report what's paid
+  const depositCopy = depositRequired > 0
+    ? `Deposit received: $${depositPaid.toLocaleString()} of $${depositRequired.toLocaleString()} required`
+    : quoteAmount > 0
+    ? `Deposit received: $${depositPaid.toLocaleString()} (no deposit required on a $${quoteAmount.toLocaleString()} quote)`
+    : `Deposit received: $${depositPaid.toLocaleString()}`;
+  void depositTarget;
 
   return (
     <AppShell active="/bookings">
@@ -116,12 +170,73 @@ function BookingDetail() {
           icon={Briefcase}
           title={b.title}
           description={b.vendor_profiles?.business_name ?? "Vendor"}
-          actions={<BookingStageBadge stage={b.current_stage} />}
+          actions={<BookingStageBadge stage={stage} />}
         />
 
         <Card className="p-5">
-          <BookingProgressTracker currentStage={b.current_stage} waitingFor={waiting} />
+          <BookingProgressTracker currentStage={stage} waitingFor={waiting} timestamps={timestamps} />
         </Card>
+
+        {/* Exception actions row: primary Cancel visible, rest in "More actions" menu */}
+        <div className="flex flex-wrap items-center gap-2">
+          {!isTerminal && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                if (confirm("Cancel this booking? This releases any calendar hold and notifies both parties.")) {
+                  cancelM.mutate(undefined);
+                }
+              }}
+              disabled={cancelM.isPending}
+            >
+              {cancelM.isPending ? "Cancelling…" : "Cancel booking"}
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <MoreHorizontal className="h-4 w-4" /> More actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Exception actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                disabled={isTerminal || exceptionM.isPending}
+                onClick={() => exceptionM.mutate("no_response")}
+              >
+                Mark no response
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={isTerminal || exceptionM.isPending}
+                onClick={() => exceptionM.mutate("lost")}
+              >
+                Mark lost
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={!isTerminal || reopenM.isPending}
+                onClick={() => reopenM.mutate()}
+              >
+                Reopen booking
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Record client action</DropdownMenuLabel>
+              <DropdownMenuItem disabled={viewedM.isPending} onClick={() => viewedM.mutate()}>
+                Log: quote opened by client
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={acceptedM.isPending} onClick={() => acceptedM.mutate()}>
+                Log: quote accepted
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={reviewReqM.isPending} onClick={() => reviewReqM.mutate()}>
+                Log: review request sent
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={reviewedM.isPending} onClick={() => reviewedM.mutate()}>
+                Log: review submitted
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="space-y-3 p-5">
@@ -134,6 +249,12 @@ function BookingDetail() {
               <Button onClick={() => quoteM.mutate()} disabled={!quoteAmt || quoteM.isPending}>
                 {quoteM.isPending ? "Sending…" : "Send quote"}
               </Button>
+              {quoteAmount > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Current quote: ${quoteAmount.toLocaleString()}
+                  {depositRequired > 0 ? ` · deposit required $${depositRequired.toLocaleString()}` : ""}
+                </p>
+              )}
             </div>
           </Card>
 
@@ -141,11 +262,8 @@ function BookingDetail() {
             <h3 className="font-display text-base font-semibold">Record deposit</h3>
             <div className="grid gap-2">
               <Label>Deposit received ($)</Label>
-              <Input type="number" value={depositAmt} onChange={(e) => setDepositAmt(e.target.value)} placeholder="1500" />
-              <p className="text-xs text-muted-foreground">
-                Paid so far: ${Number(b.deposit_paid_amount ?? 0).toLocaleString()}
-                {b.deposit_amount ? ` of $${Number(b.deposit_amount).toLocaleString()}` : ""}
-              </p>
+              <Input type="number" value={depositAmt} onChange={(e) => setDepositAmt(e.target.value)} placeholder={depositRequired ? String(depositRequired) : "1500"} />
+              <p className="text-xs text-muted-foreground">{depositCopy}</p>
               <Button onClick={() => depositM.mutate()} disabled={!depositAmt || depositM.isPending}>
                 {depositM.isPending ? "Recording…" : "Record deposit"}
               </Button>
@@ -154,48 +272,10 @@ function BookingDetail() {
         </div>
 
         <Card className="p-5">
-          <h3 className="mb-3 font-display text-base font-semibold">Advance stage</h3>
-          <div className="flex flex-wrap gap-2">
-            {ACTION_STAGES.map((s) => {
-              const m = stageMeta(s);
-              const Icon = m.icon;
-              return (
-                <Button
-                  key={s} variant="outline" size="sm"
-                  onClick={() => advanceM.mutate(s)}
-                  disabled={advanceM.isPending}
-                >
-                  <Icon className="mr-1.5 h-3.5 w-3.5" /> {m.label}
-                </Button>
-              );
-            })}
-          </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            "Booked" cannot be set manually — it's applied automatically the moment the vendor's confirmation rule is satisfied.
-          </p>
-          {b.current_stage !== "cancelled" && b.current_stage !== "completed" && (
-            <div className="mt-4 border-t pt-4">
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => {
-                  if (confirm("Cancel this booking? This releases any calendar hold and notifies both parties.")) {
-                    cancelM.mutate();
-                  }
-                }}
-                disabled={cancelM.isPending}
-              >
-                {cancelM.isPending ? "Cancelling…" : "Cancel booking"}
-              </Button>
-            </div>
-          )}
-        </Card>
-
-        <Card className="p-5">
           <h3 className="mb-3 font-display text-base font-semibold">History</h3>
           <ol className="space-y-2">
             {events.map((ev: any) => {
-              const m = stageMeta(ev.stage);
+              const m = stageMeta(ev.stage as BookingStage);
               const Icon = m.icon;
               return (
                 <li key={ev.id} className="flex items-start gap-3 text-sm">
@@ -325,4 +405,3 @@ function InvoicesAndSchedule({
     </div>
   );
 }
-
