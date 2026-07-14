@@ -394,6 +394,8 @@ function AuthPage() {
                 )}
               </AlertDescription>
             </Alert>
+          )}
+
 
           {pendingVerificationEmail && (
             <Alert className="mb-5 border-primary/30 bg-primary/5">
