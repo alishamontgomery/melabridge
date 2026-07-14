@@ -134,7 +134,9 @@ function EventDetailPage() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Archive this event?</AlertDialogTitle>
-                <AlertDialogDescription>You can restore it later from settings.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  &ldquo;{event.name}&rdquo; will be hidden from Active events but kept for future reference. You can restore it anytime from the Archived tab.
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -149,11 +151,13 @@ function EventDetailPage() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete this event?</AlertDialogTitle>
-                <AlertDialogDescription>This permanently removes the event and all its tasks, budget items, and guests. This cannot be undone.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  You&rsquo;re about to delete &ldquo;{event.name}&rdquo;. This event will be moved to Trash and can be restored for 30 days. After that it&rsquo;s permanently removed along with its tasks, budget, guests, runsheet, and files.
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete permanently</AlertDialogAction>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Move to Trash</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
