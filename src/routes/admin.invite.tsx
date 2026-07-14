@@ -29,7 +29,7 @@ function AdminInvitePage() {
   const isAdmin = role === "admin";
 
   const [email, setEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<Role>("planner");
+  const [inviteRole, setInviteRole] = useState<Role>("personal");
   const [message, setMessage] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
 
