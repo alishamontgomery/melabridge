@@ -171,7 +171,12 @@ function AuthPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const timedOutRef = useRef(false);
   const callbackHandledRef = useRef(false);
-  const googleDisabled = useMemo(() => isPreviewEnvironment(), []);
+  // Google sign-in is disabled site-wide until OAuth is fully verified end-to-end.
+  // Keeps a broken button from shipping to production; email/password remains fully functional.
+  const googleDisabled = useMemo(() => {
+    void isPreviewEnvironment; // preserve helper for future re-enable
+    return true;
+  }, []);
 
   const busy = activeOperation !== null;
 
