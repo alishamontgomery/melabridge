@@ -480,28 +480,94 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
     await reload();
   }
 
+  const budgetTarget = target ?? totals.est;
+  const remaining = Math.max(0, budgetTarget - totals.paid);
+  const spentPct = budgetTarget > 0 ? Math.min(100, Math.round((totals.paid / budgetTarget) * 100)) : 0;
+
+  function exportCsv() {
+    const rows = [["Category", "Description", "Budgeted", "Spent", "Paid"]];
+    items.forEach((it) =>
+      rows.push([
+        it.category ?? "",
+        it.label ?? "",
+        String(Number(it.estimated_amount) || 0),
+        String(Number(it.actual_amount) || 0),
+        String(Number(it.paid_amount) || 0),
+      ])
+    );
+    const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "budget.csv"; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function scrollToForm() {
+    document.getElementById("budget-add-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    document.getElementById("budget-add-category")?.focus();
+  }
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard icon={Wallet} label="Estimated">${totals.est.toLocaleString()}</StatCard>
-        <StatCard icon={Wallet} label="Actual">${totals.act.toLocaleString()}</StatCard>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={Wallet} label="Budget">${budgetTarget.toLocaleString()}</StatCard>
+        <StatCard icon={Wallet} label="Spent">${totals.act.toLocaleString()}</StatCard>
         <StatCard icon={Wallet} label="Paid">${totals.paid.toLocaleString()}</StatCard>
+        <StatCard icon={Wallet} label="Remaining">${remaining.toLocaleString()}</StatCard>
       </div>
+
+      <Card className="border-border/60 p-4 shadow-soft">
+        <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span>Budget progress</span>
+          <span>{spentPct}% of ${budgetTarget.toLocaleString()}</span>
+        </div>
+        <Progress value={spentPct} />
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <span>Budget ${budgetTarget.toLocaleString()}</span>
+          <span>Spent ${totals.act.toLocaleString()}</span>
+          <span>Paid ${totals.paid.toLocaleString()}</span>
+          <span>Remaining ${remaining.toLocaleString()}</span>
+        </div>
+      </Card>
+
       {over && (
         <Card className="border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
           Heads up — actual spend has passed your ${target?.toLocaleString()} target by ${(totals.act - (target ?? 0)).toLocaleString()}.
         </Card>
       )}
 
-      <Card className="border-border/60 p-4 shadow-soft">
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={scrollToForm} className="gap-1.5"><Plus className="h-4 w-4" /> Add Budget Item</Button>
+        <Button size="sm" variant="outline" onClick={() => toast.info("Import coming soon — export a CSV to see the format.")} className="gap-1.5"><Upload className="h-4 w-4" /> Import Budget</Button>
+        <Button size="sm" variant="outline" onClick={exportCsv} disabled={items.length === 0} className="gap-1.5"><Download className="h-4 w-4" /> Export</Button>
+        <Button size="sm" variant="outline" onClick={() => toast.info("AI budget suggestions are on the way.")} className="gap-1.5"><Sparkles className="h-4 w-4" /> AI Budget Suggestions</Button>
+      </div>
+
+      <Card id="budget-add-form" className="border-border/60 p-4 shadow-soft">
         <form onSubmit={add} className="grid gap-3 sm:grid-cols-6">
-          <Input placeholder="Category" value={category} onChange={(e) => setCategory(e.target.value)} className="sm:col-span-1" />
-          <Input placeholder="What is this?" value={label} onChange={(e) => setLabel(e.target.value)} required className="sm:col-span-2" />
-          <Input type="number" min="0" step="0.01" placeholder="Est." value={estimated} onChange={(e) => setEstimated(e.target.value)} />
-          <Input type="number" min="0" step="0.01" placeholder="Actual" value={actual} onChange={(e) => setActual(e.target.value)} />
-          <div className="flex gap-2">
-            <Input type="number" min="0" step="0.01" placeholder="Paid" value={paid} onChange={(e) => setPaid(e.target.value)} />
-            <Button type="submit" disabled={busy} size="icon" aria-label="Add"><Plus className="h-4 w-4" /></Button>
+          <div className="space-y-1.5 sm:col-span-1">
+            <Label htmlFor="budget-add-category" className="text-xs">Category</Label>
+            <Input id="budget-add-category" placeholder="e.g. Venue" value={category} onChange={(e) => setCategory(e.target.value)} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="budget-add-label" className="text-xs">Description</Label>
+            <Input id="budget-add-label" placeholder="e.g. Ballroom deposit" value={label} onChange={(e) => setLabel(e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="budget-add-est" className="text-xs">Budgeted</Label>
+            <Input id="budget-add-est" type="number" min="0" step="0.01" placeholder="0" value={estimated} onChange={(e) => setEstimated(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="budget-add-act" className="text-xs">Spent</Label>
+            <Input id="budget-add-act" type="number" min="0" step="0.01" placeholder="0" value={actual} onChange={(e) => setActual(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="budget-add-paid" className="text-xs">Paid</Label>
+            <Input id="budget-add-paid" type="number" min="0" step="0.01" placeholder="0" value={paid} onChange={(e) => setPaid(e.target.value)} />
+          </div>
+          <div className="sm:col-span-6 flex justify-end">
+            <Button type="submit" disabled={busy} className="gap-1.5"><Plus className="h-4 w-4" /> Add Budget Item</Button>
           </div>
         </form>
       </Card>
@@ -517,9 +583,9 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
               <thead className="bg-muted/40 text-xs uppercase tracking-widest text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-left">Category</th>
-                  <th className="px-3 py-2 text-left">Item</th>
-                  <th className="px-3 py-2 text-right">Estimated</th>
-                  <th className="px-3 py-2 text-right">Actual</th>
+                  <th className="px-3 py-2 text-left">Description</th>
+                  <th className="px-3 py-2 text-right">Budgeted</th>
+                  <th className="px-3 py-2 text-right">Spent</th>
                   <th className="px-3 py-2 text-right">Paid</th>
                   <th className="px-3 py-2"></th>
                 </tr>
