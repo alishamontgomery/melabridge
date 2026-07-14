@@ -31,6 +31,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagingRouteImport } from './routes/messaging'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as InspirationRouteImport } from './routes/inspiration'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as GuestsRouteImport } from './routes/guests'
@@ -199,6 +200,11 @@ const MessagingRoute = MessagingRouteImport.update({
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InspirationRoute = InspirationRouteImport.update({
+  id: '/inspiration',
+  path: '/inspiration',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -543,6 +549,7 @@ export interface FileRoutesByFullPath {
   '/guests': typeof GuestsRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/inspiration': typeof InspirationRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/notifications': typeof NotificationsRoute
@@ -625,6 +632,7 @@ export interface FileRoutesByTo {
   '/guests': typeof GuestsRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/inspiration': typeof InspirationRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/notifications': typeof NotificationsRoute
@@ -708,6 +716,7 @@ export interface FileRoutesById {
   '/guests': typeof GuestsRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/inspiration': typeof InspirationRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/notifications': typeof NotificationsRoute
@@ -792,6 +801,7 @@ export interface FileRouteTypes {
     | '/guests'
     | '/help'
     | '/how-it-works'
+    | '/inspiration'
     | '/marketplace'
     | '/messaging'
     | '/notifications'
@@ -874,6 +884,7 @@ export interface FileRouteTypes {
     | '/guests'
     | '/help'
     | '/how-it-works'
+    | '/inspiration'
     | '/marketplace'
     | '/messaging'
     | '/notifications'
@@ -956,6 +967,7 @@ export interface FileRouteTypes {
     | '/guests'
     | '/help'
     | '/how-it-works'
+    | '/inspiration'
     | '/marketplace'
     | '/messaging'
     | '/notifications'
@@ -1040,6 +1052,7 @@ export interface RootRouteChildren {
   GuestsRoute: typeof GuestsRoute
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  InspirationRoute: typeof InspirationRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MessagingRoute: typeof MessagingRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -1223,6 +1236,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inspiration': {
+      id: '/inspiration'
+      path: '/inspiration'
+      fullPath: '/inspiration'
+      preLoaderRoute: typeof InspirationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -1751,6 +1771,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuestsRoute: GuestsRoute,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
+  InspirationRoute: InspirationRoute,
   MarketplaceRoute: MarketplaceRoute,
   MessagingRoute: MessagingRoute,
   NotificationsRoute: NotificationsRoute,
