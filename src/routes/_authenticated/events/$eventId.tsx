@@ -179,9 +179,26 @@ function EventDetailPage() {
           }
         />
 
+        <Card className="border-border/60 p-4 shadow-soft">
+          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <KeyFact icon={Calendar} label="Date">
+              {event.event_date ? new Date(event.event_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "To be set"}
+            </KeyFact>
+            <KeyFact icon={Clock} label="Time">
+              {event.event_time ? event.event_time.slice(0, 5) : "—"}
+            </KeyFact>
+            <KeyFact icon={MapPin} label="Location">
+              {event.location || "—"}
+            </KeyFact>
+            <KeyFact icon={Users} label="Guests">
+              {event.guest_target ? `${event.guest_target} expected` : `${guests.length} added`}
+            </KeyFact>
+          </dl>
+        </Card>
+
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex w-full flex-wrap gap-1 sm:w-auto">
-            <TabsTrigger value="overview">Dashboard</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks{tasks.length > 0 ? ` (${tasks.length})` : ""}</TabsTrigger>
             <TabsTrigger value="budget">Budget</TabsTrigger>
             <TabsTrigger value="guests">Guests{guests.length > 0 ? ` (${guests.length})` : ""}</TabsTrigger>
@@ -189,15 +206,9 @@ function EventDetailPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
-            {dashboardData && (
-              <div className="mb-6">
-                <EventDashboardPreview data={dashboardData} />
-              </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard icon={Calendar} label="Countdown">
-                {countdown === null ? "No date set" : countdown < 0 ? "Past" : `${countdown} day${countdown === 1 ? "" : "s"}`}
+                <span className="text-xl sm:text-2xl">{countdownLabel}</span>
               </StatCard>
               <StatCard icon={ClipboardList} label="Task progress">
                 {taskProgress}% <Progress value={taskProgress} className="mt-2" />
