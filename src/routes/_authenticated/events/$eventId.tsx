@@ -2,10 +2,10 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import {
-  ArrowLeft, Calendar, Clock, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
-  Loader2, Sparkles, ClipboardList, PartyPopper, Save, Pencil, Upload, Download,
+  ArrowLeft, Calendar, Wallet, Trash2, Plus, Check, Circle,
+  Loader2, Sparkles, Save, Pencil, Upload, Download,
 } from "lucide-react";
-import { AppShell, PageHeader } from "@/components/app-shell";
+import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { EventOverview } from "@/components/event-overview";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -62,16 +63,6 @@ function EventDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
-  const countdown = useMemo(() => {
-    if (!event?.event_date) return null;
-    const diff = Math.ceil((new Date(event.event_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return diff;
-  }, [event?.event_date]);
-
-  const taskProgress = tasks.length
-    ? Math.round((tasks.filter((t) => t.status === "done").length / tasks.length) * 100)
-    : 0;
-
   const budgetTotals = useMemo(() => {
     const est = budget.reduce((s, b) => s + Number(b.estimated_amount), 0);
     const act = budget.reduce((s, b) => s + Number(b.actual_amount), 0);
@@ -79,20 +70,6 @@ function EventDetailPage() {
     return { est, act, paid };
   }, [budget]);
 
-  const rsvpCounts = useMemo(() => {
-    const counts = { yes: 0, no: 0, maybe: 0, pending: 0 };
-    guests.forEach((g) => { counts[g.rsvp_status]++; });
-    return counts;
-  }, [guests]);
-
-  const countdownLabel = useMemo(() => {
-    if (countdown === null) return "No date set";
-    if (countdown === 0) return "Today";
-    if (countdown === 1) return "Tomorrow";
-    if (countdown > 1) return `${countdown} days to go`;
-    if (countdown === -1) return "Yesterday";
-    return `${Math.abs(countdown)} days ago`;
-  }, [countdown]);
 
   async function handleDelete() {
     if (!event) return;
@@ -138,63 +115,38 @@ function EventDetailPage() {
           <ArrowLeft className="h-4 w-4" /> All events
         </Link>
 
-        <PageHeader
-          eyebrow={event.event_type || "Event"}
-          title={event.name}
-          description={event.description || "Track your budget, guests, vendors, timeline, and every detail of your event."}
-          icon={PartyPopper}
-          actions={
-            <div className="flex flex-wrap gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">Archive</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Archive this event?</AlertDialogTitle>
-                    <AlertDialogDescription>You can restore it later from settings.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Delete</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this event?</AlertDialogTitle>
-                    <AlertDialogDescription>This permanently removes the event and all its tasks, budget items, and guests. This cannot be undone.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete permanently</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          }
-        />
-
-        <Card className="border-border/60 p-4 shadow-soft">
-          <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <KeyFact icon={Calendar} label="Date">
-              {event.event_date ? new Date(event.event_date).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "To be set"}
-            </KeyFact>
-            <KeyFact icon={Clock} label="Time">
-              {event.event_time ? event.event_time.slice(0, 5) : "—"}
-            </KeyFact>
-            <KeyFact icon={MapPin} label="Location">
-              {event.location || "—"}
-            </KeyFact>
-            <KeyFact icon={Users} label="Guests">
-              {event.guest_target ? `${event.guest_target} expected` : `${guests.length} added`}
-            </KeyFact>
-          </dl>
-        </Card>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm">Archive</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Archive this event?</AlertDialogTitle>
+                <AlertDialogDescription>You can restore it later from settings.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="gap-1.5"><Trash2 className="h-3.5 w-3.5" /> Delete</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+                <AlertDialogDescription>This permanently removes the event and all its tasks, budget items, and guests. This cannot be undone.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete permanently</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="flex w-full flex-wrap gap-1 sm:w-auto">
@@ -206,59 +158,9 @@ function EventDetailPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard icon={Calendar} label="Countdown">
-                <span className="text-xl sm:text-2xl">{countdownLabel}</span>
-              </StatCard>
-              <StatCard icon={ClipboardList} label="Task progress">
-                {taskProgress}% <Progress value={taskProgress} className="mt-2" />
-              </StatCard>
-              <StatCard icon={Wallet} label="Budget used">
-                ${budgetTotals.act.toLocaleString()}
-                <p className="text-xs text-muted-foreground">of ${(event.budget_target ? Number(event.budget_target) : budgetTotals.est).toLocaleString()}</p>
-              </StatCard>
-              <StatCard icon={Users} label="Guests confirmed">
-                {rsvpCounts.yes}
-                <p className="text-xs text-muted-foreground">of {guests.length} invited</p>
-              </StatCard>
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <Card className="border-border/60 p-5 shadow-soft">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-display text-lg font-semibold">Upcoming tasks</h3>
-                  <Button size="sm" variant="ghost" onClick={() => setTab("tasks")}>Open</Button>
-                </div>
-                {tasks.filter((t) => t.status !== "done").slice(0, 5).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No open tasks. Add your first one from the Tasks tab.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {tasks.filter((t) => t.status !== "done").slice(0, 5).map((t) => (
-                      <li key={t.id} className="flex items-center gap-2 text-sm">
-                        <Circle className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="flex-1 truncate">{t.title}</span>
-                        {t.due_date && <span className="text-xs text-muted-foreground">{new Date(t.due_date).toLocaleDateString()}</span>}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </Card>
-              <Card className="border-border/60 p-5 shadow-soft">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-display text-lg font-semibold">RSVP snapshot</h3>
-                  <Button size="sm" variant="ghost" onClick={() => setTab("guests")}>Open</Button>
-                </div>
-                <div className="grid grid-cols-4 gap-2 text-center">
-                  {(["yes", "maybe", "pending", "no"] as const).map((k) => (
-                    <div key={k} className="rounded-lg border border-border/60 p-3">
-                      <div className="text-xl font-semibold">{rsvpCounts[k]}</div>
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{k}</div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
+            <EventOverview event={event} tasks={tasks} budget={budget} guests={guests} onOpenTab={setTab} />
           </TabsContent>
+
 
           <TabsContent value="tasks" className="mt-6">
             <TasksTab eventId={eventId} tasks={tasks} reload={reload} />
@@ -289,19 +191,6 @@ function StatCard({ icon: Icon, label, children }: { icon: React.ComponentType<{
   );
 }
 
-function KeyFact({ icon: Icon, label, children }: { icon: React.ComponentType<{ className?: string }>; label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex min-w-0 items-start gap-2.5">
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="h-4 w-4" />
-      </div>
-      <div className="min-w-0">
-        <dt className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{label}</dt>
-        <dd className="truncate text-sm font-medium text-foreground">{children}</dd>
-      </div>
-    </div>
-  );
-}
 
 // ============= TASKS =============
 function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; reload: () => Promise<void> }) {
