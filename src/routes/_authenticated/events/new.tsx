@@ -1,12 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -27,89 +26,41 @@ const EVENT_TYPES = [
   "Fundraiser", "Private Celebration", "Other",
 ];
 
-// Cancelled and Completed are intentionally omitted here — those statuses
-// only make sense after an event exists, and are available from the event
-// details page.
-const STATUSES = [
-  { value: "inquiry", label: "Inquiry" },
-  { value: "consultation_scheduled", label: "Consultation Scheduled" },
-  { value: "quote_sent", label: "Quote Sent" },
-  { value: "tentative", label: "Tentative" },
-  { value: "confirmed", label: "Confirmed" },
-] as const;
-
-const CONTACT_METHODS = ["Phone", "Email", "Text", "In-app"] as const;
-const LEAD_SOURCES = ["Referral", "Instagram", "Google", "Website", "Repeat client", "Marketplace", "Other"] as const;
-const PAYMENT_STATUSES = [
-  { value: "unpaid", label: "Unpaid" },
-  { value: "deposit_paid", label: "Deposit paid" },
-  { value: "partial", label: "Partial" },
-  { value: "paid", label: "Paid in full" },
-] as const;
-
 type Form = {
-  name: string; type: string; customType: string;
-  clientName: string; clientPhone: string; clientEmail: string; preferredContact: string; leadSource: string;
+  name: string;
+  type: string;
+  customType: string;
+  date: string;
   addressText: string; street: string; city: string; state: string; zip: string;
   lat: number | null; lng: number | null; placeId: string;
-  date: string; startTime: string; endTime: string; durationHours: string;
-  expectedGuests: string;
-  notes: string;
-  status: (typeof STATUSES)[number]["value"];
-  depositRequired: string; depositPaid: string; balanceDueDate: string; paymentStatus: string;
+  guests: string;
+  budget: string;
 };
+
+type Stage = "form" | "bootstrapping" | "done";
 
 function NewEventPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const bootstrap = useServerFn(bootstrapEventPlan);
-  const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<Stage>("form");
+  const [progress, setProgress] = useState<{ tasks: number; budget: number; runsheet: number; vendors: number }>({
+    tasks: 0, budget: 0, runsheet: 0, vendors: 0,
+  });
   const [f, setF] = useState<Form>({
-    name: "", type: "Wedding", customType: "",
-    clientName: "", clientPhone: "", clientEmail: "", preferredContact: "Email", leadSource: "",
+    name: "", type: "Wedding", customType: "", date: "",
     addressText: "", street: "", city: "", state: "", zip: "", lat: null, lng: null, placeId: "",
-    date: "", startTime: "", endTime: "", durationHours: "",
-    expectedGuests: "",
-    notes: "",
-    status: "inquiry",
-    depositRequired: "", depositPaid: "", balanceDueDate: "", paymentStatus: "unpaid",
+    guests: "", budget: "",
   });
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((prev) => ({ ...prev, [k]: v }));
 
-  // Auto-calc duration or end time
-  const computed = useMemo(() => {
-    if (!f.startTime) return { duration: "", endTime: f.endTime };
-    if (f.endTime) {
-      const [sh, sm] = f.startTime.split(":").map(Number);
-      const [eh, em] = f.endTime.split(":").map(Number);
-      let mins = (eh * 60 + em) - (sh * 60 + sm);
-      if (mins < 0) mins += 24 * 60;
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      return { duration: `${h}h${m ? ` ${m}m` : ""}`, endTime: f.endTime };
-    }
-    if (f.durationHours) {
-      const dur = parseFloat(f.durationHours);
-      if (Number.isFinite(dur) && dur > 0) {
-        const [sh, sm] = f.startTime.split(":").map(Number);
-        const total = sh * 60 + sm + Math.round(dur * 60);
-        const eh = Math.floor((total % (24 * 60)) / 60);
-        const em = total % 60;
-        const pad = (n: number) => String(n).padStart(2, "0");
-        return { duration: `${dur}h`, endTime: `${pad(eh)}:${pad(em)}` };
-      }
-    }
-    return { duration: "", endTime: "" };
-  }, [f.startTime, f.endTime, f.durationHours]);
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!user || busy) return;
-    setBusy(true);
+    if (!user || stage !== "form") return;
+    let eventId: string | null = null;
     try {
       const name = z.string().trim().min(1, "Event name is required").max(120).parse(f.name);
       const eventType = f.type === "Other" ? (f.customType.trim() || "Other") : f.type;
-      const endTime = f.endTime || computed.endTime || null;
 
       const { data, error } = await supabase.from("events").insert({
         owner_id: user.id,
@@ -117,9 +68,6 @@ function NewEventPage() {
         event_type: eventType,
         custom_event_type: f.type === "Other" ? f.customType.trim() || null : null,
         event_date: f.date || null,
-        event_time: f.startTime || null,
-        start_time: f.startTime || null,
-        end_time: endTime,
         location: f.addressText || [f.street, f.city, f.state].filter(Boolean).join(", ") || null,
         venue_street: f.street || null,
         venue_city: f.city || null,
@@ -128,45 +76,70 @@ function NewEventPage() {
         venue_lat: f.lat,
         venue_lng: f.lng,
         venue_place_id: f.placeId || null,
-        guest_target: f.expectedGuests ? parseInt(f.expectedGuests, 10) : null,
-        event_notes: f.notes || null,
-        description: f.notes || null,
-        status: f.status,
-        client_name: f.clientName || null,
-        client_phone: f.clientPhone || null,
-        client_email: f.clientEmail || null,
-        preferred_contact: f.preferredContact || null,
-        lead_source: f.leadSource || null,
-        deposit_required: f.depositRequired ? Number(f.depositRequired) : null,
-        deposit_paid: f.depositPaid ? Number(f.depositPaid) : 0,
-        balance_due_date: f.balanceDueDate || null,
-        payment_status: f.paymentStatus || "unpaid",
+        guest_target: f.guests ? parseInt(f.guests, 10) : null,
+        budget_target: f.budget ? Number(f.budget) : null,
+        status: "confirmed",
       }).select("id").single();
       if (error) throw error;
-      toast.success("Event created — MelaAssist is drafting your plan");
-      // Fire-and-forget: don't block navigation on AI latency.
-      void bootstrap({ data: { event_id: data.id, only_if_empty: true } } as never)
-        .then((r: { tasksInserted?: number; budgetInserted?: number; skipped?: boolean } | undefined) => {
-          if (r && !r.skipped) {
-            toast.success(
-              `MelaAssist added ${r.tasksInserted ?? 0} tasks and ${r.budgetInserted ?? 0} budget items`,
-            );
-          }
-        })
-        .catch(() => {
-          /* Silent: the event still exists; user can retry generation from the workspace. */
-        });
-      navigate({ to: "/events/$eventId", params: { eventId: data.id } });
+      eventId = data.id;
+      setStage("bootstrapping");
+
+      // Await bootstrap so the workspace is already populated on arrival.
+      const r = (await bootstrap({ data: { event_id: eventId, only_if_empty: true } } as never)) as {
+        tasksInserted?: number; budgetInserted?: number; runsheetInserted?: number; vendorNeedsInserted?: number;
+      } | undefined;
+      setProgress({
+        tasks: r?.tasksInserted ?? 0,
+        budget: r?.budgetInserted ?? 0,
+        runsheet: r?.runsheetInserted ?? 0,
+        vendors: r?.vendorNeedsInserted ?? 0,
+      });
+      setStage("done");
+      toast.success("Your event workspace is ready");
+      setTimeout(() => {
+        navigate({ to: "/events/$eventId", params: { eventId: eventId! } });
+      }, 900);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create event");
-    } finally {
-      setBusy(false);
+      if (eventId) {
+        // Event exists but bootstrap failed — still route there so the user isn't stuck.
+        navigate({ to: "/events/$eventId", params: { eventId } });
+      } else {
+        setStage("form");
+      }
     }
+  }
+
+  if (stage !== "form") {
+    return (
+      <AppShell active="/events">
+        <div className="mx-auto max-w-xl space-y-6 py-10">
+          <Card className="border-border/60 p-8 shadow-soft">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3.5 w-3.5" />
+              MelaAssist is planning your event
+            </div>
+            <h1 className="font-display text-2xl font-semibold">
+              {stage === "bootstrapping" ? "Building your workspace…" : "Workspace ready"}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Generating tasks, budget, runsheet, and vendor recommendations tailored to your event.
+            </p>
+            <div className="mt-6 space-y-2.5">
+              <ProgressLine label="Planning tasks" count={progress.tasks} done={stage === "done"} />
+              <ProgressLine label="Budget categories" count={progress.budget} done={stage === "done"} />
+              <ProgressLine label="Day-of runsheet" count={progress.runsheet} done={stage === "done"} />
+              <ProgressLine label="Vendor recommendations" count={progress.vendors} done={stage === "done"} />
+            </div>
+          </Card>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
     <AppShell active="/events">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <Link to="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to events
         </Link>
@@ -174,18 +147,19 @@ function NewEventPage() {
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
             <Sparkles className="h-3.5 w-3.5" /> New event
           </div>
-          <h1 className="font-display text-3xl font-semibold">Create an event</h1>
-          <p className="mt-1 text-sm text-muted-foreground">You can edit anything later. Only the event name is required.</p>
+          <h1 className="font-display text-3xl font-semibold">Tell MelaAssist about your event</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Answer a few questions. MelaAssist will build your tasks, budget, runsheet, and vendor plan automatically.
+          </p>
         </div>
 
-        <form onSubmit={submit} className="space-y-5">
-          {/* 1. Event Information */}
+        <form onSubmit={submit} className="space-y-4">
           <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Event information</h2>
             <div className="space-y-1.5">
               <Label htmlFor="name">Event name *</Label>
-              <Input id="name" value={f.name} onChange={(e) => set("name", e.target.value)} required placeholder="e.g. Priya & Arjun Wedding" />
+              <Input id="name" value={f.name} onChange={(e) => set("name", e.target.value)} required placeholder="e.g. Priya & Arjun Wedding" autoFocus />
             </div>
+
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Event type *</Label>
@@ -196,66 +170,27 @@ function NewEventPage() {
                   </SelectContent>
                 </Select>
               </div>
-              {f.type === "Other" && (
+              {f.type === "Other" ? (
                 <div className="space-y-1.5">
-                  <Label htmlFor="customType">Custom event type</Label>
+                  <Label htmlFor="customType">Describe it</Label>
                   <Input id="customType" value={f.customType} onChange={(e) => set("customType", e.target.value)} placeholder="e.g. Product launch" />
                 </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="date">Event date</Label>
+                  <Input id="date" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} />
+                </div>
               )}
-              <div className="space-y-1.5">
-                <Label>Status</Label>
-                <Select value={f.status} onValueChange={(v) => set("status", v as Form["status"])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              {f.type === "Other" && (
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="date2">Event date</Label>
+                  <Input id="date2" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} />
+                </div>
+              )}
             </div>
-          </Card>
 
-          {/* 2. Client info */}
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Client information</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="clientName">Client name</Label>
-                <Input id="clientName" value={f.clientName} onChange={(e) => set("clientName", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="clientPhone">Phone number</Label>
-                <Input id="clientPhone" type="tel" value={f.clientPhone} onChange={(e) => set("clientPhone", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="clientEmail">Email</Label>
-                <Input id="clientEmail" type="email" value={f.clientEmail} onChange={(e) => set("clientEmail", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Preferred contact</Label>
-                <Select value={f.preferredContact} onValueChange={(v) => set("preferredContact", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CONTACT_METHODS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label>Lead source</Label>
-                <Select value={f.leadSource} onValueChange={(v) => set("leadSource", v)}>
-                  <SelectTrigger><SelectValue placeholder="Where did they find you?" /></SelectTrigger>
-                  <SelectContent>
-                    {LEAD_SOURCES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </Card>
-
-          {/* 3. Venue */}
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Venue</h2>
             <div className="space-y-1.5">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="address">Location</Label>
               <AddressAutocomplete
                 id="address"
                 value={f.addressText}
@@ -268,117 +203,53 @@ function NewEventPage() {
                     lat: d.lat, lng: d.lng, placeId: d.placeId,
                   }));
                 }}
-                placeholder="Start typing an address…"
+                placeholder="City, venue, or address…"
               />
-              <p className="text-xs text-muted-foreground">Suggestions from Google. You can also enter details manually.</p>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="street">Street</Label>
-                <Input id="street" value={f.street} onChange={(e) => set("street", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="city">City</Label>
-                <Input id="city" value={f.city} onChange={(e) => set("city", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="state">State</Label>
-                <Input id="state" value={f.state} onChange={(e) => set("state", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="zip">ZIP</Label>
-                <Input id="zip" value={f.zip} onChange={(e) => set("zip", e.target.value)} />
-              </div>
-            </div>
-          </Card>
 
-          {/* 4. Date & Time */}
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Date & time</h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="startTime">Start time</Label>
-                <Input id="startTime" type="time" value={f.startTime} onChange={(e) => set("startTime", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="endTime">End time</Label>
-                <Input id="endTime" type="time" value={f.endTime} onChange={(e) => set("endTime", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dur">Or duration (hours)</Label>
-                <Input id="dur" type="number" min="0" step="0.5" value={f.durationHours} onChange={(e) => set("durationHours", e.target.value)} disabled={!!f.endTime} />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label>Calculated</Label>
-                <div className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                  {computed.duration ? `Duration: ${computed.duration}` : "Enter start + end (or duration)"}
-                  {!f.endTime && computed.endTime && ` · End: ${computed.endTime}`}
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* 5. Guests */}
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Guests</h2>
-            <div className="space-y-1.5 sm:max-w-xs">
-              <Label htmlFor="guests">Expected guests</Label>
-              <Input id="guests" type="number" min="0" value={f.expectedGuests} onChange={(e) => set("expectedGuests", e.target.value)} />
-            </div>
-          </Card>
-
-          {/* 6. Notes */}
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Event notes</h2>
-            <Textarea rows={4} value={f.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Client prefers black & gold · Setup through side entrance · Outdoor ceremony · Wheelchair access…" />
-          </Card>
-
-          {/* 7. Payment */}
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
-            <h2 className="font-display text-lg font-semibold">Payment</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="depReq">Deposit required ($)</Label>
-                <Input id="depReq" type="number" min="0" step="0.01" value={f.depositRequired} onChange={(e) => set("depositRequired", e.target.value)} />
+                <Label htmlFor="guests">Estimated guests</Label>
+                <Input id="guests" type="number" min="0" value={f.guests} onChange={(e) => set("guests", e.target.value)} placeholder="e.g. 120" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="depPaid">Deposit paid ($)</Label>
-                <Input id="depPaid" type="number" min="0" step="0.01" value={f.depositPaid} onChange={(e) => set("depositPaid", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="due">Balance due date</Label>
-                <Input id="due" type="date" value={f.balanceDueDate} onChange={(e) => set("balanceDueDate", e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Payment status</Label>
-                <Select value={f.paymentStatus} onValueChange={(v) => set("paymentStatus", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_STATUSES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="sm:col-span-2 text-sm text-muted-foreground">
-                {(() => {
-                  const req = Number(f.depositRequired) || 0;
-                  const paid = Number(f.depositPaid) || 0;
-                  const rem = Math.max(0, req - paid);
-                  return req > 0 ? `Remaining balance: $${rem.toLocaleString()}` : "Enter deposit required to see remaining balance.";
-                })()}
+                <Label htmlFor="budget">Estimated budget <span className="text-xs text-muted-foreground">(optional)</span></Label>
+                <Input id="budget" type="number" min="0" step="100" value={f.budget} onChange={(e) => set("budget", e.target.value)} placeholder="e.g. 25000" />
               </div>
             </div>
           </Card>
 
-          <div className="sticky bottom-4 z-10 flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => navigate({ to: "/events" })}>Cancel</Button>
-            <Button type="submit" disabled={busy} size="lg">{busy ? "Creating…" : "Create event"}</Button>
+          <div className="sticky bottom-0 -mx-2 border-t border-border/60 bg-background/95 px-2 py-3 backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                <Sparkles className="mr-1 inline h-3 w-3" />
+                MelaAssist will draft everything you need — you can edit anything after.
+              </p>
+              <Button type="submit" size="lg" className="gap-2">
+                <Sparkles className="h-4 w-4" /> Create with MelaAssist
+              </Button>
+            </div>
           </div>
         </form>
       </div>
     </AppShell>
+  );
+}
+
+function ProgressLine({ label, count, done }: { label: string; count: number; done: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-md border border-border/50 bg-muted/20 px-3 py-2">
+      <span className="text-sm">{label}</span>
+      <span className="inline-flex items-center gap-2 text-sm">
+        {done ? (
+          <>
+            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <span className="font-medium">{count}</span>
+          </>
+        ) : (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        )}
+      </span>
+    </div>
   );
 }
