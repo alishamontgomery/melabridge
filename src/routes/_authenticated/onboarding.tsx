@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useServerFn } from "@tanstack/react-start";
 import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
+import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
 
 type AccountType = "personal" | "organization" | "vendor";
 
