@@ -836,44 +836,59 @@ export type Database = {
       }
       event_runsheet_items: {
         Row: {
+          ai_generated: boolean
+          assigned_user_id: string | null
+          assigned_vendor_id: string | null
           created_at: string
           created_by: string | null
           duration_min: number
           event_id: string
           id: string
           is_sample: boolean
+          locked: boolean
           notes: string | null
           owner: string | null
           sort_order: number
           start_time: string | null
+          status: Database["public"]["Enums"]["runsheet_status"]
           title: string
           updated_at: string
         }
         Insert: {
+          ai_generated?: boolean
+          assigned_user_id?: string | null
+          assigned_vendor_id?: string | null
           created_at?: string
           created_by?: string | null
           duration_min?: number
           event_id: string
           id?: string
           is_sample?: boolean
+          locked?: boolean
           notes?: string | null
           owner?: string | null
           sort_order?: number
           start_time?: string | null
+          status?: Database["public"]["Enums"]["runsheet_status"]
           title: string
           updated_at?: string
         }
         Update: {
+          ai_generated?: boolean
+          assigned_user_id?: string | null
+          assigned_vendor_id?: string | null
           created_at?: string
           created_by?: string | null
           duration_min?: number
           event_id?: string
           id?: string
           is_sample?: boolean
+          locked?: boolean
           notes?: string | null
           owner?: string | null
           sort_order?: number
           start_time?: string | null
+          status?: Database["public"]["Enums"]["runsheet_status"]
           title?: string
           updated_at?: string
         }
@@ -945,6 +960,7 @@ export type Database = {
           balance_due_date: string | null
           banner_url: string | null
           budget_target: number | null
+          ceremony_start_time: string | null
           client_email: string | null
           client_name: string | null
           client_phone: string | null
@@ -986,6 +1002,7 @@ export type Database = {
           balance_due_date?: string | null
           banner_url?: string | null
           budget_target?: number | null
+          ceremony_start_time?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -1027,6 +1044,7 @@ export type Database = {
           balance_due_date?: string | null
           banner_url?: string | null
           budget_target?: number | null
+          ceremony_start_time?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -2127,6 +2145,13 @@ export type Database = {
       guest_rsvp: "pending" | "yes" | "no" | "maybe"
       invoice_status: "draft" | "sent" | "partial" | "paid" | "overdue" | "void"
       payment_schedule_status: "pending" | "paid" | "overdue" | "waived"
+      runsheet_status:
+        | "planned"
+        | "in_progress"
+        | "complete"
+        | "delayed"
+        | "critical"
+        | "skipped"
       task_priority: "low" | "medium" | "high" | "urgent"
       task_status: "todo" | "in_progress" | "done"
       vendor_need_status: "required" | "recommended" | "optional"
@@ -2327,6 +2352,14 @@ export const Constants = {
       guest_rsvp: ["pending", "yes", "no", "maybe"],
       invoice_status: ["draft", "sent", "partial", "paid", "overdue", "void"],
       payment_schedule_status: ["pending", "paid", "overdue", "waived"],
+      runsheet_status: [
+        "planned",
+        "in_progress",
+        "complete",
+        "delayed",
+        "critical",
+        "skipped",
+      ],
       task_priority: ["low", "medium", "high", "urgent"],
       task_status: ["todo", "in_progress", "done"],
       vendor_need_status: ["required", "recommended", "optional"],

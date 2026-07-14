@@ -233,7 +233,15 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
     const plan = aiPlan ?? templateToPlan(template, totalBudget);
     const usedFallback = aiPlan === null;
 
-    const baseStart = event.event_time ?? event.start_time ?? null;
+    // Prefer the explicit ceremony start (when the "main event" actually
+    // begins). Fall back to event_time / start_time. This is what runsheet
+    // offsets are anchored to: negative offsets are setup BEFORE, offset 0
+    // is the main event.
+    const baseStart =
+      (event as { ceremony_start_time?: string | null }).ceremony_start_time ??
+      event.event_time ??
+      event.start_time ??
+      null;
 
     // TASKS
     let tasksInserted = 0;
@@ -279,6 +287,7 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
         owner: r.owner ?? null,
         notes: r.notes ?? null,
         sort_order: idx,
+        ai_generated: true,
         created_by: userId,
       }));
       const { error, count } = await supabase.from("event_runsheet_items").insert(rows, { count: "exact" });
@@ -316,3 +325,94 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
       usedFallback,
     };
   });
+
+/**
+ * Regenerate the day-of runsheet, preserving locked items.
+ *
+ * - Locked items are kept as-is (title, time, duration, owner, assignments,
+ *   notes, status).
+ * - Non-locked items are deleted and replaced with a fresh AI (or template)
+ *   plan anchored to the event's ceremony start time.
+ * - New rows are inserted with sort_order that interleaves them around the
+ *   locked ones by chronological start_time.
+ */
+export const regenerateRunsheet = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ event_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: event, error: evErr } = await supabase
+      .from("events")
+      .select(
+        "id,owner_id,name,event_type,event_date,event_time,start_time,end_time,ceremony_start_time,guest_target,budget_target,location,description,event_notes",
+      )
+      .eq("id", data.event_id)
+      .maybeSingle();
+    if (evErr) throw new Error(evErr.message);
+    if (!event) throw new Error("Event not found");
+    if (event.owner_id !== userId) throw new Error("Not authorized");
+
+    // Delete only non-locked runsheet items.
+    const { error: delErr } = await supabase
+      .from("event_runsheet_items")
+      .delete()
+      .eq("event_id", event.id)
+      .eq("locked", false);
+    if (delErr) throw new Error(delErr.message);
+
+    const template = getEventTemplate(event.event_type);
+    const totalBudget = Number(event.budget_target ?? 0);
+    const eventContext = {
+      name: event.name,
+      event_type: event.event_type ?? "Event",
+      event_date: event.event_date ?? "unknown",
+      guest_target: event.guest_target ?? null,
+      budget_target: totalBudget || null,
+      location: event.location ?? null,
+      notes: event.event_notes ?? event.description ?? null,
+    };
+
+    const aiPlan = await callAI(eventContext, template, totalBudget);
+    const plan = aiPlan ?? templateToPlan(template, totalBudget);
+    const baseStart =
+      (event as { ceremony_start_time?: string | null }).ceremony_start_time ??
+      event.event_time ??
+      event.start_time ??
+      null;
+
+    // Fetch locked items so we can skip duplicate titles + choose sort_order.
+    const { data: locked } = await supabase
+      .from("event_runsheet_items")
+      .select("id,title,sort_order")
+      .eq("event_id", event.id)
+      .eq("locked", true);
+    const lockedTitles = new Set((locked ?? []).map((r) => r.title.toLowerCase().trim()));
+    const startSort = (locked ?? []).reduce((m, r) => Math.max(m, r.sort_order), -1) + 1;
+
+    const rows = plan.runsheet
+      .filter((r) => !lockedTitles.has(r.title.toLowerCase().trim()))
+      .map((r, idx) => ({
+        event_id: event.id,
+        title: r.title,
+        start_time: computeRunsheetTime(baseStart, r.offset_min),
+        duration_min: r.duration_min,
+        owner: r.owner ?? null,
+        notes: r.notes ?? null,
+        sort_order: startSort + idx,
+        ai_generated: true,
+        created_by: userId,
+      }));
+
+    let inserted = 0;
+    if (rows.length > 0) {
+      const { error, count } = await supabase
+        .from("event_runsheet_items")
+        .insert(rows, { count: "exact" });
+      if (error) throw new Error(error.message);
+      inserted = count ?? rows.length;
+    }
+
+    return { ok: true, inserted, keptLocked: (locked ?? []).length, usedFallback: aiPlan === null };
+  });
+
