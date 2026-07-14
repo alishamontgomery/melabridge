@@ -74,6 +74,26 @@ function friendlyAuthError(error: unknown) {
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+/**
+ * The Lovable preview environment (id-preview--*.lovable.app and the editor iframe)
+ * intercepts fetch requests to Supabase auth endpoints, which causes Google OAuth
+ * POST /auth/v1/token to hang indefinitely. Google sign-in works correctly on the
+ * published site and custom domains — we only hide the button in the preview.
+ */
+function isPreviewEnvironment() {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  if (host.includes("id-preview--")) return true;
+  if (host.endsWith(".lovableproject.com")) return true;
+  try {
+    if (window.self !== window.top) return true;
+  } catch {
+    // Cross-origin iframe access throws — that itself means we're framed.
+    return true;
+  }
+  return false;
+}
+
 function safeNextPath() {
   const stored = window.sessionStorage.getItem("melabridge.auth.next");
   window.sessionStorage.removeItem("melabridge.auth.next");
