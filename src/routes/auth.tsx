@@ -171,7 +171,12 @@ function AuthPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const timedOutRef = useRef(false);
   const callbackHandledRef = useRef(false);
-  const googleDisabled = useMemo(() => isPreviewEnvironment(), []);
+  // Google sign-in is disabled site-wide until OAuth is fully verified end-to-end.
+  // Keeps a broken button from shipping to production; email/password remains fully functional.
+  const googleDisabled = useMemo(() => {
+    void isPreviewEnvironment; // preserve helper for future re-enable
+    return true;
+  }, []);
 
   const busy = activeOperation !== null;
 
@@ -553,7 +558,7 @@ function AuthPage() {
             </div>
           )}
 
-          {!googleDisabled ? (
+          {!googleDisabled && (
             <>
               <div className="my-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-border" />
@@ -565,11 +570,6 @@ function AuthPage() {
                 {activeOperation === "google" ? "Opening Google…" : "Continue with Google"}
               </Button>
             </>
-          ) : (
-            <p className="mt-6 rounded-md border border-border/60 bg-muted/40 px-3 py-2 text-center text-xs text-muted-foreground">
-              Google sign-in is unavailable in the Lovable preview. Use email &amp; password here, or try Google on the{" "}
-              <a href="https://melabridge.com/auth" className="underline">published site</a>.
-            </p>
           )}
         </Card>
 

@@ -68,6 +68,8 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminInviteRouteImport } from './routes/admin.invite'
 import { Route as AuthenticatedVendorSettingsRouteImport } from './routes/_authenticated/vendor-settings'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -383,6 +385,16 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminInviteRoute = AdminInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AuthenticatedVendorSettingsRoute =
   AuthenticatedVendorSettingsRouteImport.update({
     id: '/vendor-settings',
@@ -500,7 +512,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
@@ -558,6 +570,8 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
+  '/admin/invite': typeof AdminInviteRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
@@ -580,7 +594,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
@@ -637,6 +651,8 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
+  '/admin/invite': typeof AdminInviteRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
@@ -661,7 +677,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
@@ -719,6 +735,8 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
   '/_authenticated/vendor-settings': typeof AuthenticatedVendorSettingsRoute
+  '/admin/invite': typeof AdminInviteRoute
+  '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/_authenticated/bookings/$id': typeof AuthenticatedBookingsIdRoute
@@ -801,6 +819,8 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/vendor'
     | '/vendor-settings'
+    | '/admin/invite'
+    | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
     | '/bookings/$id'
@@ -880,6 +900,8 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/vendor'
     | '/vendor-settings'
+    | '/admin/invite'
+    | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
     | '/bookings/$id'
@@ -961,6 +983,8 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
     | '/_authenticated/vendor-settings'
+    | '/admin/invite'
+    | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
     | '/_authenticated/bookings/$id'
@@ -985,7 +1009,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AccessibilityRoute: typeof AccessibilityRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AiMemoryRoute: typeof AiMemoryRoute
   AiPlanningRoute: typeof AiPlanningRoute
   AnalyticsRoute: typeof AnalyticsRoute
@@ -1460,6 +1484,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/invite': {
+      id: '/admin/invite'
+      path: '/invite'
+      fullPath: '/admin/invite'
+      preLoaderRoute: typeof AdminInviteRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_authenticated/vendor-settings': {
       id: '/_authenticated/vendor-settings'
       path: '/vendor-settings'
@@ -1655,6 +1693,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminRouteChildren {
+  AdminInviteRoute: typeof AdminInviteRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminInviteRoute: AdminInviteRoute,
+  AdminUsersRoute: AdminUsersRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
@@ -1670,7 +1720,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AccessibilityRoute: AccessibilityRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AiMemoryRoute: AiMemoryRoute,
   AiPlanningRoute: AiPlanningRoute,
   AnalyticsRoute: AnalyticsRoute,

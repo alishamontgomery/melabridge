@@ -142,12 +142,16 @@ const GUEST_NAV: NavGroup[] = [
 const ADMIN_NAV: NavGroup[] = [
   {
     label: "Dashboard",
-    items: [{ to: "/dashboard", label: "Overview", icon: LayoutDashboard }],
+    items: [
+      { to: "/admin", label: "AdminOS™", icon: ShieldCheck },
+      { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    ],
   },
   {
     label: "Platform",
     items: [
-      { to: "/admin", label: "Users", icon: Users },
+      { to: "/admin/users", label: "Users", icon: Users },
+      { to: "/admin/invite", label: "Invite Users", icon: Users },
       { to: "/vendors", label: "Vendors", icon: Store },
       { to: "/events", label: "Events", icon: Calendar },
       { to: "/marketplace", label: "Marketplace", icon: Store },
@@ -159,7 +163,6 @@ const ADMIN_NAV: NavGroup[] = [
   {
     label: "System",
     items: [
-      { to: "/admin", label: "AdminOS™", icon: ShieldCheck },
       { to: "/bridgepilot", label: "AI Command Center", icon: Sparkles },
       { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
       { to: "/ai-memory", label: "AI & Memory", icon: Brain },
@@ -170,7 +173,6 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { to: "/settings", label: "Platform Settings", icon: SettingsIcon },
       { to: "/subscription", label: "Subscription Mgmt", icon: Crown },
-      { to: "/admin", label: "Feature Flags", icon: Flag },
     ],
   },
 ];
