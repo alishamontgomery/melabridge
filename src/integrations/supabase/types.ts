@@ -1894,6 +1894,13 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_booking_party: {
         Args: { _booking_id: string; _user: string }
         Returns: boolean
@@ -1911,7 +1918,7 @@ export type Database = {
       wipe_test_data: { Args: never; Returns: Json }
     }
     Enums: {
-      app_role: "planner" | "vendor" | "guest" | "admin" | "attendee"
+      app_role: "personal" | "organization" | "vendor" | "admin"
       booking_confirmation_rule:
         | "contract_only"
         | "deposit_only"
@@ -2104,7 +2111,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["planner", "vendor", "guest", "admin", "attendee"],
+      app_role: ["personal", "organization", "vendor", "admin"],
       booking_confirmation_rule: [
         "contract_only",
         "deposit_only",
