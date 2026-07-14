@@ -223,6 +223,7 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
   const [dueDate, setDueDate] = useState("");
   const [filter, setFilter] = useState<"all" | Task["status"]>("all");
   const [busy, setBusy] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Task | null>(null);
 
   const filtered = filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
 
@@ -241,6 +242,7 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
       });
       if (error) throw error;
       setTitle(""); setDueDate("");
+      toast.success("Task added");
       await reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add task");
@@ -258,8 +260,15 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
   }
 
   async function removeTask(id: string) {
-    const { error } = await supabase.from("tasks").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    const { error } = await supabase
+      .from("tasks")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Task removed");
     await reload();
   }
 
@@ -310,13 +319,28 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
                   {t.due_date && <span>Due {new Date(t.due_date).toLocaleDateString()}</span>}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => removeTask(t.id)} aria-label="Delete task">
+              <Button variant="ghost" size="icon" onClick={() => setPendingDelete(t)} aria-label="Delete task">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </Card>
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+        destructive
+        title="Delete this task?"
+        description={
+          <>
+            <p>&ldquo;{pendingDelete?.title}&rdquo; will be removed from your task list.</p>
+            <p className="mt-1 text-xs text-muted-foreground">You can undo this by asking MelaAssist to re-add it.</p>
+          </>
+        }
+        confirmLabel="Delete task"
+        onConfirm={async () => { if (pendingDelete) await removeTask(pendingDelete.id); }}
+      />
     </div>
   );
 }
