@@ -196,7 +196,7 @@ function EventDetailPage() {
         <PageHeader
           eyebrow={event.event_type || "Event"}
           title={event.name}
-          description={event.description || "Your planning workspace — everything in one place."}
+          description={event.description || "Track your budget, guests, vendors, timeline, and every detail of your event."}
           icon={PartyPopper}
           actions={
             <div className="flex flex-wrap gap-2">
