@@ -31,6 +31,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MessagingRouteImport } from './routes/messaging'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
+import { Route as InvitationsRouteImport } from './routes/invitations'
 import { Route as InspirationRouteImport } from './routes/inspiration'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as HelpRouteImport } from './routes/help'
@@ -67,6 +68,7 @@ import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -200,6 +202,11 @@ const MessagingRoute = MessagingRouteImport.update({
 const MarketplaceRoute = MarketplaceRouteImport.update({
   id: '/marketplace',
   path: '/marketplace',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvitationsRoute = InvitationsRouteImport.update({
+  id: '/invitations',
+  path: '/invitations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InspirationRoute = InspirationRouteImport.update({
@@ -381,6 +388,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -550,6 +562,7 @@ export interface FileRoutesByFullPath {
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/inspiration': typeof InspirationRoute
+  '/invitations': typeof InvitationsRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/notifications': typeof NotificationsRoute
@@ -581,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -633,6 +647,7 @@ export interface FileRoutesByTo {
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/inspiration': typeof InspirationRoute
+  '/invitations': typeof InvitationsRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/notifications': typeof NotificationsRoute
@@ -663,6 +678,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -717,6 +733,7 @@ export interface FileRoutesById {
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/inspiration': typeof InspirationRoute
+  '/invitations': typeof InvitationsRoute
   '/marketplace': typeof MarketplaceRoute
   '/messaging': typeof MessagingRoute
   '/notifications': typeof NotificationsRoute
@@ -748,6 +765,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/_authenticated/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/_authenticated/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -802,6 +820,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/how-it-works'
     | '/inspiration'
+    | '/invitations'
     | '/marketplace'
     | '/messaging'
     | '/notifications'
@@ -833,6 +852,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/invite/$token'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
@@ -885,6 +905,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/how-it-works'
     | '/inspiration'
+    | '/invitations'
     | '/marketplace'
     | '/messaging'
     | '/notifications'
@@ -915,6 +936,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/invite/$token'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
@@ -968,6 +990,7 @@ export interface FileRouteTypes {
     | '/help'
     | '/how-it-works'
     | '/inspiration'
+    | '/invitations'
     | '/marketplace'
     | '/messaging'
     | '/notifications'
@@ -999,6 +1022,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/invite/$token'
     | '/_authenticated/bookings/$id'
     | '/_authenticated/calendar/dashboard'
     | '/_authenticated/calendar/requests'
@@ -1053,6 +1077,7 @@ export interface RootRouteChildren {
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   InspirationRoute: typeof InspirationRoute
+  InvitationsRoute: typeof InvitationsRoute
   MarketplaceRoute: typeof MarketplaceRoute
   MessagingRoute: typeof MessagingRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -1076,6 +1101,7 @@ export interface RootRouteChildren {
   VisionRoute: typeof VisionRoute
   WorkspaceRoute: typeof WorkspaceRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1236,6 +1262,13 @@ declare module '@tanstack/react-router' {
       path: '/marketplace'
       fullPath: '/marketplace'
       preLoaderRoute: typeof MarketplaceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invitations': {
+      id: '/invitations'
+      path: '/invitations'
+      fullPath: '/invitations'
+      preLoaderRoute: typeof InvitationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inspiration': {
@@ -1488,6 +1521,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
@@ -1772,6 +1812,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   InspirationRoute: InspirationRoute,
+  InvitationsRoute: InvitationsRoute,
   MarketplaceRoute: MarketplaceRoute,
   MessagingRoute: MessagingRoute,
   NotificationsRoute: NotificationsRoute,
@@ -1795,6 +1836,7 @@ const rootRouteChildren: RootRouteChildren = {
   VisionRoute: VisionRoute,
   WorkspaceRoute: WorkspaceRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  InviteTokenRoute: InviteTokenRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

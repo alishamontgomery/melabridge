@@ -81,6 +81,9 @@
   * {
     border-color: var(--color-border);
   }
+  html, body {
+    overflow-x: hidden;
+  }
   html {
     scroll-behavior: smooth;
   }
@@ -90,11 +93,20 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     font-feature-settings: "ss01", "cv11";
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
+    overflow-wrap: break-word;
   }
+  /* Global overflow safety: any long token (email, URL, hash) breaks safely */
+  p, span, li, dd, dt, label, a, button {
+    overflow-wrap: anywhere;
+  }
+  /* Preserve nowrap where explicitly requested */
+  .whitespace-nowrap { overflow-wrap: normal; word-break: normal; }
 }
 
 @utility text-gradient {

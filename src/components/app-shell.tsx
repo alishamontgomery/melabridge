@@ -30,6 +30,9 @@ import {
   Home,
   Flag,
   Boxes,
+  Mail,
+  BellRing,
+  Palette,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,9 +80,17 @@ const PLANNER_NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Design & Invite",
+    items: [
+      { to: "/invitations", label: "Create Invitation", icon: Palette },
+      { to: "/inspiration", label: "Inspiration Studio", icon: Star },
+      { to: "/messaging", label: "Guest Messaging", icon: Mail },
+      { to: "/notifications", label: "Scheduled Reminders", icon: BellRing },
+    ],
+  },
+  {
     label: "Resources",
     items: [
-      { to: "/inspiration", label: "Inspiration Studio", icon: Star },
       { to: "/files", label: "Files", icon: FolderOpen },
     ],
   },
