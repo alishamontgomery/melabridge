@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useServerFn } from "@tanstack/react-start";
 import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
+import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
 
 type AccountType = "personal" | "organization" | "vendor";
 
@@ -210,12 +211,148 @@ function OptionalLabel({ children }: { children: React.ReactNode }) {
 
 /* ============== PLANNER FLOW (Personal + Organization) ============== */
 function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organization"; onBack: () => void }) {
+  if (accountType === "personal") {
+    return <WelcomeDashboard onBack={onBack} />;
+  }
+  return <OrganizationFlow onBack={onBack} />;
+}
+
+function WelcomeDashboard({ onBack }: { onBack: () => void }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const seedSample = useServerFn(seedSampleWorkspace);
+  const [busy, setBusy] = useState<"create" | "sample" | "tour" | null>(null);
+
+  async function markOnboarded() {
+    if (!user) return;
+    await supabase
+      .from("profiles")
+      .update({ account_type: "personal", onboarding_completed: true })
+      .eq("id", user.id);
+  }
+
+  async function handleCreate() {
+    setBusy("create");
+    await markOnboarded();
+    navigate({ to: "/events/new" });
+  }
+
+  async function handleExploreSample(tour: boolean) {
+    setBusy(tour ? "tour" : "sample");
+    try {
+      await markOnboarded();
+      const res = (await seedSample()) as { ok: boolean; event_id?: string; error?: string };
+      if (!res.ok) throw new Error(res.error);
+      toast.success(tour ? "Starting your guided tour" : "Sample workspace ready to explore");
+      if (res.event_id) {
+        navigate({ to: "/events/$eventId", params: { eventId: res.event_id } });
+      } else {
+        navigate({ to: "/events" });
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not load sample workspace");
+      setBusy(null);
+    }
+  }
+
+  const cards = [
+    {
+      key: "create" as const,
+      icon: PartyPopper,
+      title: "Create My First Event",
+      description: "Start fresh — MelaAssist™ will help build your timeline, budget, and guest list.",
+      cta: "Create event",
+      variant: "hero" as const,
+      onClick: handleCreate,
+      badge: "Recommended",
+    },
+    {
+      key: "sample" as const,
+      icon: Sparkles,
+      title: "Explore Sample Event",
+      description: "Preview a fully-planned wedding workspace with realistic guests, budget, and tasks.",
+      cta: "Explore sample",
+      variant: "outline" as const,
+      onClick: () => handleExploreSample(false),
+      badge: "See it in action",
+    },
+    {
+      key: "tour" as const,
+      icon: ArrowRight,
+      title: "Take a 2-Minute Tour",
+      description: "Get a guided walkthrough of every planning tool, powered by MelaAssist™.",
+      cta: "Start tour",
+      variant: "ghost" as const,
+      onClick: () => handleExploreSample(true),
+    },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-card to-gold/5 p-6 shadow-soft">
+        <div className="flex items-start gap-4">
+          <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground shadow-soft">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">MelaAssist™</p>
+            <p className="mt-1 text-sm">
+              Welcome{user?.email ? `, ${user.email.split("@")[0]}` : ""}! I'll help you plan every detail — from
+              the first idea to the last dance. Pick how you'd like to start below.
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid gap-3">
+        {cards.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            onClick={c.onClick}
+            disabled={busy !== null}
+            className={cn(
+              "group relative flex items-center gap-4 rounded-2xl border p-5 text-left transition",
+              "hover:border-primary hover:bg-primary/5 hover:shadow-soft disabled:opacity-60",
+              busy === c.key ? "border-primary bg-primary/10" : "border-border/60 bg-card",
+            )}
+          >
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary/15 to-gold/15 text-primary transition group-hover:from-primary group-hover:to-primary-glow group-hover:text-primary-foreground">
+              <c.icon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-display text-base font-semibold">{c.title}</p>
+                {c.badge && (
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
+                    {c.badge}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-primary group-hover:translate-x-0.5" />
+          </button>
+        ))}
+      </div>
+
+      <div className="flex justify-between pt-2">
+        <Button variant="ghost" size="sm" onClick={onBack} disabled={busy !== null}>
+          <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+        </Button>
+        <p className="text-xs text-muted-foreground">You can switch modes anytime in Settings.</p>
+      </div>
+    </div>
+  );
+}
+
+function OrganizationFlow({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const bootstrap = useServerFn(bootstrapEventPlan);
   const [busy, setBusy] = useState(false);
   const [eventName, setEventName] = useState("");
-  const [eventType, setEventType] = useState("Wedding");
+  const [eventType, setEventType] = useState("Corporate Event");
   const [eventDate, setEventDate] = useState<Date | undefined>(undefined);
   const [dateUnknown, setDateUnknown] = useState(false);
 
@@ -229,7 +366,7 @@ function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organ
     try {
       const { error: profErr } = await supabase
         .from("profiles")
-        .update({ account_type: accountType, onboarding_completed: true })
+        .update({ account_type: "organization", onboarding_completed: true })
         .eq("id", user.id);
       if (profErr) throw profErr;
 
@@ -276,7 +413,7 @@ function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organ
               id="ev-name"
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
-              placeholder="Johnson Family Reunion"
+              placeholder="Q4 Company Summit"
               autoFocus
             />
           </div>
@@ -343,6 +480,7 @@ function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organ
     </div>
   );
 }
+
 
 /* ============== VENDOR FLOW ============== */
 function VendorFlow({ onBack }: { onBack: () => void }) {

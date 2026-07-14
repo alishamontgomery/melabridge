@@ -95,6 +95,7 @@ function TeamPage() {
         role: "editor",
         invited_email: email,
         created_at: new Date().toISOString(),
+        is_sample: false,
         profile,
       },
     ]);
