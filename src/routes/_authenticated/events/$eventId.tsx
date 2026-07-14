@@ -48,10 +48,10 @@ function EventDetailPage() {
 
   async function reload() {
     const [ev, t, b, g] = await Promise.all([
-      supabase.from("events").select("*").eq("id", eventId).maybeSingle(),
-      supabase.from("tasks").select("*").eq("event_id", eventId).order("created_at"),
-      supabase.from("budget_items").select("*").eq("event_id", eventId).order("created_at"),
-      supabase.from("guests").select("*").eq("event_id", eventId).order("created_at"),
+      supabase.from("events").select("*").eq("id", eventId).is("deleted_at", null).maybeSingle(),
+      supabase.from("tasks").select("*").eq("event_id", eventId).is("deleted_at", null).order("created_at"),
+      supabase.from("budget_items").select("*").eq("event_id", eventId).is("deleted_at", null).order("created_at"),
+      supabase.from("guests").select("*").eq("event_id", eventId).is("deleted_at", null).order("created_at"),
     ]);
     if (ev.error) toast.error(ev.error.message);
     setEvent(ev.data ?? null);
@@ -75,16 +75,25 @@ function EventDetailPage() {
 
   async function handleDelete() {
     if (!event) return;
-    const { error } = await supabase.from("events").delete().eq("id", event.id);
-    if (error) return toast.error(error.message);
-    toast.success("Event deleted");
+    const { error } = await supabase
+      .from("events")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", event.id);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
+    toast.success("Moved to Trash", { description: "You can restore it within 30 days." });
     navigate({ to: "/events" });
   }
 
   async function handleArchive() {
     if (!event) return;
     const { error } = await supabase.from("events").update({ status: "archived" }).eq("id", event.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      throw error;
+    }
     toast.success("Event archived");
     navigate({ to: "/events" });
   }
