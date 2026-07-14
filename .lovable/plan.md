@@ -1,111 +1,110 @@
-# MelaBridge Launch Readiness Sprint — Execution Plan
+## MelaBridge Personal Workspace Overhaul — Implementation Plan
 
-This master prompt covers 24 workstreams. Shipping it in one turn would produce shallow work and regressions. I'll execute it in **8 sequenced phases**, each independently deployable and verifiable. Confirm the order (or reorder) and I'll start Phase 1.
-
-Some items overlap with work already shipped in prior phases (booking pipeline, notifications, invoices, email templates). Those become **audit-only** — no rebuild.
+This is a very large scope. I'll break it into phased slices so we can ship polished work without a giant single-shot rewrite that risks regressions. Each phase is independently mergeable and improves the app.
 
 ---
 
-## Already in place (audit only)
+### Phase 0 — Foundations (shared infrastructure)
 
-- 12-stage booking pipeline with contract+deposit rule (§17) — audit stage labels only
-- Notification center + realtime (§4-prior)
-- Invoices & payment schedule auto-generated on `booked` (§17 payment side)
-- Auth + transactional email scaffolding (§15 base)
-- Booking cannot reach `booked` without rule satisfied (§17, §24)
+1. **Sample-data mode** — the single mechanism every page will use.
+   - Add `profiles.sample_mode` boolean (default `true` on signup).
+   - Add `is_sample` boolean to: `events`, `guests`, `tasks`, `budget_items`, `vendor_bookings`, `conversations`, `messages`, `event_files`, `event_members`, `notifications`.
+   - Server fn `seedSampleWorkspace()` — idempotently creates 5 sample events (Wedding, Birthday, Corporate Conference, Baby Shower, Family Reunion) fully populated (guests, tasks, budget, vendors, bookings, timeline, messages, files, team).
+   - Server fn `clearSampleWorkspace()` — deletes all `is_sample = true` rows for the user, sets `sample_mode = false`.
+   - Server fn `reloadSampleWorkspace()` — clear + reseed.
+   - Auto-run seed on first login (via onboarding route). Auto-run clear when the user creates their first real event. Auto-run reseed when they delete their last real event (only if `sample_mode` was never explicitly disabled).
 
----
-
-## Phase 1 — Credibility & messaging cleanup (§1, §3, §4, §5, §10, §12, §20)
-
-Remove every unsupported claim across the marketing site.
-
-- Strip fake stats (12,400 events, 38 countries, SOC 2, fake logos/testimonials) from `index.tsx`, `about.tsx`, `features.tsx`, `how-it-works.tsx`, `ai-planning.tsx`, `vision.tsx`, `bridge-*` pages
-- Replace with **Early Access** messaging ("Now welcoming planners and vendors", "Join the first wave")
-- Replace "escrow" with "Secure payments powered by Stripe" everywhere
-- Remove funeral / celebration-of-life references from category lists
-- Homepage headline: "Your complete event workspace" / "Everything you need to plan your event"
-- Tone down AI claims (no "10,000 simulations", "predictive engine", "world-class")
-- Tag every unfinished feature with `Coming Soon` / `Beta` badges (escrow, digital contracts, QR check-in, silent auctions, floor plans, calendar sync where not shipped, vendor AI matching)
-- Unify positioning: "The intelligent platform for planning every event"
-
-## Phase 2 — Pricing restructure (§2)
-
-Rewrite `src/lib/billing-config.ts` and `pricing.tsx` / `subscription.tsx`:
-
-- **Free (Host)**: unlimited personal event planning, guests, budget, timeline, tasks, basic AI, marketplace access
-- **MelaAssist Plus**: premium AI, automation, smart reminders, calendar integrations, priority support
-- **Vendor**: Free Listing / Professional / Premium (featured, AI assistant, lead automation, analytics)
-- **Professional Planner**: business mgmt, client portals, team, reporting, branding, automation
-- Remove any paywall on core event planning for families
-- Keep existing Stripe price IDs where possible; add new ones via `payments--create_price` where needed
-
-## Phase 3 — Public vs authenticated separation + nav (§6, §7)
-
-- Extract public `<SiteHeader>` component with: Product, Marketplace, For Vendors, Pricing, About, Help, Log In, Get Started
-- Apply to every public route (`index`, `about`, `features`, `pricing`, `marketplace`, `vendors`, `how-it-works`, `help`, `faq`, `contact`, `bridge-*`, etc.)
-- Ensure `AppShell` (planner sidebar) never renders on public routes
-- Anonymous visit to `/` must show marketing chrome only
-
-## Phase 4 — Homepage, AI page, thin pages, FAQ (§10, §11, §13, §14, §21)
-
-- Homepage: prioritize hosts → planners → vendors → venues in that order
-- `ai-planning.tsx`: dedupe MelaAssist heading; sections = Planning Assistant, Smart Recommendations, Timeline Intelligence, Budget Intelligence, Risk Detection, Vendor Assistance, Decision Support
-- Expand `features.tsx`, `about.tsx`, `help.tsx`, `how-it-works.tsx`, `pricing.tsx`, `ai-planning.tsx` with intro + screenshots + use cases + benefits + FAQ + CTA
-- `faq.tsx`: keyboard-accessible accordion, real answers on every question
-
-## Phase 5 — Auth + multi-role profiles (§15, §16)
-
-- Registration form: confirm password, show/hide toggle, strength meter, terms/privacy checkboxes
-- Resend verification email flow
-- Google login error handling
-- Post-signup role picker: Planner / Professional Planner / Vendor / Venue / Guest (multi-select)
-- Multi-role profile switcher in account menu (single login, multiple profiles via `user_roles` table — already exists)
-- Add profile later from settings
-
-## Phase 6 — Marketplace + AI drafts + vendor workflow (§8, §18, §19)
-
-- Marketplace empty state: "We're onboarding our first verified vendors" + Become a Vendor / Request a Vendor / Notify Me CTAs
-- No infinite loading — proper empty/loading/error states
-- AI event creation → always creates `event_drafts` row; review screen with Approve / Edit / Discard (drafts table already exists)
-- Vendor workflow UI: Save, Compare, Request Quote, Request Availability, Invite External, Manual Add (planner side); Accept, Send Quote, Generate/Upload Contract, Signature, Request Deposit (vendor side)
-
-## Phase 7 — Dashboard data consistency + booking labels (§9, §17)
-
-- Audit demo/mock numbers — make them internally consistent (84 days, 96/142 guests → 34 pending + 12 declined, budget totals reconcile)
-- Rename booking stages per master prompt: Saved / Contacted / Availability Requested / Quote Received / Negotiating / Contract Sent / Contract Signed / Deposit Received / Booked / Completed / Cancelled
-- Confirm `fn_apply_confirmation_rule` still blocks `booked` without contract+deposit
-
-## Phase 8 — Launch polish + QA (§22, §24)
-
-Automated sweep via Playwright + code audit:
-
-- Every `<Link>` target exists, every button has an onClick or Coming Soon label
-- No placeholder text, no dead routes, no fabricated content
-- Empty states everywhere
-- Responsive check at 375/768/1280
-- Form validation + error messages
-- A11y: keyboard nav, focus states, labels, contrast
-- Console error scan, network 4xx/5xx scan
-- Signed-off QA report
+2. **UI primitives**
+   - `<SampleDataBadge />` — small pill shown on every sample-mode surface.
+   - `<PageEmptyState />` — illustrated empty state with primary/secondary CTA + AI suggestion slot.
+   - `<SkeletonCard />`, `<SkeletonList />` — consistent loaders.
+   - `<MelaAssistPanel />` — reusable contextual AI suggestions panel (takes an array of suggestions).
+   - `<FloatingAssistant />` — global floating button in `AppShell`.
 
 ---
 
-## Preserved (not touched — §23)
-
-- Existing branding, logo, color palette, typography
-- Capture A Perfect Memory package assets + pricing + CheckCherry embed
-- Working functionality (bookings, invoices, notifications, calendar, messaging)
+### Phase 1 — First-login & onboarding dashboard
+Rebuild `/onboarding` as the premium welcome dashboard:
+- Hero: "Welcome to MelaBridge — Your AI-powered event planning workspace is ready."
+- Three primary CTAs: **Create My First Event**, **Explore Sample Event**, **Take a 2-Minute Tour**.
+- MelaAssist greeting card with personalized guidance.
+- After seed runs, redirect returning users straight to `/events` (their sample workspace).
 
 ---
 
-## What I need from you
+### Phase 2 — Core planning pages (wire to sample data)
+Every page below reads real DB rows (sample or live). No hardcoded fixtures. Each gets: sample badge, skeleton loader, empty→sample fallback, MelaAssist suggestions, quick-action bar.
 
-1. **Approve phase order** or reorder (e.g. "auth before pricing").
-2. **Confirm pricing amounts** for MelaAssist Plus, Vendor Pro/Premium, Professional Planner — or say "you pick reasonable numbers and I'll adjust in Stripe later".
-3. **Confirm which features are truly shipped vs Coming Soon** so I tag correctly. My current read:
-   - Shipped: bookings, invoices, notifications, calendar module, messaging, tasks, budget, guests, marketplace search, Stripe subscriptions, AI planning (basic)
-   - Coming Soon: escrow (removing), digital contracts (e-sign), QR check-in, silent auctions, floor plans, vendor AI matching, calendar 2-way sync
-   - Confirm or correct.
+- **My Events** (`/events`) — premium event cards (banner, countdown, guests, budget, completion %, next task, quick actions: Open/Duplicate/Archive/Share).
+- **Guests** (`/guests`) — RSVP statuses, meals, seating, households, plus-ones, search.
+- **Timeline** (`/timeline`) — 12-month → event-day milestones.
+- **Budget** (`/budget`) — estimated vs actual, category breakdown, remaining, charts, alerts.
+- **Tasks** (`/tasks`) — priority, due dates, assignees, progress, AI recs.
+- **Bookings** (`/bookings`) — contracts, deposits, payment schedule, status.
+- **Messages** (`/messaging`) — planner/vendor/guest/team threads with attachments, reactions, read receipts (UI only for reactions/typing).
+- **Team** (`/team`) — sample members, roles, permissions, pending invites, role templates.
+- **Files** (`/files`) — sample folders (Contracts, Invoices, Mood Boards, Guest Docs, Vendor Files), drag-drop upload.
 
-On approval I'll start **Phase 1** immediately and ship it end-to-end (code + Playwright verification) before moving on. Each phase ends at a deployable checkpoint.
+---
+
+### Phase 3 — Vendors marketplace redesign
+- `/vendors` → premium marketplace cards (cover, logo, verified, rating, reviews, city, starting price, response time, availability, save, view, quote, message).
+- Filters: search, category, location, event date, budget, rating, distance, availability.
+- Category shortcuts row (15 categories listed in brief).
+- Sections: Featured, MelaAssist Recommendations, BridgeDNA™ compatibility.
+- Vendor profile page: Gallery, Packages, Reviews, FAQs, Policies, Portfolio, Videos, Availability calendar, Booking, Messaging.
+- Seed ~20 sample vendor profiles across categories (`vendor_profiles.is_sample`).
+
+---
+
+### Phase 4 — Calendar enhancements
+Keep existing shell; add:
+- Dashboard summary cards (Upcoming Events, Pending Tasks, Vendor Payments, Pending RSVPs, Notifications).
+- MelaAssist sidebar (deadlines, follow-ups, overdue invoices, guest reminders, conflicts).
+- Date-click opens **side drawer** instead of route change.
+- Placeholder "Connect Google/Apple/Outlook" cards (disabled, "coming soon").
+
+---
+
+### Phase 5 — Guided event creation
+Rebuild `/events/new`:
+- Step 1: Type picker (Wedding, Birthday, Corporate, Baby Shower, Graduation, Reunion, Fundraiser, Custom).
+- Step 2: AI auto-generates timeline, budget, tasks, vendor recs, guest checklist, calendar, documents, comms (uses Lovable AI gateway; server fn already exists in `event-bootstrap.functions.ts` — extend it).
+- On first real event created → clear sample data.
+
+---
+
+### Phase 6 — Global UX polish
+- Animated page transitions (fade-in on route mount).
+- Skeleton loaders everywhere.
+- Floating MelaAssist button in `AppShell`.
+- Sticky action bars on list pages.
+- Empty-state illustrations (generated).
+- Keyboard shortcuts palette (already partially exists — polish).
+- Consistent spacing/typography audit.
+- Dark mode pass.
+
+---
+
+## Technical Details
+
+- **DB migration** adds `is_sample`, `sample_mode`, plus `sample_metadata jsonb` on events (banner URL, description).
+- **Grants**: every new column is on existing tables — no new tables, no new grants required.
+- **Seed server fn** uses `requireSupabaseAuth` and writes as the user (RLS-safe). Idempotent via `WHERE is_sample = true AND owner_id = auth.uid()` checks.
+- **Auto-transitions**: trigger on `events` INSERT/DELETE checks if user has any non-sample events; if first non-sample → mark profile `sample_mode=false` and delete sample rows. If last event deleted and `sample_mode` was never explicitly disabled → reseed. Implemented as a DB trigger + server-fn fallback.
+- **AI** uses `openai/gpt-5.5` via Lovable AI Gateway for event bootstrap suggestions.
+- **Images**: generate ~10 shared banner/cover images (weddings, corporate, etc.) once, store in `src/assets/`.
+
+---
+
+## Suggested execution order
+
+I recommend we ship in this order, one phase per turn so you can review each:
+
+1. **Phase 0 + 1** (foundations + onboarding) — biggest structural change; unlocks everything else.
+2. **Phase 2** (planning pages) — highest visible impact.
+3. **Phase 3** (vendors marketplace).
+4. **Phase 4** (calendar) + **Phase 6** (polish pass).
+5. **Phase 5** (guided event creation with AI).
+
+**Question before I start:** should I proceed with Phase 0 + 1 now, or would you like to reorder / cut scope? (For example, if the vendor marketplace is highest priority for launch, we can front-load Phase 3.)
