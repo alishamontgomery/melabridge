@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import {
   ArrowLeft, Calendar, MapPin, Users, Wallet, Trash2, Plus, Check, Circle,
-  Loader2, Sparkles, ClipboardList, PartyPopper, Save, Pencil,
+  Loader2, Sparkles, ClipboardList, PartyPopper, Save, Pencil, Upload, Download,
 } from "lucide-react";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
