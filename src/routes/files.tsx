@@ -69,6 +69,7 @@ function FilesPage() {
         .from("event_files")
         .select("*")
         .eq("event_id", event.id!)
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as EventFile[];
@@ -124,12 +125,17 @@ function FilesPage() {
 
   const remove = useMutation({
     mutationFn: async (f: EventFile) => {
-      await supabase.storage.from(BUCKET).remove([f.storage_path]);
-      const del = await db.from("event_files").delete().eq("id", f.id);
+      // Soft-delete: keep the storage object until the row is purged, so restore
+      // is possible. Hard delete happens in a follow-up sweep alongside the
+      // events trash purge.
+      const del = await db
+        .from("event_files")
+        .update({ deleted_at: new Date().toISOString() } as never)
+        .eq("id", f.id);
       if (del.error) throw del.error;
     },
     onSuccess: () => {
-      toast.success("File deleted");
+      toast.success("Document moved to Trash");
       qc.invalidateQueries({ queryKey: ["event-files", event.id] });
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Delete failed"),

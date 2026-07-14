@@ -53,6 +53,7 @@ function GuestsPage() {
         .from("guests")
         .select("id, full_name, email, phone, household, rsvp_status, plus_ones, meal_choice, notes")
         .eq("event_id", event.id!)
+        .is("deleted_at", null)
         .order("full_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as Guest[];
