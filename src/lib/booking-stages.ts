@@ -9,7 +9,9 @@ export type BookingStage =
   | "contacted"
   | "consultation_scheduled"
   | "quote_sent"
+  | "quote_viewed"
   | "quote_under_review"
+  | "quote_accepted"
   | "contract_sent"
   | "contract_signed"
   | "deposit_paid"
@@ -18,7 +20,9 @@ export type BookingStage =
   | "completed"
   | "review_requested"
   | "reviewed"
-  | "cancelled";
+  | "cancelled"
+  | "no_response"
+  | "lost";
 
 export type ConfirmationRule =
   | "contract_only"
