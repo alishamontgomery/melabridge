@@ -230,7 +230,7 @@ function EventsListPage() {
           </>
         }
         confirmLabel="Delete forever"
-        onConfirm={() => confirmPurge && purge(confirmPurge)}
+        onConfirm={async () => { if (confirmPurge) await purge(confirmPurge); }}
       />
     </AppShell>
   );
