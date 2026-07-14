@@ -8,17 +8,21 @@ function seedingAllowed(): boolean {
 }
 
 const TEST_ACCOUNTS = [
-  { key: "admin",    email: "admin@test.melabridge.com",    password: "MelaTest!2026", display_name: "Test Admin",    account_type: "planner"  },
-  { key: "planner",  email: "planner@test.melabridge.com",  password: "MelaTest!2026", display_name: "Test Planner",  account_type: "planner"  },
-  { key: "vendor",   email: "vendor@test.melabridge.com",   password: "MelaTest!2026", display_name: "Test Vendor",   account_type: "vendor"   },
-  { key: "attendee", email: "attendee@test.melabridge.com", password: "MelaTest!2026", display_name: "Test Attendee", account_type: "attendee" },
-  { key: "guest",    email: "guest@test.melabridge.com",    password: "MelaTest!2026", display_name: "Test Guest",    account_type: "guest"    },
+  { key: "admin",   email: "admin@test.melabridge.com",   password: "MelaTest!2026", display_name: "Test Admin",   account_type: "personal" },
+  { key: "planner", email: "planner@test.melabridge.com", password: "MelaTest!2026", display_name: "Test Planner", account_type: "personal" },
+  { key: "vendor",  email: "vendor@test.melabridge.com",  password: "MelaTest!2026", display_name: "Test Vendor",  account_type: "vendor"   },
 ] as const;
 
 type AccountResult = { email: string; role: string; id: string; created: boolean };
 type SeedResult =
   | { ok: true; accounts: AccountResult[]; events: number; guests: number; notifications: number }
   | { ok: false; error: string };
+
+const ROLE_BY_KEY: Record<string, "personal" | "vendor" | "admin"> = {
+  admin: "admin",
+  planner: "personal",
+  vendor: "vendor",
+};
 
 export const seedTestData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -74,7 +78,7 @@ export const seedTestData = createServerFn({ method: "POST" })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabaseAdmin.from("user_roles") as any).upsert(
-        { user_id: outId, role: acct.key === "admin" ? "admin" : acct.key },
+        { user_id: outId, role: ROLE_BY_KEY[acct.key] },
         { onConflict: "user_id,role" },
       );
 
@@ -89,8 +93,6 @@ export const seedTestData = createServerFn({ method: "POST" })
     const { data: seedSummary, error: seedErr } = await adminRpc("seed_test_data", {
       planner_id: ids.planner,
       vendor_id: ids.vendor,
-      attendee_id: ids.attendee,
-      guest_id: ids.guest,
       admin_id: ids.admin,
     });
     if (seedErr) return { ok: false, error: `Seed: ${seedErr.message}` };
