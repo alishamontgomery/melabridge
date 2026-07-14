@@ -63,16 +63,6 @@ function EventDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
-  const countdown = useMemo(() => {
-    if (!event?.event_date) return null;
-    const diff = Math.ceil((new Date(event.event_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return diff;
-  }, [event?.event_date]);
-
-  const taskProgress = tasks.length
-    ? Math.round((tasks.filter((t) => t.status === "done").length / tasks.length) * 100)
-    : 0;
-
   const budgetTotals = useMemo(() => {
     const est = budget.reduce((s, b) => s + Number(b.estimated_amount), 0);
     const act = budget.reduce((s, b) => s + Number(b.actual_amount), 0);
@@ -80,20 +70,6 @@ function EventDetailPage() {
     return { est, act, paid };
   }, [budget]);
 
-  const rsvpCounts = useMemo(() => {
-    const counts = { yes: 0, no: 0, maybe: 0, pending: 0 };
-    guests.forEach((g) => { counts[g.rsvp_status]++; });
-    return counts;
-  }, [guests]);
-
-  const countdownLabel = useMemo(() => {
-    if (countdown === null) return "No date set";
-    if (countdown === 0) return "Today";
-    if (countdown === 1) return "Tomorrow";
-    if (countdown > 1) return `${countdown} days to go`;
-    if (countdown === -1) return "Yesterday";
-    return `${Math.abs(countdown)} days ago`;
-  }, [countdown]);
 
   async function handleDelete() {
     if (!event) return;
