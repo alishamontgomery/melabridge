@@ -41,6 +41,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications } from "@/hooks/use-notifications";
 
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
+import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
 import { LogOut } from "lucide-react";
@@ -334,7 +335,10 @@ export function AppShell({ active, children }: { active: string; children: React
             </div>
           </aside>
 
-          <main id="main-content" className="min-w-0 flex-1">{children}</main>
+          <main id="main-content" className="min-w-0 flex-1">
+            <SampleBanner />
+            {children}
+          </main>
         </div>
 
         <CommandPalette />
