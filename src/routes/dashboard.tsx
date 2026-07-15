@@ -107,9 +107,7 @@ function DashboardPage() {
 
       <div className="mt-8 space-y-6">
         {!user || loading || dashQ.isLoading ? (
-          <div className="grid min-h-[360px] place-items-center rounded-3xl border border-border bg-card">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+          <DashboardSkeleton />
         ) : !event || !derived ? (
           <EmptyDashboard firstName={firstName} />
         ) : (
@@ -128,7 +126,7 @@ function DashboardPage() {
               <div className="lg:col-span-2 space-y-6">
                 <TodaysFocus focus={derived.focus} onCompleted={() => qc.invalidateQueries({ queryKey: ["dashboard-companion", event.id] })} />
                 <TodaysBrief items={derived.brief} />
-                <AIConcierge />
+                <AIConcierge eventId={event.id} />
               </div>
               <div className="space-y-6">
                 <EventHealthScore health={derived.health} />
@@ -144,6 +142,21 @@ function DashboardPage() {
 }
 
 function EmptyDashboard({ firstName }: { firstName: string }) {
+  const seed = useServerFn(seedSampleWorkspace);
+  const [busy, setBusy] = useState(false);
+
+  async function trySample() {
+    setBusy(true);
+    try {
+      await seed({ data: undefined as unknown as never });
+      toast.success("Sample workspace ready — refreshing your dashboard.");
+      window.location.reload();
+    } catch {
+      toast.error("Could not load the sample workspace.");
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
       <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
@@ -153,9 +166,15 @@ function EmptyDashboard({ firstName }: { firstName: string }) {
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
         Create an event and MelaAssist will prepare a personalized brief, focus task, and health score every time you sign in.
       </p>
-      <Button asChild className="mt-5" variant="hero">
-        <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create an event</Link>
-      </Button>
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <Button asChild variant="hero">
+          <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create an event</Link>
+        </Button>
+        <Button variant="outline" onClick={trySample} disabled={busy}>
+          <Wand2 className="mr-2 h-4 w-4" />
+          {busy ? "Loading sample…" : "Try with sample data"}
+        </Button>
+      </div>
     </div>
   );
 }
