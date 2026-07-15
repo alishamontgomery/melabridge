@@ -425,7 +425,7 @@ function PurchaseCard({ type, eventName, eventId }: { type: TicketType; eventNam
       )}
 
 
-      {open && !clientSecret && (
+      {open && !soldOut && !clientSecret && (
         <div className="mt-5 grid gap-3 border-t border-border pt-5">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Buying tickets to {eventName}
