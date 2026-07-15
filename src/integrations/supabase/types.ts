@@ -1737,9 +1737,15 @@ export type Database = {
           buyer_name: string | null
           created_at: string
           currency: string
+          email_sent_at: string | null
           event_id: string
+          failure_reason: string | null
+          finalized_at: string | null
           id: string
           quantity: number
+          refund_amount_cents: number
+          refund_reason: string | null
+          refunded_at: string | null
           status: string
           stripe_payment_intent: string | null
           stripe_session_id: string | null
@@ -1752,9 +1758,15 @@ export type Database = {
           buyer_name?: string | null
           created_at?: string
           currency?: string
+          email_sent_at?: string | null
           event_id: string
+          failure_reason?: string | null
+          finalized_at?: string | null
           id?: string
           quantity: number
+          refund_amount_cents?: number
+          refund_reason?: string | null
+          refunded_at?: string | null
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
@@ -1767,9 +1779,15 @@ export type Database = {
           buyer_name?: string | null
           created_at?: string
           currency?: string
+          email_sent_at?: string | null
           event_id?: string
+          failure_reason?: string | null
+          finalized_at?: string | null
           id?: string
           quantity?: number
+          refund_amount_cents?: number
+          refund_reason?: string | null
+          refunded_at?: string | null
           status?: string
           stripe_payment_intent?: string | null
           stripe_session_id?: string | null
