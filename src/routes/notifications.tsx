@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { useNotifications, type NotificationRow } from "@/hooks/use-notifications";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { ModuleLoading, RouteError } from "@/components/module-states";
+
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
@@ -19,6 +21,8 @@ export const Route = createFileRoute("/notifications")({
     ],
   }),
   component: NotificationsPage,
+  errorComponent: RouteError,
+
 });
 
 const iconFor = (category: string) => {
@@ -127,7 +131,8 @@ function NotificationsPage() {
         </div>
 
         {isLoading ? (
-          <Card className="p-10 text-center text-sm text-muted-foreground">Loading…</Card>
+          <ModuleLoading rows={4} showStats={false} />
+
         ) : filtered.length === 0 ? (
           <Card className="border-border/60 p-10 text-center shadow-soft">
             <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">

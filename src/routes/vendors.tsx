@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Store, Loader2 } from "lucide-react";
+import { Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
 
 export const Route = createFileRoute("/vendors")({
   head: () => ({
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/vendors")({
     ],
   }),
   component: VendorsPage,
+  errorComponent: RouteError,
 });
 
 type VendorRow = {
@@ -26,25 +28,22 @@ type VendorRow = {
 };
 
 function VendorsPage() {
-  const [loading, setLoading] = useState(true);
-  const [vendors, setVendors] = useState<VendorRow[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase
+  const vq = useQuery({
+    queryKey: ["vendors-directory"],
+    queryFn: async (): Promise<VendorRow[]> => {
+      const { data, error } = await supabase
         .from("vendor_profiles_public")
         .select("id,business_name,business_category,city,starting_price")
         .order("created_at", { ascending: false })
         .limit(50);
-      if (cancelled) return;
-      setVendors((data ?? []).filter((v): v is VendorRow => !!v.id && !!v.business_name && !!v.business_category));
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      if (error) throw error;
+      return (data ?? []).filter(
+        (v): v is VendorRow => !!v.id && !!v.business_name && !!v.business_category,
+      );
+    },
+  });
+
+  const vendors = vq.data ?? [];
 
   return (
     <AppShell active="/vendors">
@@ -56,10 +55,10 @@ function VendorsPage() {
           description="Discover vendors on MelaBridge. Contract management and BridgeDNA™ matching launching soon."
         />
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading vendors…
-          </div>
+        {vq.isLoading ? (
+          <ModuleLoading rows={3} showStats={false} />
+        ) : vq.isError ? (
+          <ModuleError error={vq.error} onRetry={() => vq.refetch()} />
         ) : vendors.length === 0 ? (
           <Card className="p-8 text-center">
             <Store className="mx-auto mb-3 h-10 w-10 text-primary" />

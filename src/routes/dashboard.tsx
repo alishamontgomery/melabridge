@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/module-states";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/dashboard")({
     ],
   }),
   component: DashboardPage,
+  errorComponent: RouteError,
 });
 
 function firstNameFromUser(user: { email?: string | null; user_metadata?: Record<string, unknown> } | null): string {

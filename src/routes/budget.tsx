@@ -18,6 +18,8 @@ import {
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Wallet, Plus, Loader2 } from "lucide-react";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/budget")({
@@ -29,6 +31,7 @@ export const Route = createFileRoute("/budget")({
     ],
   }),
   component: BudgetPage,
+  errorComponent: RouteError,
 });
 
 type BudgetItem = {
@@ -101,10 +104,11 @@ function BudgetPage() {
       />
 
       {eventLoading || (hasEvent && q.isLoading) ? (
-        <div className="mt-8 grid min-h-[240px] place-items-center rounded-3xl border border-border bg-card">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <ModuleLoading rows={4} />
+      ) : hasEvent && q.isError ? (
+        <ModuleError error={q.error} onRetry={() => q.refetch()} />
       ) : !hasEvent ? (
+
         <EmptyBudget message="Create an event to start tracking your budget." />
       ) : items.length === 0 ? (
         <EmptyBudget

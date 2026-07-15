@@ -8,6 +8,8 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
+
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
@@ -18,7 +20,9 @@ export const Route = createFileRoute("/reports")({
     ],
   }),
   component: ReportsPage,
+  errorComponent: RouteError,
 });
+
 
 function ReportsPage() {
   const { user } = useRequireAuth();
@@ -77,6 +81,12 @@ function ReportsPage() {
           </Button>
         }
       />
+      {eventsQ.isLoading ? (
+        <ModuleLoading rows={2} />
+      ) : eventsQ.isError ? (
+        <ModuleError error={eventsQ.error} onRetry={() => eventsQ.refetch()} />
+      ) : (
+      <>
       <section className="mt-8 grid gap-4 sm:grid-cols-4">
         <StatCard k="Events tracked" v={String(tracked)} />
         <StatCard k="With scheduled dates" v={String(withDates)} />
@@ -84,6 +94,7 @@ function ReportsPage() {
         <StatCard k="Data freshness" v="Live" hint="Real-time sync" />
       </section>
       <section className="mt-8">
+
         <Card className="border-border/60 p-6 shadow-soft">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -96,7 +107,10 @@ function ReportsPage() {
           </p>
         </Card>
       </section>
+      </>
+      )}
     </AppShell>
+
   );
 }
 

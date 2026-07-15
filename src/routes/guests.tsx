@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, UserPlus, Search, Loader2 } from "lucide-react";
+import { Users, UserPlus, Search } from "lucide-react";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
+
+
 
 export const Route = createFileRoute("/guests")({
   head: () => ({
@@ -18,6 +21,7 @@ export const Route = createFileRoute("/guests")({
     ],
   }),
   component: GuestsPage,
+  errorComponent: RouteError,
 });
 
 type Guest = {
@@ -118,10 +122,11 @@ function GuestsPage() {
       />
 
       {eventLoading || (hasEvent && gq.isLoading) ? (
-        <div className="mt-8 grid min-h-[240px] place-items-center rounded-3xl border border-border bg-card">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <ModuleLoading rows={5} />
+      ) : hasEvent && gq.isError ? (
+        <ModuleError error={gq.error} onRetry={() => gq.refetch()} />
       ) : !hasEvent ? (
+
         <EmptyState message="Create an event to invite guests, track RSVPs, and manage meal choices." to="/events/new" cta="Create an event" />
       ) : guests.length === 0 ? (
         <EmptyState

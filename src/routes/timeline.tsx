@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/module-states";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/timeline")({
     ],
   }),
   component: TimelinePage,
+  errorComponent: RouteError,
 });
 
 function TimelinePage() {
