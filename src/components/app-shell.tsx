@@ -279,6 +279,8 @@ export function AppShell({ active, children }: { active: string; children: React
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const groups = NAV_BY_ROLE[role];
+  useIdleSignout(!!user);
+
 
   useEffect(() => {
     if (loading || user) return;
