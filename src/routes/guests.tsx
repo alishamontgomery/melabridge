@@ -121,10 +121,11 @@ function GuestsPage() {
       />
 
       {eventLoading || (hasEvent && gq.isLoading) ? (
-        <div className="mt-8 grid min-h-[240px] place-items-center rounded-3xl border border-border bg-card">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <ModuleLoading rows={5} />
+      ) : hasEvent && gq.isError ? (
+        <ModuleError error={gq.error} onRetry={() => gq.refetch()} />
       ) : !hasEvent ? (
+
         <EmptyState message="Create an event to invite guests, track RSVPs, and manage meal choices." to="/events/new" cta="Create an event" />
       ) : guests.length === 0 ? (
         <EmptyState
