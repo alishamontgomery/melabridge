@@ -97,6 +97,8 @@ const Input = z.object({
 function templateToPlan(
   template: EventTemplate,
   totalBudget: number,
+  shopping: ShoppingTemplate[],
+  invitationGuidance: string,
 ): BootstrapPlan {
   const budget_items = template.budget.map((b) => ({
     category: b.category,
@@ -128,8 +130,16 @@ function templateToPlan(
       priority: v.priority,
       notes: v.notes ?? null,
     })),
+    shopping_list: shopping.map((s) => ({
+      category: s.category,
+      item: s.item,
+      quantity: s.quantity ?? null,
+      notes: s.notes ?? null,
+    })),
+    invitation_guidance: invitationGuidance,
   };
 }
+
 
 /** Compose ISO date from event_date + days_before offset. */
 function computeDueDate(eventDate: string | null, daysBefore: number | null | undefined): string | null {
