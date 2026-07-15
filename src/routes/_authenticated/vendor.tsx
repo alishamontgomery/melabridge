@@ -211,7 +211,7 @@ function VendorDashboardPage() {
           <ListCard title="Upcoming bookings" empty="No upcoming bookings yet." to="/events" items={upcomingBookings.slice(0, 5).map((e) => ({
             id: e.id, primary: e.name, secondary: `${e.event_date ?? "TBD"}${e.client_name ? ` · ${e.client_name}` : ""}`, href: `/events/${e.id}`,
           }))} loading={loading} />
-          <ListCard title="New leads" empty="No leads waiting." to="/messaging" items={newLeads.slice(0, 5).map((e) => ({
+          <ListCard title="New leads" empty="No leads waiting." to="/vendor-portal" items={newLeads.slice(0, 5).map((e) => ({
             id: e.id, primary: e.client_name ?? e.name, secondary: e.name, href: `/events/${e.id}`,
           }))} loading={loading} />
           <ListCard title="Awaiting payments" empty="All paid up." to="/bridgepay" items={awaitingPayments.slice(0, 5).map((e) => {
