@@ -810,7 +810,6 @@ function InvitationsTab({ event, onSaved }: { event: Event; onSaved: () => Promi
   );
 }
 
-// Local imports used by InvitationsTab that live at file top:
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type _InvitationsTabDeps = { useServerFn: typeof useServerFn; bootstrapEventPlan: typeof bootstrapEventPlan };
+
+
 
