@@ -35,11 +35,11 @@ function CollabPage() {
             cta="Open Team"
           />
           <ActionCard
-            icon={MessageSquare}
-            title="Message your team"
-            description="Threaded conversations with planners, vendors, and guests."
-            to="/messaging"
-            cta="Open Messages"
+            icon={Handshake}
+            title="Share files"
+            description="Contracts, moodboards, and vendor deliverables in one place."
+            to="/files"
+            cta="Open Files"
           />
         </div>
 
