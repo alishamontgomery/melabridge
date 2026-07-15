@@ -164,7 +164,7 @@ function GuestsPage() {
               <thead className="bg-muted/50 text-xs uppercase tracking-widest text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2 text-left">Guest</th>
-                  <th className="px-4 py-2 text-left">Household</th>
+                  <th className="px-4 py-2 text-left">Phone</th>
                   <th className="px-4 py-2 text-left">+1s</th>
                   <th className="px-4 py-2 text-left">RSVP</th>
                   <th className="px-4 py-2 text-left">Meal</th>
@@ -179,7 +179,7 @@ function GuestsPage() {
                         <p className="font-medium">{g.full_name}</p>
                         {g.email && <p className="text-xs text-muted-foreground">{g.email}</p>}
                       </td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{g.household ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{g.phone ?? "—"}</td>
                       <td className="px-4 py-2.5">{g.plus_ones ?? 0}</td>
                       <td className="px-4 py-2.5">
                         <Badge
