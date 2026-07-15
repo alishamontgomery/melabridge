@@ -265,9 +265,12 @@ function AuthPage() {
       const signedInUser = await waitForAuthenticatedUser();
       await ensureProfile(signedInUser);
       toast.success("Welcome back");
-      navigate({ to: await landingRouteForUser(signedInUser.id) });
+      const landing = await landingRouteForUser(signedInUser.id);
+      const next = safeNextPath();
+      navigate({ to: (next === "/events" ? landing : next) as "/events" });
     });
   }
+
 
   async function handleSignIn(e: FormEvent) {
     e.preventDefault();
