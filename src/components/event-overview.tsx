@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   Activity, ArrowRight, Calendar, CheckCircle2, ClipboardList, Clock,
   DollarSign, Heart, Map, MapPin, MessageSquare, PartyPopper, Plus,
-  Send, Sparkles, Store, Timer, TrendingUp, Users, Wallet, Zap,
+  Sparkles, Store, Timer, TrendingUp, Users, Wallet, Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
