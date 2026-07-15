@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Activity, ArrowRight, Calendar, CheckCircle2, ClipboardList, Clock,
-  DollarSign, Heart, Map, MapPin, MessageSquare, PartyPopper, Plus,
+  DollarSign, Heart, Map, MapPin, PartyPopper, Plus,
   Sparkles, Store, Timer, TrendingUp, Users, Wallet, Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
