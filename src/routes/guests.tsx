@@ -76,7 +76,7 @@ function GuestsPage() {
       const matchQ =
         q === "" ||
         g.full_name.toLowerCase().includes(q.toLowerCase()) ||
-        (g.household ?? "").toLowerCase().includes(q.toLowerCase());
+        (g.email ?? "").toLowerCase().includes(q.toLowerCase());
       return matchFilter && matchQ;
     });
   }, [guests, q, filter]);
