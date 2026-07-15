@@ -236,36 +236,21 @@ export const refundTicketOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const newRefunded = alreadyRefunded + requested;
-    const isFull = newRefunded >= (order.amount_cents ?? 0);
-
-    await supabaseAdmin
-      .from("ticket_orders")
-      .update({
-        refund_amount_cents: newRefunded,
-        refund_reason: data.reason ?? null,
-        refunded_at: new Date().toISOString(),
-        status: isFull ? "refunded" : "partially_refunded",
-      })
-      .eq("id", order.id);
-
-    // On full refund release inventory + invalidate attendees (not checked in).
-    if (isFull) {
-      const { data: t } = await supabaseAdmin
-        .from("ticket_types").select("sold_count").eq("id", order.ticket_type_id).single();
-      await supabaseAdmin
-        .from("ticket_types")
-        .update({ sold_count: Math.max(0, (t?.sold_count ?? 0) - order.quantity) })
-        .eq("id", order.ticket_type_id);
-      await supabaseAdmin
-        .from("ticket_attendees")
-        .delete()
-        .eq("order_id", order.id)
-        .is("checked_in_at", null);
-    }
-
-    return { ok: true, refunded_cents: newRefunded, status: isFull ? "refunded" : "partially_refunded" };
+    // Atomic: lock order + type, apply refund state, release inventory on full refund.
+    const { data: applied, error: rpcErr } = await supabaseAdmin.rpc("apply_ticket_refund", {
+      _order_id: order.id,
+      _refund_delta_cents: requested,
+      _reason: data.reason ?? null,
+    });
+    if (rpcErr) throw new Error(rpcErr.message);
+    const row = Array.isArray(applied) ? applied[0] : applied;
+    return {
+      ok: true,
+      refunded_cents: row?.refund_amount_cents ?? (alreadyRefunded + requested),
+      status: row?.status ?? (alreadyRefunded + requested >= (order.amount_cents ?? 0) ? "refunded" : "partially_refunded"),
+    };
   });
+
 
 // ---------- Owner/attendee: build PDF for order (returns base64 bytes) ----------
 export const getOrderTicketsPdf = createServerFn({ method: "POST" })
