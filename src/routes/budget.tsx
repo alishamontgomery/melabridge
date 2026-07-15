@@ -226,6 +226,10 @@ function AddLineItemDialog({
     setBusy(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const extra: string[] = [];
+      if (deposit) extra.push(`Deposit: $${Number(deposit).toLocaleString()}`);
+      if (dueDate) extra.push(`Due: ${dueDate}`);
+      const combinedNotes = [notes.trim(), extra.join(" · ")].filter(Boolean).join("\n");
       const { error } = await supabase.from("budget_items").insert({
         event_id: eventId,
         category: category.trim() || "Uncategorized",
@@ -234,9 +238,7 @@ function AddLineItemDialog({
         estimated_amount: estimated ? Number(estimated) : 0,
         actual_amount: paid ? Number(paid) : 0,
         paid_amount: paid ? Number(paid) : 0,
-        deposit_amount: deposit ? Number(deposit) : null,
-        due_date: dueDate || null,
-        notes: notes.trim() || null,
+        notes: combinedNotes || null,
         created_by: user?.id ?? null,
       });
       if (error) throw error;
