@@ -72,6 +72,18 @@ const BootstrapSchema = z.object({
     )
     .max(30)
     .default([]),
+  shopping_list: z
+    .array(
+      z.object({
+        category: z.string().min(1).max(60).default("General"),
+        item: z.string().min(1).max(160),
+        quantity: z.string().max(80).optional().nullable(),
+        notes: z.string().max(300).optional().nullable(),
+      }),
+    )
+    .max(60)
+    .default([]),
+  invitation_guidance: z.string().max(800).optional().default(""),
 });
 
 type BootstrapPlan = z.infer<typeof BootstrapSchema>;
