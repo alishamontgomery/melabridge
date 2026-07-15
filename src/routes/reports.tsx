@@ -45,7 +45,7 @@ function ReportsPage() {
       toast.info("Nothing to export yet");
       return;
     }
-    const header = ["Name", "Date", "Guest target", "Budget target", "Status"];
+    const header = ["Name", "Date", "Expected guests", "Budget target", "Status"];
     const rows = events.map((e) => [
       e.name ?? "",
       e.event_date ?? "",
