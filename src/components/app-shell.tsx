@@ -73,11 +73,10 @@ const PLANNER_NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Communication",
+    label: "Team",
     items: [
-      { to: "/messaging", label: "Messages", icon: MessageSquare },
-      { to: "/notifications", label: "Scheduled Reminders", icon: BellRing },
       { to: "/team", label: "Team", icon: Users },
+      { to: "/notifications", label: "Notifications", icon: BellRing },
     ],
   },
   {
