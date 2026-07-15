@@ -908,6 +908,59 @@ export type Database = {
           },
         ]
       }
+      event_shopping_items: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          event_id: string
+          id: string
+          is_test_seed: boolean
+          item: string
+          notes: string | null
+          purchased: boolean
+          quantity: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          id?: string
+          is_test_seed?: boolean
+          item: string
+          notes?: string | null
+          purchased?: boolean
+          quantity?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          id?: string
+          is_test_seed?: boolean
+          item?: string
+          notes?: string | null
+          purchased?: boolean
+          quantity?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_shopping_items_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_vendor_needs: {
         Row: {
           booked_vendor_id: string | null
@@ -984,6 +1037,7 @@ export type Database = {
           event_type: string | null
           guest_target: number | null
           id: string
+          invitation_guidance: string | null
           is_sample: boolean
           is_test_seed: boolean
           lead_source: string | null
@@ -1028,6 +1082,7 @@ export type Database = {
           event_type?: string | null
           guest_target?: number | null
           id?: string
+          invitation_guidance?: string | null
           is_sample?: boolean
           is_test_seed?: boolean
           lead_source?: string | null
@@ -1072,6 +1127,7 @@ export type Database = {
           event_type?: string | null
           guest_target?: number | null
           id?: string
+          invitation_guidance?: string | null
           is_sample?: boolean
           is_test_seed?: boolean
           lead_source?: string | null
