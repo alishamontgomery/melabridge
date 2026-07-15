@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, UserPlus, Search, Loader2 } from "lucide-react";
+import { Users, UserPlus, Search } from "lucide-react";
+import { ModuleError, ModuleLoading } from "@/components/module-states";
+
+
 
 export const Route = createFileRoute("/guests")({
   head: () => ({
