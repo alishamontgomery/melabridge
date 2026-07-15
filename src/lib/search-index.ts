@@ -9,7 +9,7 @@ import {
   BarChart3,
   Ticket,
   HeartHandshake,
-  MessageSquare,
+  
   FolderOpen,
   FileBarChart,
   Settings,
