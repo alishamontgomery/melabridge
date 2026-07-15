@@ -20,7 +20,9 @@ export const Route = createFileRoute("/reports")({
     ],
   }),
   component: ReportsPage,
+  errorComponent: RouteError,
 });
+
 
 function ReportsPage() {
   const { user } = useRequireAuth();
