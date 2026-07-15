@@ -1,11 +1,11 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Calendar, Users, Store, ClipboardList, FolderOpen, MessageSquare, Wallet,
+  Calendar, Users, Store, ClipboardList, FolderOpen, Wallet,
   type LucideIcon,
 } from "lucide-react";
 
 export type LiveKind =
-  | "event" | "guest" | "vendor" | "task" | "file" | "message" | "budget";
+  | "event" | "guest" | "vendor" | "task" | "file" | "budget";
 
 export type LiveHit = {
   id: string;
@@ -18,7 +18,7 @@ export type LiveHit = {
 
 const ICONS: Record<LiveKind, LucideIcon> = {
   event: Calendar, guest: Users, vendor: Store, task: ClipboardList,
-  file: FolderOpen, message: MessageSquare, budget: Wallet,
+  file: FolderOpen, budget: Wallet,
 };
 
 const like = (q: string) => `%${q.replace(/[%_]/g, (m) => "\\" + m)}%`;
@@ -29,14 +29,14 @@ export async function liveSearch(query: string, perKind = 5): Promise<LiveHit[]>
   if (q.length < 2) return [];
   const p = like(q);
 
-  const [events, guests, vendors, tasks, files, messages, budget] = await Promise.all([
+  const [events, guests, vendors, tasks, files, budget] = await Promise.all([
     supabase.from("events")
       .select("id,name,event_type,location,event_date")
       .or(`name.ilike.${p},event_type.ilike.${p},location.ilike.${p}`)
       .limit(perKind),
     supabase.from("guests")
       .select("id,full_name,email,rsvp_status,event_id")
-      .or(`full_name.ilike.${p},email.ilike.${p},household.ilike.${p}`)
+      .or(`full_name.ilike.${p},email.ilike.${p}`)
       .limit(perKind),
     supabase.from("vendor_profiles_public")
       .select("id,business_name,business_category,city")
@@ -49,10 +49,6 @@ export async function liveSearch(query: string, perKind = 5): Promise<LiveHit[]>
     supabase.from("event_files")
       .select("id,filename,category,event_id")
       .or(`filename.ilike.${p},category.ilike.${p}`)
-      .limit(perKind),
-    supabase.from("messages")
-      .select("id,body,conversation_id")
-      .ilike("body", p)
       .limit(perKind),
     supabase.from("budget_items")
       .select("id,label,category,vendor_name,event_id")
@@ -86,11 +82,6 @@ export async function liveSearch(query: string, perKind = 5): Promise<LiveHit[]>
     id: `file-${f.id}`, kind: "file", title: f.filename,
     subtitle: f.category ?? undefined, to: "/files", icon: ICONS.file,
   }));
-  (messages.data ?? []).forEach((m: any) => out.push({
-    id: `message-${m.id}`, kind: "message",
-    title: (m.body ?? "").slice(0, 80) || "(message)",
-    subtitle: "Conversation", to: "/messaging", icon: ICONS.message,
-  }));
   (budget.data ?? []).forEach((b: any) => out.push({
     id: `budget-${b.id}`, kind: "budget", title: b.label,
     subtitle: [b.category, b.vendor_name].filter(Boolean).join(" · "),
@@ -100,8 +91,8 @@ export async function liveSearch(query: string, perKind = 5): Promise<LiveHit[]>
   return out;
 }
 
-export const KIND_ORDER: LiveKind[] = ["event", "guest", "vendor", "task", "file", "message", "budget"];
+export const KIND_ORDER: LiveKind[] = ["event", "guest", "vendor", "task", "file", "budget"];
 export const KIND_LABEL: Record<LiveKind, string> = {
   event: "Events", guest: "Guests", vendor: "Vendors", task: "Tasks",
-  file: "Files", message: "Messages", budget: "Budget",
+  file: "Files", budget: "Budget",
 };
