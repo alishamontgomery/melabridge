@@ -349,13 +349,41 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
       vendorNeedsInserted = count ?? rows.length;
     }
 
+    // SHOPPING LIST
+    let shoppingInserted = 0;
+    const { count: shoppingCount } = await supabase
+      .from("event_shopping_items")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", event.id);
+    if ((data.only_if_empty ? (shoppingCount ?? 0) === 0 : true) && plan.shopping_list.length > 0) {
+      const rows = plan.shopping_list.map((s, idx) => ({
+        event_id: event.id,
+        category: s.category || "General",
+        item: s.item,
+        quantity: s.quantity ?? null,
+        notes: s.notes ?? null,
+        sort_order: idx,
+        created_by: userId,
+      }));
+      const { error, count } = await supabase.from("event_shopping_items").insert(rows, { count: "exact" });
+      if (error) throw new Error(`Shopping insert: ${error.message}`);
+      shoppingInserted = count ?? rows.length;
+    }
+
+    // INVITATION GUIDANCE (only write when empty, unless caller opted out of only_if_empty)
+    if (plan.invitation_guidance && (!data.only_if_empty || !(event as { invitation_guidance?: string | null }).invitation_guidance)) {
+      await supabase.from("events").update({ invitation_guidance: plan.invitation_guidance }).eq("id", event.id);
+    }
+
     return {
       ok: true,
-      skipped: tasksInserted + budgetInserted + runsheetInserted + vendorNeedsInserted === 0,
+      skipped:
+        tasksInserted + budgetInserted + runsheetInserted + vendorNeedsInserted + shoppingInserted === 0,
       tasksInserted,
       budgetInserted,
       runsheetInserted,
       vendorNeedsInserted,
+      shoppingInserted,
       summary: plan.summary ?? "",
       usedFallback,
     };
