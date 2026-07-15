@@ -111,7 +111,7 @@ export function CommandPalette() {
     { id: "a-upload", title: "Upload files to BridgeVault™", icon: Upload, run: () => go("/bridgevault") },
     { id: "a-invite", title: "Invite collaborators", icon: UserPlus, run: () => go("/collaboration") },
     { id: "a-guest", title: "Add a guest", icon: UserPlus, run: () => go("/guests") },
-    { id: "a-draft", title: "Draft with AI", hint: "Message, invite, or plan", icon: Wand2, run: () => go("/messaging") },
+    { id: "a-task", title: "Add a task", hint: "Plan next steps", icon: Wand2, run: () => go("/tasks") },
     { id: "a-schedule", title: "Schedule an event date", icon: Calendar, run: () => go("/timeline") },
   ], []);
 
