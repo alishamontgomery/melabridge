@@ -5,14 +5,8 @@ import { toast } from "sonner";
 const IDLE_KEY = "melabridge.auth.lastActivity";
 const IDLE_MS = 30 * 60 * 1000; // 30 min
 const CHECK_MS = 30 * 1000;
-const EVENTS: (keyof WindowEventMap)[] = [
-  "mousemove",
-  "mousedown",
-  "keydown",
-  "touchstart",
-  "scroll",
-  "visibilitychange",
-];
+const EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll"] as const;
+
 
 /**
  * Signs the user out after IDLE_MS of no interaction. Timestamp is stored in
