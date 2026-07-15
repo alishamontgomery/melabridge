@@ -238,9 +238,10 @@ function FilesPage() {
       <div className="mt-8">
         <h2 className="mb-3 font-display text-lg font-semibold">All files</h2>
         {eventLoading || filesQ.isLoading ? (
-          <div className="grid min-h-[160px] place-items-center rounded-2xl border border-border bg-card">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-          </div>
+          <ModuleLoading rows={3} showStats={false} />
+        ) : hasEvent && filesQ.isError ? (
+          <ModuleError error={filesQ.error} onRetry={() => filesQ.refetch()} />
+
         ) : !hasEvent ? (
           <Card className="border-2 border-dashed border-border bg-background p-10 text-center">
             <Vault className="mx-auto h-8 w-8 text-muted-foreground" />
