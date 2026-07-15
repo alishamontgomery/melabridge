@@ -26,17 +26,54 @@ function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [touched, setTouched] = useState(false);
+  const [sessionState, setSessionState] = useState<"checking" | "ready" | "missing">("checking");
 
   const strength = useMemo(() => getPasswordStrength(pw), [pw]);
   const passwordError = pw.length === 0 ? "New password is required" : z.string().min(8).max(128).safeParse(pw).success ? null : "Use at least 8 characters";
   const matchError = confirmPw.length === 0 ? "Confirm your new password" : pw === confirmPw ? null : "Passwords must match";
-  const formValid = !passwordError && !matchError;
+  const formValid = !passwordError && !matchError && sessionState === "ready";
 
   useEffect(() => {
     const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const search = new URLSearchParams(window.location.search);
     const errorDescription = hash.get("error_description") || search.get("error_description");
-    if (errorDescription) setError("This password reset link is invalid or expired. Please request a new reset email.");
+    if (errorDescription) {
+      setError("This password reset link is invalid or expired. Please request a new reset email.");
+      setSessionState("missing");
+      return;
+    }
+
+    // Supabase fires PASSWORD_RECOVERY when the recovery token in the URL is exchanged for a session.
+    // We must have that session before calling updateUser — otherwise the update would either fail
+    // or, worse, mutate the currently signed-in user's password on a shared device.
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" && session) setSessionState("ready");
+    });
+
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session) {
+        setSessionState("ready");
+      } else {
+        // Give Supabase a moment to exchange the URL token for a session on first load.
+        window.setTimeout(async () => {
+          if (cancelled) return;
+          const { data: retry } = await supabase.auth.getSession();
+          if (retry.session) setSessionState("ready");
+          else {
+            setSessionState("missing");
+            setError("This password reset link is invalid or expired. Please request a new reset email.");
+          }
+        }, 1500);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   async function handle(e: React.FormEvent) {
@@ -57,7 +94,9 @@ function ResetPasswordPage() {
       if (error) throw error;
       window.clearTimeout(timeout);
       toast.success("Password updated");
-      navigate({ to: "/events" });
+      // Sign the recovery session out so the user must sign in fresh with the new password.
+      await supabase.auth.signOut();
+      navigate({ to: "/auth" });
     } catch (err) {
       window.clearTimeout(timeout);
       const message = err instanceof Error ? err.message : "Could not update password";
