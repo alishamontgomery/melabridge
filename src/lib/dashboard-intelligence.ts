@@ -278,11 +278,11 @@ export function pickTodaysFocus(input: {
     };
   }
   return {
-    title: "Send a warm update to your guests",
-    reason: "A short note keeps everyone excited and RSVPs flowing.",
+    title: "Review your open tasks",
+    reason: "A quick pass keeps momentum and nothing slips through.",
     estimatedMinutes: 5,
-    cta: "Open messages",
-    route: "/messaging",
+    cta: "Open tasks",
+    route: "/tasks",
   };
 }
 
