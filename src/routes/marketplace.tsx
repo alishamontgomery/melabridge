@@ -136,6 +136,7 @@ function MarketplacePage() {
 function VendorCard({ v }: { v: VendorRow }) {
   const location = [v.city, v.state].filter(Boolean).join(", ");
   const navigate = useNavigate();
+  const { user } = useAuth();
   const saveFn = useServerFn(createBooking);
   const save = useMutation({
     mutationFn: () => saveFn({ data: { vendorId: v.id, title: v.business_name, category: v.business_category } }),
@@ -146,6 +147,7 @@ function VendorCard({ v }: { v: VendorRow }) {
     onError: (e: any) => toast.error(e.message ?? "Failed to save"),
   });
   return (
+
     <Card className="overflow-hidden border-border/60 shadow-soft transition hover:shadow-elegant">
       <div
         className="h-24 bg-gradient-to-br from-primary/20 via-gold/20 to-transparent bg-cover bg-center"
