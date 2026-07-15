@@ -60,7 +60,6 @@ function VendorDashboardPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [notifs, setNotifs] = useState<NotifRow[]>([]);
-  const [messages, setMessages] = useState<MsgConvo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
