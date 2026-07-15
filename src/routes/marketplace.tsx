@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
+import { useAuth } from "@/lib/auth";
 import { Store, Search, Star, MapPin, BadgeCheck, Sparkles, Filter, Bookmark } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -35,7 +38,9 @@ type VendorRow = {
 };
 
 function MarketplacePage() {
+  const { user, loading } = useAuth();
   const [query, setQuery] = useState("");
+
 
   const vendorsQ = useQuery({
     queryKey: ["marketplace-vendors"],
@@ -62,8 +67,12 @@ function MarketplacePage() {
     );
   }, [vendors, query]);
 
+  const Shell = ({ children }: { children: React.ReactNode }) =>
+    !loading && !user ? <PublicShell>{children}</PublicShell> : <AppShell active="/marketplace">{children}</AppShell>;
+
   return (
-    <AppShell active="/marketplace">
+    <Shell>
+
       <div className="space-y-6">
         <PageHeader
           eyebrow="Marketplace"
@@ -119,13 +128,15 @@ function MarketplacePage() {
           )}
         </Section>
       </div>
-    </AppShell>
+    </Shell>
   );
 }
+
 
 function VendorCard({ v }: { v: VendorRow }) {
   const location = [v.city, v.state].filter(Boolean).join(", ");
   const navigate = useNavigate();
+  const { user } = useAuth();
   const saveFn = useServerFn(createBooking);
   const save = useMutation({
     mutationFn: () => saveFn({ data: { vendorId: v.id, title: v.business_name, category: v.business_category } }),
@@ -136,6 +147,7 @@ function VendorCard({ v }: { v: VendorRow }) {
     onError: (e: any) => toast.error(e.message ?? "Failed to save"),
   });
   return (
+
     <Card className="overflow-hidden border-border/60 shadow-soft transition hover:shadow-elegant">
       <div
         className="h-24 bg-gradient-to-br from-primary/20 via-gold/20 to-transparent bg-cover bg-center"
@@ -161,11 +173,18 @@ function VendorCard({ v }: { v: VendorRow }) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="flex-1">View profile</Button>
-          <Button size="sm" className="flex-1" onClick={() => save.mutate()} disabled={save.isPending}>
-            <Bookmark className="mr-1 h-3.5 w-3.5" />
-            {save.isPending ? "Saving…" : "Save vendor"}
-          </Button>
+          {user ? (
+            <Button size="sm" className="flex-1" onClick={() => save.mutate()} disabled={save.isPending}>
+              <Bookmark className="mr-1 h-3.5 w-3.5" />
+              {save.isPending ? "Saving…" : "Save vendor"}
+            </Button>
+          ) : (
+            <Button size="sm" className="flex-1" asChild>
+              <Link to="/auth"><Bookmark className="mr-1 h-3.5 w-3.5" /> Sign in to save</Link>
+            </Button>
+          )}
         </div>
+
       </div>
     </Card>
   );

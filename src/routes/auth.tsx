@@ -192,9 +192,13 @@ function AuthPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      void landingRouteForUser(user.id).then((to) => navigate({ to }));
+      void landingRouteForUser(user.id).then((landing) => {
+        const next = safeNextPath();
+        navigate({ to: (next === "/events" ? landing : next) as "/events" });
+      });
     }
   }, [loading, user, navigate]);
+
 
   async function runAuthOperation(operation: AuthOperation, message: string, action: () => Promise<void>) {
     if (busy) return;
@@ -265,9 +269,12 @@ function AuthPage() {
       const signedInUser = await waitForAuthenticatedUser();
       await ensureProfile(signedInUser);
       toast.success("Welcome back");
-      navigate({ to: await landingRouteForUser(signedInUser.id) });
+      const landing = await landingRouteForUser(signedInUser.id);
+      const next = safeNextPath();
+      navigate({ to: (next === "/events" ? landing : next) as "/events" });
     });
   }
+
 
   async function handleSignIn(e: FormEvent) {
     e.preventDefault();

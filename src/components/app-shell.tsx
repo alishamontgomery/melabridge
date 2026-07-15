@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -47,7 +47,8 @@ import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
+
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type NavGroup = { label: string; items: NavItem[] };
@@ -275,10 +276,37 @@ function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: s
 export function AppShell({ active, children }: { active: string; children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role } = useRole();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const groups = NAV_BY_ROLE[role];
+
+  useEffect(() => {
+    if (loading || user) return;
+    try {
+      const path = window.location.pathname + window.location.search;
+      if (path && path.startsWith("/") && !path.startsWith("/auth")) {
+        window.sessionStorage.setItem("melabridge.auth.next", path);
+      }
+    } catch {
+      // sessionStorage may be blocked; safe to ignore.
+    }
+    navigate({ to: "/auth", replace: true });
+  }, [loading, user, navigate]);
+
+  if (loading || !user) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background" role="status" aria-live="polite">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-sm">{loading ? "Loading your workspace…" : "Redirecting to sign in…"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
+
 
       <a
         href="#main-content"
