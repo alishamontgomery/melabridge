@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications } from "@/hooks/use-notifications";
@@ -47,7 +47,8 @@ import { CommandPalette, CommandTrigger } from "@/components/command-palette";
 import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
+
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type NavGroup = { label: string; items: NavItem[] };
