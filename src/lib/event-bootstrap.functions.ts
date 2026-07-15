@@ -262,8 +262,10 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
       notes: event.event_notes ?? event.description ?? null,
     };
 
-    const aiPlan = await callAI(eventContext, template, totalBudget);
-    const plan = aiPlan ?? templateToPlan(template, totalBudget);
+    const shopping = getShoppingTemplate(event.event_type);
+    const invitationGuidanceDefault = getInvitationGuidance(event.event_type);
+    const aiPlan = await callAI(eventContext, template, totalBudget, shopping, invitationGuidanceDefault);
+    const plan = aiPlan ?? templateToPlan(template, totalBudget, shopping, invitationGuidanceDefault);
     const usedFallback = aiPlan === null;
 
     // Prefer the explicit ceremony start (when the "main event" actually
