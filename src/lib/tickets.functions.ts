@@ -236,36 +236,21 @@ export const refundTicketOrder = createServerFn({ method: "POST" })
       }
     }
 
-    const newRefunded = alreadyRefunded + requested;
-    const isFull = newRefunded >= (order.amount_cents ?? 0);
-
-    await supabaseAdmin
-      .from("ticket_orders")
-      .update({
-        refund_amount_cents: newRefunded,
-        refund_reason: data.reason ?? null,
-        refunded_at: new Date().toISOString(),
-        status: isFull ? "refunded" : "partially_refunded",
-      })
-      .eq("id", order.id);
-
-    // On full refund release inventory + invalidate attendees (not checked in).
-    if (isFull) {
-      const { data: t } = await supabaseAdmin
-        .from("ticket_types").select("sold_count").eq("id", order.ticket_type_id).single();
-      await supabaseAdmin
-        .from("ticket_types")
-        .update({ sold_count: Math.max(0, (t?.sold_count ?? 0) - order.quantity) })
-        .eq("id", order.ticket_type_id);
-      await supabaseAdmin
-        .from("ticket_attendees")
-        .delete()
-        .eq("order_id", order.id)
-        .is("checked_in_at", null);
-    }
-
-    return { ok: true, refunded_cents: newRefunded, status: isFull ? "refunded" : "partially_refunded" };
+    // Atomic: lock order + type, apply refund state, release inventory on full refund.
+    const { data: applied, error: rpcErr } = await supabaseAdmin.rpc("apply_ticket_refund", {
+      _order_id: order.id,
+      _refund_delta_cents: requested,
+      _reason: data.reason ?? undefined,
+    });
+    if (rpcErr) throw new Error(rpcErr.message);
+    const row = Array.isArray(applied) ? applied[0] : applied;
+    return {
+      ok: true,
+      refunded_cents: row?.refund_amount_cents ?? (alreadyRefunded + requested),
+      status: row?.status ?? (alreadyRefunded + requested >= (order.amount_cents ?? 0) ? "refunded" : "partially_refunded"),
+    };
   });
+
 
 // ---------- Owner/attendee: build PDF for order (returns base64 bytes) ----------
 export const getOrderTicketsPdf = createServerFn({ method: "POST" })
@@ -422,31 +407,23 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
       }
       // Unlisted tickets can be bought via direct link; no extra check here.
 
-      // Free tickets: skip Stripe entirely
+      // Free tickets: atomic RPC (locks type row, validates, inserts order+attendees, bumps sold_count).
       if (t.price_cents === 0) {
-        const { data: order, error: oErr } = await supabaseAdmin
-          .from("ticket_orders")
-          .insert({
-            event_id: t.event_id, ticket_type_id: t.id,
-            buyer_name: data.buyerName, buyer_email: data.buyerEmail,
-            quantity: data.quantity, amount_cents: 0, currency: t.currency, status: "paid",
-          }).select("id").single();
-        if (oErr || !order) return { error: oErr?.message ?? "Could not reserve free tickets" };
-        const attendees = Array.from({ length: data.quantity }, (_, i) => ({
-          order_id: order.id, event_id: t.event_id,
-          full_name: i === 0 ? data.buyerName : null,
-          email: i === 0 ? data.buyerEmail : null,
-        }));
-        await supabaseAdmin.from("ticket_attendees").insert(attendees);
-        await supabaseAdmin.from("ticket_types")
-          .update({ sold_count: (t.sold_count ?? 0) + data.quantity })
-          .eq("id", t.id);
+        const { data: newOrderId, error: rpcErr } = await supabaseAdmin.rpc("claim_free_tickets", {
+          _ticket_type_id: t.id,
+          _buyer_name: data.buyerName,
+          _buyer_email: data.buyerEmail,
+          _quantity: data.quantity,
+          _promo_code: data.promoCode ?? undefined,
+        });
+        if (rpcErr || !newOrderId) return { error: rpcErr?.message ?? "Could not reserve free tickets" };
         try {
           const { sendOrderConfirmation } = await import("@/lib/tickets-emails.server");
-          await sendOrderConfirmation({ orderId: order.id });
+          await sendOrderConfirmation({ orderId: newOrderId as string });
         } catch (e) { console.error("free ticket email failed", e); }
-        return { clientSecret: `free_${order.id}` };
+        return { clientSecret: `free_${newOrderId}` };
       }
+
 
 
       const stripe = createStripeClient(data.environment);
