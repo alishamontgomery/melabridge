@@ -97,7 +97,7 @@ function CalendarPage() {
             <Button asChild size="sm" variant="outline"><Link to="/calendar/dashboard"><LayoutDashboard className="mr-1.5 h-4 w-4" />Dashboard</Link></Button>
             <Button asChild size="sm" variant="outline"><Link to="/calendar/requests"><Inbox className="mr-1.5 h-4 w-4" />Requests</Link></Button>
             <Button asChild size="sm" variant="outline"><Link to="/calendar/settings"><Settings2 className="mr-1.5 h-4 w-4" />Availability</Link></Button>
-            <Button asChild size="sm" variant="hero"><Link to="/calendar/events/new"><Plus className="mr-1.5 h-4 w-4" />New event</Link></Button>
+            <Button asChild size="sm" variant="hero"><Link to="/events/new"><Plus className="mr-1.5 h-4 w-4" />New event</Link></Button>
           </div>
         }
       />
