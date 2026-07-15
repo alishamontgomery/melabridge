@@ -142,7 +142,7 @@ function GuestsPage() {
           <div className="mt-6 mb-3 flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[220px]">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search guests or households…" className="pl-9" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search guests by name or email…" className="pl-9" />
             </div>
             {(["all", "confirmed", "pending", "declined"] as const).map((f) => (
               <button
