@@ -96,7 +96,7 @@ function MelaAssistPage() {
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard icon={Inbox} label="Active conversations" value={stats.unreadThreads} to="/messaging" />
+              <StatCard icon={Inbox} label="Notifications" value={stats.unreadThreads} to="/notifications" />
               <StatCard icon={ClipboardCheck} label="Open tasks" value={stats.openTasks} to="/tasks" />
               <StatCard icon={CalendarClock} label="Upcoming bookings" value={stats.upcomingBookings} to="/timeline" />
               <StatCard
@@ -110,16 +110,16 @@ function MelaAssistPage() {
             <Section title="Get started">
               <div className="grid gap-4 md:grid-cols-2">
                 <ActionCard
-                  icon={MessageSquare}
-                  title="Reply to your inbox"
-                  description="Manage client conversations and quotes in one thread."
-                  to="/messaging"
-                />
-                <ActionCard
                   icon={ClipboardCheck}
                   title="Review open tasks"
                   description="Stay on top of proposals, deliverables, and follow-ups."
                   to="/tasks"
+                />
+                <ActionCard
+                  icon={CalendarClock}
+                  title="Check the timeline"
+                  description="See what's coming up across your events."
+                  to="/timeline"
                 />
               </div>
             </Section>
