@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock, FlaskConical, Trash2 } from "lucide-react";
+import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock, FlaskConical, Trash2, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin-stats.functions";
 import { seedTestData, wipeTestData } from "@/lib/test-seed.functions";
+import { sendDomainTestEmail } from "@/lib/email-test.functions";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -133,6 +134,8 @@ function AdminPage() {
         </Section>
 
         <TestSeedSection />
+
+        <EmailDomainTestSection />
 
         <Section title="Billing configuration">
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-5 shadow-soft">
@@ -288,6 +291,94 @@ function TestSeedSection() {
               </Button>
             </div>
             {lastResult && <p className="text-xs text-muted-foreground">{lastResult}</p>}
+          </div>
+        </div>
+      </Card>
+    </Section>
+  );
+}
+
+function EmailDomainTestSection() {
+  const send = useServerFn(sendDomainTestEmail);
+  const [verified, setVerified] = useState<null | boolean>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const recipient = "hello@melabridge.com";
+
+  const run = async () => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await send({ data: { recipient } } as never);
+      if (res.ok) {
+        setVerified(true);
+        setMessage(`Test email sent to ${res.recipient}. Check the inbox in a moment.`);
+        toast.success("Test email sent");
+      } else if (res.code === "domain_not_verified") {
+        setVerified(false);
+        setMessage("notify.melabridge.com is not verified yet. DNS is still propagating — try again in a few minutes.");
+        toast.error("Domain not verified yet");
+      } else if (res.code === "forbidden") {
+        setMessage("Admin role required.");
+        toast.error("Admin role required");
+      } else {
+        setMessage(res.message ?? "Send failed.");
+        toast.error(res.message ?? "Send failed");
+      }
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Send failed");
+      toast.error("Send failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const canSend = verified === true;
+  const showCheck = verified !== true;
+
+  return (
+    <Section title="Email domain">
+      <Card className="border-border/60 p-5 shadow-soft">
+        <div className="flex items-start gap-3">
+          <Mail className="mt-0.5 h-5 w-5 text-primary" />
+          <div className="flex-1 space-y-3">
+            <div>
+              <p className="text-sm font-semibold">Send a test email from notify.melabridge.com</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sends a delivery test to <code className="rounded bg-muted px-1">{recipient}</code>. The send button only becomes available once DNS verification for <code className="rounded bg-muted px-1">notify.melabridge.com</code> completes.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <Button size="sm" onClick={run} disabled={busy || !canSend}>
+                <Mail className="mr-2 h-4 w-4" />
+                {busy && canSend ? "Sending…" : "Send test email"}
+              </Button>
+              {showCheck && (
+                <Button size="sm" variant="outline" onClick={run} disabled={busy}>
+                  <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />
+                  {busy ? "Checking…" : verified === false ? "Recheck verification" : "Check verification"}
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs">
+              {verified === true && (
+                <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Domain verified — sending is live.
+                </span>
+              )}
+              {verified === false && (
+                <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-3.5 w-3.5" /> Domain not verified yet.
+                </span>
+              )}
+              {verified === null && (
+                <span className="text-muted-foreground">Verification status unknown — run a check to confirm.</span>
+              )}
+            </div>
+
+            {message && <p className="text-xs text-muted-foreground">{message}</p>}
           </div>
         </div>
       </Card>
