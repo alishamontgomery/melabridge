@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { ModuleError, ModuleLoading } from "@/components/module-states";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
 
 
 export const Route = createFileRoute("/files")({

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, UserPlus, Search } from "lucide-react";
-import { ModuleError, ModuleLoading } from "@/components/module-states";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
 
 
 
