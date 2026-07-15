@@ -164,7 +164,7 @@ const RELATIONSHIPS = [
     icon: CloudRain,
     reacts: [
       { m: "Decision Center™", to: "/decisions", icon: Lightbulb, note: "AI drafts contingency" },
-      { m: "Messaging", to: "/messaging", icon: MessageSquare, note: "Vendor notifications ready" },
+      { m: "Notifications", to: "/notifications", icon: Bell, note: "Alerts ready" },
       { m: "BridgeVault™", to: "/bridgevault", icon: Vault, note: "Forecast archived" },
       { m: "Intelligence", to: "/bridge-intelligence", icon: BarChart3, note: "Benchmark check" },
     ],
