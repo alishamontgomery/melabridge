@@ -44,11 +44,11 @@ function formatTime(t: string | null) {
 const QUICK_ACTIONS = [
   { label: "New Event", to: "/events/new", icon: Plus },
   { label: "AI Draft Inbox", to: "/drafts", icon: Sparkles },
-  { label: "New Lead", to: "/messaging", icon: UserPlus },
+  { label: "New Lead", to: "/vendor-portal", icon: UserPlus },
   { label: "Create Quote", to: "/bookings", icon: FileText },
   { label: "Send Contract", to: "/bookings", icon: ScrollText },
   { label: "Collect Payment", to: "/bookings", icon: CreditCard },
-  { label: "Email Client", to: "/messaging", icon: Mail },
+  { label: "Client Notes", to: "/bookings", icon: Mail },
   { label: "Calendar Sync", to: "/settings/calendar", icon: CalendarSync },
   { label: "Block Dates", to: "/calendar/settings", icon: CalendarX2 },
 ] as const;
