@@ -18,6 +18,8 @@ import {
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Wallet, Plus, Loader2 } from "lucide-react";
+import { ModuleError, ModuleLoading } from "@/components/module-states";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/budget")({
