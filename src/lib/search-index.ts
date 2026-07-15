@@ -96,9 +96,6 @@ export const SEARCH_INDEX: SearchItem[] = [
   { id: "t2", kind: "task", title: "Send save-the-dates (batch 2)", subtitle: "Due today", to: "/tasks", icon: ClipboardList },
   { id: "t3", kind: "task", title: "Approve caterer tasting menu", subtitle: "Due tomorrow", to: "/tasks", icon: ClipboardList },
 
-  // Messages
-  { id: "msg1", kind: "message", title: "Priya: 'Is a vegan option possible?'", subtitle: "Guest thread · 2h ago", to: "/messaging", icon: MessageSquare },
-  { id: "msg2", kind: "message", title: "Studio Nero sent the shot list", subtitle: "Vendor thread · Yesterday", to: "/messaging", icon: MessageSquare },
 
   // Budget items
   { id: "b1", kind: "budget", title: "Venue — $22,000 committed", subtitle: "32% of budget", to: "/budget", icon: Wallet },
