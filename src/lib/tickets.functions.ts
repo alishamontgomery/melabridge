@@ -240,7 +240,7 @@ export const refundTicketOrder = createServerFn({ method: "POST" })
     const { data: applied, error: rpcErr } = await supabaseAdmin.rpc("apply_ticket_refund", {
       _order_id: order.id,
       _refund_delta_cents: requested,
-      _reason: data.reason ?? null,
+      _reason: data.reason ?? undefined,
     });
     if (rpcErr) throw new Error(rpcErr.message);
     const row = Array.isArray(applied) ? applied[0] : applied;
