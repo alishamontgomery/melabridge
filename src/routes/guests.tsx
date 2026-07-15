@@ -21,6 +21,7 @@ export const Route = createFileRoute("/guests")({
     ],
   }),
   component: GuestsPage,
+  errorComponent: RouteError,
 });
 
 type Guest = {

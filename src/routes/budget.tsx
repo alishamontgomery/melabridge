@@ -31,6 +31,7 @@ export const Route = createFileRoute("/budget")({
     ],
   }),
   component: BudgetPage,
+  errorComponent: RouteError,
 });
 
 type BudgetItem = {

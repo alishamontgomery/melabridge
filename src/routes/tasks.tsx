@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/module-states";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/tasks")({
     ],
   }),
   component: TasksPage,
+  errorComponent: RouteError,
 });
 
 function TasksPage() {

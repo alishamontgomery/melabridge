@@ -26,6 +26,7 @@ export const Route = createFileRoute("/files")({
     ],
   }),
   component: FilesPage,
+  errorComponent: RouteError,
 });
 
 const BUCKET = "bridgevault";
