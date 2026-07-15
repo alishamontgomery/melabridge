@@ -5,13 +5,12 @@ import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib
 
 const uuid = z.string().uuid();
 
-// ---------- Owner: list ticket types + counts ----------
+// ---------- Owner: list ticket types ----------
 export const listTicketTypes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { eventId: string }) => ({ eventId: uuid.parse(d.eventId) }))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: rows, error } = await supabase
+    const { data: rows, error } = await context.supabase
       .from("ticket_types")
       .select("*")
       .eq("event_id", data.eventId)
@@ -27,8 +26,11 @@ const CreateType = z.object({
   description: z.string().max(600).optional().nullable(),
   price_cents: z.number().int().min(0).max(10_000_000),
   quantity: z.number().int().min(1).max(1_000_000).nullable().optional(),
+  max_per_order: z.number().int().min(1).max(100).optional(),
   sales_start: z.string().nullable().optional(),
   sales_end: z.string().nullable().optional(),
+  visibility: z.enum(["public", "unlisted"]).optional(),
+  promo_code: z.string().max(60).nullable().optional(),
 });
 export const createTicketType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -43,8 +45,11 @@ export const createTicketType = createServerFn({ method: "POST" })
         description: data.description ?? null,
         price_cents: data.price_cents,
         quantity: data.quantity ?? null,
+        max_per_order: data.max_per_order ?? 10,
         sales_start: data.sales_start || null,
         sales_end: data.sales_end || null,
+        visibility: data.visibility ?? "public",
+        promo_code: data.promo_code?.trim() || null,
         created_by: userId,
       })
       .select()
@@ -60,9 +65,12 @@ const UpdateType = z.object({
   description: z.string().max(600).nullable().optional(),
   price_cents: z.number().int().min(0).max(10_000_000).optional(),
   quantity: z.number().int().min(1).max(1_000_000).nullable().optional(),
+  max_per_order: z.number().int().min(1).max(100).optional(),
   is_active: z.boolean().optional(),
   sales_start: z.string().nullable().optional(),
   sales_end: z.string().nullable().optional(),
+  visibility: z.enum(["public", "unlisted"]).optional(),
+  promo_code: z.string().max(60).nullable().optional(),
 });
 export const updateTicketType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -72,6 +80,37 @@ export const updateTicketType = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("ticket_types").update(patch).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+// ---------- Owner: duplicate ticket type ----------
+export const duplicateTicketType = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: uuid.parse(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: src, error } = await supabase
+      .from("ticket_types").select("*").eq("id", data.id).single();
+    if (error || !src) throw new Error(error?.message ?? "Not found");
+    const { data: row, error: e2 } = await supabase
+      .from("ticket_types")
+      .insert({
+        event_id: src.event_id,
+        name: `${src.name} (copy)`,
+        description: src.description,
+        price_cents: src.price_cents,
+        currency: src.currency,
+        quantity: src.quantity,
+        max_per_order: src.max_per_order,
+        sales_start: src.sales_start,
+        sales_end: src.sales_end,
+        visibility: src.visibility,
+        promo_code: src.promo_code,
+        is_active: false,
+        created_by: userId,
+      })
+      .select().single();
+    if (e2) throw new Error(e2.message);
+    return row;
   });
 
 // ---------- Owner: delete ticket type ----------
@@ -94,7 +133,7 @@ export const listTicketOrders = createServerFn({ method: "GET" })
       .select("*, ticket_types(name)")
       .eq("event_id", data.eventId)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
@@ -109,12 +148,12 @@ export const listAttendees = createServerFn({ method: "GET" })
       .select("*")
       .eq("event_id", data.eventId)
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(2000);
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
 
-// ---------- Owner: check in attendee ----------
+// ---------- Owner: check-in / undo ----------
 export const checkInAttendee = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => ({ id: uuid.parse(d.id) }))
@@ -127,38 +166,74 @@ export const checkInAttendee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const undoCheckInAttendee = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: uuid.parse(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("ticket_attendees")
+      .update({ checked_in_at: null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------- Owner: resend confirmation (stub — records intent) ----------
+export const resendOrderConfirmation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string }) => ({ orderId: uuid.parse(d.orderId) }))
+  .handler(async ({ data, context }) => {
+    const { data: order, error } = await context.supabase
+      .from("ticket_orders").select("buyer_email").eq("id", data.orderId).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!order?.buyer_email) throw new Error("No email on order");
+    // Email delivery hook — integrate with your transactional provider here.
+    return { ok: true, email: order.buyer_email };
+  });
+
 // ---------- Public: fetch event + active ticket types ----------
 export const getPublicEventTickets = createServerFn({ method: "GET" })
   .inputValidator((d: { eventId: string }) => ({ eventId: uuid.parse(d.eventId) }))
   .handler(async ({ data }) => {
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
     const { createClient } = await import("@supabase/supabase-js");
-    const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+    const sb = createClient(process.env.SUPABASE_URL!, key, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: event, error: e1 } = await sb
       .from("events")
-      .select("id, name, event_type, event_date, event_time, location, tickets_enabled, banner_url")
+      .select("id, name, event_type, event_date, event_time, end_time, location, description, tickets_enabled, banner_url, owner_id")
       .eq("id", data.eventId)
       .maybeSingle();
     if (e1) throw new Error(e1.message);
-    if (!event || !event.tickets_enabled) return { event: null, types: [] as never[] };
+    if (!event || !event.tickets_enabled) return { event: null, types: [] as never[], organizer: null };
+
     const { data: types, error: e2 } = await sb
       .from("ticket_types")
-      .select("id, name, description, price_cents, currency, quantity, sold_count, sales_start, sales_end, is_active")
+      .select("id, name, description, price_cents, currency, quantity, sold_count, sales_start, sales_end, is_active, max_per_order, visibility")
       .eq("event_id", data.eventId)
       .eq("is_active", true)
+      .eq("visibility", "public")
       .order("sort_order", { ascending: true });
     if (e2) throw new Error(e2.message);
-    return { event, types: types ?? [] };
+
+    let organizer: { display_name: string | null } | null = null;
+    if (event.owner_id) {
+      const { data: prof } = await sb
+        .from("profiles").select("display_name").eq("id", event.owner_id).maybeSingle();
+      organizer = prof ?? null;
+    }
+    return { event, types: types ?? [], organizer };
   });
 
 // ---------- Public: create Stripe checkout ----------
 type CheckoutResult = { clientSecret: string } | { error: string };
 const CheckoutInput = z.object({
   ticketTypeId: uuid,
-  quantity: z.number().int().min(1).max(20),
+  quantity: z.number().int().min(1).max(100),
   buyerEmail: z.string().email(),
   buyerName: z.string().min(1).max(120),
+  promoCode: z.string().max(60).optional().nullable(),
   returnUrl: z.string().url(),
   environment: z.enum(["sandbox", "live"]),
 });
@@ -168,52 +243,67 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
     try {
       const { createClient } = await import("@supabase/supabase-js");
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      // Use admin for the atomic insert/reserve; only price + name come from public read
       const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
         auth: { persistSession: false, autoRefreshToken: false },
       });
       const { data: t, error: tErr } = await sb
         .from("ticket_types")
-        .select("id, event_id, name, price_cents, currency, quantity, sold_count, is_active")
+        .select("id, event_id, name, price_cents, currency, quantity, sold_count, is_active, max_per_order, promo_code, visibility, sales_start, sales_end")
         .eq("id", data.ticketTypeId)
         .maybeSingle();
       if (tErr || !t) return { error: "Ticket type not found" };
       if (!t.is_active) return { error: "This ticket is no longer available." };
+      const now = Date.now();
+      if (t.sales_start && new Date(t.sales_start).getTime() > now) return { error: "Sales haven't started yet." };
+      if (t.sales_end && new Date(t.sales_end).getTime() < now) return { error: "Sales have ended." };
+      if (data.quantity > (t.max_per_order ?? 10)) return { error: `Limit ${t.max_per_order} per order.` };
       if (t.quantity != null && (t.sold_count ?? 0) + data.quantity > t.quantity) {
         return { error: "Not enough tickets remaining." };
+      }
+      if (t.promo_code && (data.promoCode ?? "").trim().toUpperCase() !== t.promo_code.toUpperCase()) {
+        return { error: "Promo code required." };
+      }
+      // Unlisted tickets can be bought via direct link; no extra check here.
+
+      // Free tickets: skip Stripe entirely
+      if (t.price_cents === 0) {
+        const { data: order, error: oErr } = await supabaseAdmin
+          .from("ticket_orders")
+          .insert({
+            event_id: t.event_id, ticket_type_id: t.id,
+            buyer_name: data.buyerName, buyer_email: data.buyerEmail,
+            quantity: data.quantity, amount_cents: 0, currency: t.currency, status: "paid",
+          }).select("id").single();
+        if (oErr || !order) return { error: oErr?.message ?? "Could not reserve free tickets" };
+        const attendees = Array.from({ length: data.quantity }, (_, i) => ({
+          order_id: order.id, event_id: t.event_id,
+          full_name: i === 0 ? data.buyerName : null,
+          email: i === 0 ? data.buyerEmail : null,
+        }));
+        await supabaseAdmin.from("ticket_attendees").insert(attendees);
+        await supabaseAdmin.from("ticket_types")
+          .update({ sold_count: (t.sold_count ?? 0) + data.quantity })
+          .eq("id", t.id);
+        return { clientSecret: `free_${order.id}` };
       }
 
       const stripe = createStripeClient(data.environment);
       const amount = t.price_cents * data.quantity;
 
-      // Create a pending order first so we can attach its id to the session
       const { data: order, error: oErr } = await supabaseAdmin
         .from("ticket_orders")
         .insert({
-          event_id: t.event_id,
-          ticket_type_id: t.id,
-          buyer_name: data.buyerName,
-          buyer_email: data.buyerEmail,
-          quantity: data.quantity,
-          amount_cents: amount,
-          currency: t.currency,
-          status: "pending",
-        })
-        .select("id")
-        .single();
+          event_id: t.event_id, ticket_type_id: t.id,
+          buyer_name: data.buyerName, buyer_email: data.buyerEmail,
+          quantity: data.quantity, amount_cents: amount, currency: t.currency, status: "pending",
+        }).select("id").single();
       if (oErr || !order) return { error: oErr?.message ?? "Could not create order" };
 
       const session = await stripe.checkout.sessions.create({
-        line_items: [
-          {
-            price_data: {
-              currency: t.currency,
-              product_data: { name: t.name },
-              unit_amount: t.price_cents,
-            },
-            quantity: data.quantity,
-          },
-        ],
+        line_items: [{
+          price_data: { currency: t.currency, product_data: { name: t.name }, unit_amount: t.price_cents },
+          quantity: data.quantity,
+        }],
         mode: "payment",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
@@ -222,18 +312,14 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
         metadata: { orderId: order.id, ticketTypeId: t.id, eventId: t.event_id },
       });
 
-      await supabaseAdmin
-        .from("ticket_orders")
-        .update({ stripe_session_id: session.id })
-        .eq("id", order.id);
-
+      await supabaseAdmin.from("ticket_orders").update({ stripe_session_id: session.id }).eq("id", order.id);
       return { clientSecret: session.client_secret ?? "" };
     } catch (error) {
       return { error: getStripeErrorMessage(error) };
     }
   });
 
-// ---------- Public: finalize order after checkout return ----------
+// ---------- Public: finalize order ----------
 const FinalizeInput = z.object({
   sessionId: z.string().min(1),
   environment: z.enum(["sandbox", "live"]),
@@ -242,6 +328,9 @@ export const finalizeTicketOrder = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => FinalizeInput.parse(d))
   .handler(async ({ data }) => {
     try {
+      // Free-ticket shortcut
+      if (data.sessionId.startsWith("free_")) return { ok: true };
+
       const stripe = createStripeClient(data.environment);
       const session = await stripe.checkout.sessions.retrieve(data.sessionId);
       const orderId = session.metadata?.orderId;
@@ -251,44 +340,28 @@ export const finalizeTicketOrder = createServerFn({ method: "POST" })
       const { data: existing } = await supabaseAdmin
         .from("ticket_orders")
         .select("id, status, quantity, event_id, ticket_type_id, buyer_email, buyer_name")
-        .eq("id", orderId)
-        .maybeSingle();
+        .eq("id", orderId).maybeSingle();
       if (!existing) return { ok: false, error: "Order not found" };
 
       const paid = session.payment_status === "paid";
-      if (!paid) {
-        return { ok: false, error: "Payment not completed" };
-      }
-      if (existing.status === "paid") {
-        return { ok: true, alreadyProcessed: true };
-      }
+      if (!paid) return { ok: false, error: "Payment not completed" };
+      if (existing.status === "paid") return { ok: true, alreadyProcessed: true };
 
-      // Mark paid + create attendees + bump sold_count
-      await supabaseAdmin
-        .from("ticket_orders")
-        .update({
-          status: "paid",
-          stripe_payment_intent:
-            typeof session.payment_intent === "string" ? session.payment_intent : null,
-        })
-        .eq("id", orderId);
+      await supabaseAdmin.from("ticket_orders").update({
+        status: "paid",
+        stripe_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : null,
+      }).eq("id", orderId);
 
       const attendees = Array.from({ length: existing.quantity }, (_, i) => ({
-        order_id: orderId,
-        event_id: existing.event_id,
+        order_id: orderId, event_id: existing.event_id,
         full_name: i === 0 ? existing.buyer_name : null,
         email: i === 0 ? existing.buyer_email : null,
       }));
       await supabaseAdmin.from("ticket_attendees").insert(attendees);
 
-      // Atomic-ish increment via RPC-less update
       const { data: t } = await supabaseAdmin
-        .from("ticket_types")
-        .select("sold_count")
-        .eq("id", existing.ticket_type_id)
-        .single();
-      await supabaseAdmin
-        .from("ticket_types")
+        .from("ticket_types").select("sold_count").eq("id", existing.ticket_type_id).single();
+      await supabaseAdmin.from("ticket_types")
         .update({ sold_count: (t?.sold_count ?? 0) + existing.quantity })
         .eq("id", existing.ticket_type_id);
 
@@ -297,3 +370,19 @@ export const finalizeTicketOrder = createServerFn({ method: "POST" })
       return { ok: false, error: getStripeErrorMessage(error) };
     }
   });
+
+// ---------- AI: quick create from natural language ----------
+export function parseTicketPrompt(input: string): { name: string; quantity: number | null; price_cents: number } | null {
+  const s = input.trim();
+  if (!s) return null;
+  const qtyMatch = s.match(/(\d{1,6})\s*(tickets?|admissions?|seats?|spots?)/i);
+  const priceMatch = s.match(/\$\s*(\d+(?:\.\d{1,2})?)/) ?? s.match(/(?:for|at)\s+(\d+(?:\.\d{1,2})?)\s*(?:dollars|usd|bucks)/i);
+  const free = /\bfree\b/i.test(s);
+  const nameMatch = s.match(/(?:create|make|add)\s+\d+\s+([a-z][\w\s-]{2,60}?)\s+tickets?/i)
+    ?? s.match(/([a-z][\w\s-]{2,60}?)\s+tickets?/i);
+  const name = (nameMatch?.[1] ?? "General Admission").replace(/\s+/g, " ").trim();
+  const qty = qtyMatch ? Math.max(1, Number(qtyMatch[1])) : null;
+  const priceCents = free ? 0 : priceMatch ? Math.round(Number(priceMatch[1]) * 100) : NaN;
+  if (Number.isNaN(priceCents)) return null;
+  return { name: name.charAt(0).toUpperCase() + name.slice(1), quantity: qty, price_cents: priceCents };
+}

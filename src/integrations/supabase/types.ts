@@ -1802,14 +1802,17 @@ export type Database = {
           event_id: string
           id: string
           is_active: boolean
+          max_per_order: number
           name: string
           price_cents: number
+          promo_code: string | null
           quantity: number | null
           sales_end: string | null
           sales_start: string | null
           sold_count: number
           sort_order: number
           updated_at: string
+          visibility: string
         }
         Insert: {
           created_at?: string
@@ -1819,14 +1822,17 @@ export type Database = {
           event_id: string
           id?: string
           is_active?: boolean
+          max_per_order?: number
           name: string
           price_cents?: number
+          promo_code?: string | null
           quantity?: number | null
           sales_end?: string | null
           sales_start?: string | null
           sold_count?: number
           sort_order?: number
           updated_at?: string
+          visibility?: string
         }
         Update: {
           created_at?: string
@@ -1836,14 +1842,17 @@ export type Database = {
           event_id?: string
           id?: string
           is_active?: boolean
+          max_per_order?: number
           name?: string
           price_cents?: number
+          promo_code?: string | null
           quantity?: number | null
           sales_end?: string | null
           sales_start?: string | null
           sold_count?: number
           sort_order?: number
           updated_at?: string
+          visibility?: string
         }
         Relationships: [
           {
