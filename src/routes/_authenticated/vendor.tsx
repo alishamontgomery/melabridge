@@ -220,26 +220,9 @@ function VendorDashboardPage() {
           })} loading={loading} />
         </div>
 
-        {/* Messages + Tasks + Notifications */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="border-border/60 p-5 shadow-soft">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-base font-semibold">Recent messages</h2>
-              <Button asChild variant="ghost" size="sm"><Link to="/messaging">Inbox</Link></Button>
-            </div>
-            {messages.length === 0 ? <EmptyRow icon={MessageSquare} text="No messages yet." /> : (
-              <ul className="divide-y divide-border/60">
-                {messages.map((m) => (
-                  <li key={m.id} className="py-2.5">
-                    <Link to="/messaging" className="block">
-                      <p className="truncate text-sm font-medium">{m.title ?? "Conversation"}</p>
-                      <p className="truncate text-xs text-muted-foreground">{m.last_message_preview ?? "—"}</p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+        {/* Tasks + Notifications */}
+        <div className="grid gap-4 lg:grid-cols-2">
+
 
           <Card className="border-border/60 p-5 shadow-soft">
             <div className="mb-3 flex items-center justify-between">
