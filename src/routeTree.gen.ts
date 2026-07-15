@@ -65,6 +65,7 @@ import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TicketsEventIdRouteImport } from './routes/tickets.$eventId'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -369,6 +370,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TicketsEventIdRoute = TicketsEventIdRouteImport.update({
+  id: '/$eventId',
+  path: '/$eventId',
+  getParentRoute: () => TicketsRoute,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -550,7 +556,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/tickets': typeof TicketsRoute
+  '/tickets': typeof TicketsRouteWithChildren
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
   '/tutorials': typeof TutorialsRoute
@@ -567,6 +573,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/tickets/$eventId': typeof TicketsEventIdRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -631,7 +638,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/tickets': typeof TicketsRoute
+  '/tickets': typeof TicketsRouteWithChildren
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
   '/tutorials': typeof TutorialsRoute
@@ -647,6 +654,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/tickets/$eventId': typeof TicketsEventIdRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -713,7 +721,7 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
-  '/tickets': typeof TicketsRoute
+  '/tickets': typeof TicketsRouteWithChildren
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
   '/tutorials': typeof TutorialsRoute
@@ -730,6 +738,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/tickets/$eventId': typeof TicketsEventIdRoute
   '/_authenticated/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/_authenticated/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/_authenticated/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -813,6 +822,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/tickets/$eventId'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
@@ -893,6 +903,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/tickets/$eventId'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
@@ -975,6 +986,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/tickets/$eventId'
     | '/_authenticated/bookings/$id'
     | '/_authenticated/calendar/dashboard'
     | '/_authenticated/calendar/requests'
@@ -1041,7 +1053,7 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
-  TicketsRoute: typeof TicketsRoute
+  TicketsRoute: typeof TicketsRouteWithChildren
   TimelineRoute: typeof TimelineRoute
   TravelRoute: typeof TravelRoute
   TutorialsRoute: typeof TutorialsRoute
@@ -1450,6 +1462,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tickets/$eventId': {
+      id: '/tickets/$eventId'
+      path: '/$eventId'
+      fullPath: '/tickets/$eventId'
+      preLoaderRoute: typeof TicketsEventIdRouteImport
+      parentRoute: typeof TicketsRoute
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -1695,6 +1714,17 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface TicketsRouteChildren {
+  TicketsEventIdRoute: typeof TicketsEventIdRoute
+}
+
+const TicketsRouteChildren: TicketsRouteChildren = {
+  TicketsEventIdRoute: TicketsEventIdRoute,
+}
+
+const TicketsRouteWithChildren =
+  TicketsRoute._addFileChildren(TicketsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1744,7 +1774,7 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
-  TicketsRoute: TicketsRoute,
+  TicketsRoute: TicketsRouteWithChildren,
   TimelineRoute: TimelineRoute,
   TravelRoute: TravelRoute,
   TutorialsRoute: TutorialsRoute,
