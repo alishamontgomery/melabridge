@@ -406,15 +406,24 @@ function PurchaseCard({ type, eventName, eventId }: { type: TicketType; eventNam
         </div>
         {!open && (
           <Button
-            variant="hero"
-            disabled={soldOut}
+            variant={soldOut ? "outline" : "hero"}
             onClick={() => setOpen(true)}
             className="shrink-0"
           >
-            {soldOut ? "Sold out" : isFree ? "Reserve" : "Get tickets"}
+            {soldOut ? "Join waitlist" : isFree ? "Reserve" : "Get tickets"}
           </Button>
         )}
       </div>
+
+      {open && soldOut && (
+        <WaitlistForm
+          type={type}
+          eventId={eventId}
+          eventName={eventName}
+          onCancel={() => setOpen(false)}
+        />
+      )}
+
 
       {open && !clientSecret && (
         <div className="mt-5 grid gap-3 border-t border-border pt-5">
