@@ -125,6 +125,12 @@ function ResetPasswordPage() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {sessionState === "checking" && !error && (
+            <div className="mt-5 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary" role="status" aria-live="polite">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Verifying your reset link…
+            </div>
+          )}
           {busy && (
             <div className="mt-5 flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-primary" role="status" aria-live="polite">
               <Loader2 className="h-4 w-4 animate-spin" />
