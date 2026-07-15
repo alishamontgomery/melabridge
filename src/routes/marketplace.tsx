@@ -38,7 +38,9 @@ type VendorRow = {
 };
 
 function MarketplacePage() {
+  const { user, loading } = useAuth();
   const [query, setQuery] = useState("");
+
 
   const vendorsQ = useQuery({
     queryKey: ["marketplace-vendors"],
