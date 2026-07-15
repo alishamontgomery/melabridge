@@ -156,7 +156,7 @@ const RELATIONSHIPS = [
       { m: "Timeline", to: "/timeline", icon: Calendar, note: "Milestones added" },
       { m: "Tasks", to: "/tasks", icon: ClipboardList, note: "Reminders cleared" },
       { m: "Budget", to: "/budget", icon: Wallet, note: "Marks amount committed" },
-      { m: "Collaboration", to: "/collaboration", icon: MessageSquare, note: "Feed post" },
+      { m: "Team", to: "/team", icon: Users, note: "Team notified" },
     ],
   },
   {
