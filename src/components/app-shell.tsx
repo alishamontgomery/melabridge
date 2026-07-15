@@ -112,10 +112,6 @@ const VENDOR_NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Communication",
-    items: [{ to: "/messaging", label: "Messages", icon: MessageSquare }],
-  },
-  {
     label: "Resources",
     items: [{ to: "/files", label: "Files", icon: FolderOpen }],
   },
