@@ -2374,6 +2374,28 @@ export type Database = {
       }
     }
     Functions: {
+      apply_ticket_refund: {
+        Args: {
+          _order_id: string
+          _reason?: string
+          _refund_delta_cents: number
+        }
+        Returns: {
+          refund_amount_cents: number
+          released: boolean
+          status: string
+        }[]
+      }
+      claim_free_tickets: {
+        Args: {
+          _buyer_email: string
+          _buyer_name: string
+          _promo_code?: string
+          _quantity: number
+          _ticket_type_id: string
+        }
+        Returns: string
+      }
       event_role_rank: {
         Args: { _role: Database["public"]["Enums"]["event_role"] }
         Returns: number
