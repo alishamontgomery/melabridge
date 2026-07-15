@@ -135,6 +135,8 @@ function AdminPage() {
 
         <TestSeedSection />
 
+        <EmailDomainTestSection />
+
         <Section title="Billing configuration">
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-5 shadow-soft">
             <div className="flex items-start gap-3">
