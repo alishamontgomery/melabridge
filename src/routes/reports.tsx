@@ -107,7 +107,10 @@ function ReportsPage() {
           </p>
         </Card>
       </section>
+      </>
+      )}
     </AppShell>
+
   );
 }
 
