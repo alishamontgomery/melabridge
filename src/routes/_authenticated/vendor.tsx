@@ -24,7 +24,7 @@ type EventRow = {
 };
 type TaskRow = { id: string; title: string; due_date: string | null; status: string; priority: string | null };
 type NotifRow = { id: string; title: string; body: string | null; category: string | null; created_at: string; read_at: string | null };
-type MsgConvo = { id: string; title: string | null; last_message_preview: string | null; last_message_at: string | null };
+
 
 function greeting() {
   const h = new Date().getHours();
