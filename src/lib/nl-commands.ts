@@ -33,6 +33,15 @@ export function parseNLCommand(input: string): NLCommand[] {
       out.push({ label: "Browse Marketplace", to: "/marketplace", hint: "Search vendors" });
     }
   }
+  if (has("ticket", "admission") || (has("sell") && has("event"))) {
+    out.push({ label: "Open Tickets", to: "/tickets", hint: "Types, orders, check-in" });
+  }
+  if (has("runsheet", "run of show", "day-of")) {
+    out.push({ label: "Open Runsheet", to: "/timeline" });
+  }
+  if (has("export") && has("guest", "list", "csv")) {
+    out.push({ label: "Open Guests", to: "/guests", hint: "Export CSV" });
+  }
   if (has("draft", "write") && has("note", "task")) {
     out.push({ label: "Draft with AI", to: "/tasks" });
   }

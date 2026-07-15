@@ -1,14 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Calendar, Store, Users, Wallet, FileText, ClipboardList } from "lucide-react";
+import { Sparkles, Calendar, Store, Users, Wallet, Ticket, ClipboardList } from "lucide-react";
 
 const ACTIONS = [
-  { to: "/timeline", label: "Build timeline", icon: Calendar },
+  { to: "/timeline", label: "Build runsheet", icon: Calendar },
   { to: "/vendors", label: "Find vendors", icon: Store },
   { to: "/tasks", label: "Track tasks", icon: ClipboardList },
-  { to: "/guests", label: "Organize seating", icon: Users },
+  { to: "/guests", label: "Manage guests", icon: Users },
   { to: "/budget", label: "Track budget", icon: Wallet },
-  { to: "/bookings", label: "Compare quotes", icon: FileText },
+  { to: "/tickets", label: "Sell tickets", icon: Ticket },
 ];
 
 export function AIConcierge() {
