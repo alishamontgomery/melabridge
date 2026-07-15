@@ -178,18 +178,133 @@ export const undoCheckInAttendee = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------- Owner: resend confirmation (stub — records intent) ----------
+// ---------- Owner: resend confirmation email ----------
 export const resendOrderConfirmation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { orderId: string; siteUrl?: string }) => ({
+    orderId: uuid.parse(d.orderId),
+    siteUrl: d.siteUrl?.slice(0, 400),
+  }))
+  .handler(async ({ data }) => {
+    const { sendOrderConfirmation } = await import("@/lib/tickets-emails.server");
+    return sendOrderConfirmation({ orderId: data.orderId, siteUrl: data.siteUrl });
+  });
+
+// ---------- Owner: refund an order ----------
+const RefundInput = z.object({
+  orderId: uuid,
+  amountCents: z.number().int().min(1).optional(), // omit for full refund
+  reason: z.string().max(400).optional(),
+  environment: z.enum(["sandbox", "live"]),
+});
+export const refundTicketOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => RefundInput.parse(d))
+  .handler(async ({ data, context }) => {
+    // Verify caller owns the event
+    const { data: order, error } = await context.supabase
+      .from("ticket_orders")
+      .select("id, event_id, ticket_type_id, quantity, amount_cents, refund_amount_cents, status, stripe_payment_intent")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!order) throw new Error("Order not found");
+    if (order.status !== "paid" && order.status !== "partially_refunded") {
+      throw new Error("Only paid orders can be refunded");
+    }
+    const alreadyRefunded = order.refund_amount_cents ?? 0;
+    const maxRefundable = (order.amount_cents ?? 0) - alreadyRefunded;
+    const requested = data.amountCents ?? maxRefundable;
+    if (requested <= 0 || requested > maxRefundable) {
+      throw new Error(`Refundable amount is ${maxRefundable / 100}`);
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Free orders (no PI) skip Stripe.
+    if (order.stripe_payment_intent) {
+      try {
+        const stripe = createStripeClient(data.environment);
+        await stripe.refunds.create({
+          payment_intent: order.stripe_payment_intent,
+          amount: requested,
+          reason: "requested_by_customer",
+          metadata: { orderId: order.id, note: data.reason ?? "" },
+        });
+      } catch (e) {
+        throw new Error(getStripeErrorMessage(e));
+      }
+    }
+
+    const newRefunded = alreadyRefunded + requested;
+    const isFull = newRefunded >= (order.amount_cents ?? 0);
+
+    await supabaseAdmin
+      .from("ticket_orders")
+      .update({
+        refund_amount_cents: newRefunded,
+        refund_reason: data.reason ?? null,
+        refunded_at: new Date().toISOString(),
+        status: isFull ? "refunded" : "partially_refunded",
+      })
+      .eq("id", order.id);
+
+    // On full refund release inventory + invalidate attendees (not checked in).
+    if (isFull) {
+      const { data: t } = await supabaseAdmin
+        .from("ticket_types").select("sold_count").eq("id", order.ticket_type_id).single();
+      await supabaseAdmin
+        .from("ticket_types")
+        .update({ sold_count: Math.max(0, (t?.sold_count ?? 0) - order.quantity) })
+        .eq("id", order.ticket_type_id);
+      await supabaseAdmin
+        .from("ticket_attendees")
+        .delete()
+        .eq("order_id", order.id)
+        .is("checked_in_at", null);
+    }
+
+    return { ok: true, refunded_cents: newRefunded, status: isFull ? "refunded" : "partially_refunded" };
+  });
+
+// ---------- Owner/attendee: build PDF for order (returns base64 bytes) ----------
+export const getOrderTicketsPdf = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { orderId: string }) => ({ orderId: uuid.parse(d.orderId) }))
   .handler(async ({ data, context }) => {
     const { data: order, error } = await context.supabase
-      .from("ticket_orders").select("buyer_email").eq("id", data.orderId).maybeSingle();
+      .from("ticket_orders")
+      .select("id, event_id, ticket_type_id, buyer_name")
+      .eq("id", data.orderId)
+      .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!order?.buyer_email) throw new Error("No email on order");
-    // Email delivery hook — integrate with your transactional provider here.
-    return { ok: true, email: order.buyer_email };
+    if (!order) throw new Error("Order not found");
+
+    const [{ data: ev }, { data: type }, { data: attendees }] = await Promise.all([
+      context.supabase.from("events").select("name, event_date, event_time, location").eq("id", order.event_id).maybeSingle(),
+      context.supabase.from("ticket_types").select("name").eq("id", order.ticket_type_id).maybeSingle(),
+      context.supabase.from("ticket_attendees").select("qr_code, full_name").eq("order_id", order.id).order("created_at", { ascending: true }),
+    ]);
+    if (!attendees?.length) throw new Error("No attendees for this order yet.");
+
+    const { buildTicketPdf } = await import("@/lib/tickets-emails.server");
+    const when = ev?.event_date
+      ? new Date(`${ev.event_date}T${(ev.event_time as string) ?? "00:00"}`).toLocaleString(undefined, { dateStyle: "full", timeStyle: ev.event_time ? "short" : undefined })
+      : null;
+    const bytes = await buildTicketPdf({
+      eventName: ev?.name ?? "Event",
+      eventWhen: when,
+      eventLocation: ev?.location ?? null,
+      ticketName: type?.name ?? "Admission",
+      attendeeName: order.buyer_name,
+      orderId: order.id,
+      attendees: attendees as { qr_code: string; full_name: string | null }[],
+    });
+    // Base64 so it round-trips through JSON.
+    const base64 = Buffer.from(bytes).toString("base64");
+    return { base64, filename: `tickets-${order.id.slice(0, 8)}.pdf` };
   });
+
 
 // ---------- Public: fetch event + active ticket types ----------
 export const getPublicEventTickets = createServerFn({ method: "GET" })
