@@ -399,8 +399,13 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
         await supabaseAdmin.from("ticket_types")
           .update({ sold_count: (t.sold_count ?? 0) + data.quantity })
           .eq("id", t.id);
+        try {
+          const { sendOrderConfirmation } = await import("@/lib/tickets-emails.server");
+          await sendOrderConfirmation({ orderId: order.id });
+        } catch (e) { console.error("free ticket email failed", e); }
         return { clientSecret: `free_${order.id}` };
       }
+
 
       const stripe = createStripeClient(data.environment);
       const amount = t.price_cents * data.quantity;
@@ -464,6 +469,7 @@ export const finalizeTicketOrder = createServerFn({ method: "POST" })
 
       await supabaseAdmin.from("ticket_orders").update({
         status: "paid",
+        finalized_at: new Date().toISOString(),
         stripe_payment_intent: typeof session.payment_intent === "string" ? session.payment_intent : null,
       }).eq("id", orderId);
 
@@ -480,11 +486,17 @@ export const finalizeTicketOrder = createServerFn({ method: "POST" })
         .update({ sold_count: (t?.sold_count ?? 0) + existing.quantity })
         .eq("id", existing.ticket_type_id);
 
+      try {
+        const { sendOrderConfirmation } = await import("@/lib/tickets-emails.server");
+        await sendOrderConfirmation({ orderId });
+      } catch (e) { console.error("ticket confirmation email failed", e); }
+
       return { ok: true };
     } catch (error) {
       return { ok: false, error: getStripeErrorMessage(error) };
     }
   });
+
 
 // ---------- AI: quick create from natural language ----------
 export function parseTicketPrompt(input: string): { name: string; quantity: number | null; price_cents: number } | null {
