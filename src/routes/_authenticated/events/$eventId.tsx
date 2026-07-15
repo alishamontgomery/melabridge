@@ -720,7 +720,7 @@ function DetailsTab({ event, onSaved }: { event: Event; onSaved: () => Promise<v
           <div className="space-y-1.5"><Label>Location</Label><Input value={f.location} onChange={(e) => setF({ ...f, location: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Date</Label><Input type="date" value={f.date} onChange={(e) => setF({ ...f, date: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Time</Label><Input type="time" value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} /></div>
-          <div className="space-y-1.5"><Label>Guest target</Label><Input type="number" min="0" value={f.guest_target} onChange={(e) => setF({ ...f, guest_target: e.target.value })} /></div>
+          <div className="space-y-1.5"><Label>Expected guests</Label><Input type="number" min="0" value={f.guest_target} onChange={(e) => setF({ ...f, guest_target: e.target.value })} /></div>
           <div className="space-y-1.5"><Label>Budget target ($)</Label><Input type="number" min="0" value={f.budget_target} onChange={(e) => setF({ ...f, budget_target: e.target.value })} /></div>
         </div>
         <div className="space-y-1.5"><Label>Vision</Label><Textarea rows={3} value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} /></div>
