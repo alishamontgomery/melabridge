@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Handshake, Users, MessageSquare } from "lucide-react";
+import { Handshake, Users } from "lucide-react";
 
 export const Route = createFileRoute("/collaboration")({
   head: () => ({
