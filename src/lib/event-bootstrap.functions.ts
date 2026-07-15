@@ -162,7 +162,13 @@ function computeRunsheetTime(baseStart: string | null, offsetMin: number): strin
   return `${pad(h)}:${pad(m)}:00`;
 }
 
-async function callAI(eventContext: Record<string, unknown>, template: EventTemplate, totalBudget: number): Promise<BootstrapPlan | null> {
+async function callAI(
+  eventContext: Record<string, unknown>,
+  template: EventTemplate,
+  totalBudget: number,
+  shopping: ShoppingTemplate[],
+  invitationGuidance: string,
+): Promise<BootstrapPlan | null> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) return null;
 
@@ -174,14 +180,18 @@ Return ONLY JSON with this exact shape:
   "tasks": [{ "title": "...", "description": "...", "priority": "low|medium|high|urgent", "days_before_event": 30 }],
   "budget_items": [{ "category": "Venue", "label": "Venue rental", "estimated_amount": 12000, "notes": "" }],
   "runsheet": [{ "title": "Guests arrive", "offset_min": 0, "duration_min": 30, "owner": "Ushers", "notes": "" }],
-  "vendor_needs": [{ "category": "Photographer", "status": "required|recommended|optional", "priority": 1, "notes": "" }]
+  "vendor_needs": [{ "category": "Photographer", "status": "required|recommended|optional", "priority": 1, "notes": "" }],
+  "shopping_list": [{ "category": "Reception", "item": "Table numbers", "quantity": "1 per table", "notes": "" }],
+  "invitation_guidance": "2-4 short sentences on WHEN and HOW to invite guests for this specific event"
 }
 Rules:
-- Tasks: adapt count to event scale (birthday ~20, wedding 40+, corporate ~20). Order by days_before_event descending. Include "day of" (days_before_event: 0) and post-event follow-ups (negative days_before_event).
+- Tasks: adapt count to event scale (birthday ~20, wedding 40+, corporate ~20). Order by days_before_event descending. Include "day of" (0) and post-event follow-ups (negative).
 - Budget: sum of estimated_amount should be close to the event's budget_target when provided; otherwise use reasonable numbers for the guest count.
 - Runsheet: offset_min is minutes from event start (negative = setup before start). Include vendor arrival, guest arrival, program, food, entertainment, teardown.
 - Vendor needs: only categories that make sense for this event type.
-- Never omit any of the four arrays.
+- Shopping list: 8-20 concrete physical items the planner must buy or bring. Never repeat vendor deliverables.
+- Invitation guidance: specific to guest count and event type. Include timing (weeks out), channel (paper/digital), and what to include.
+- Never omit any array or field.
 - No markdown. No emojis. Plain concise language.`;
 
   try {
@@ -189,7 +199,7 @@ Rules:
       method: "POST",
       headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.5-flash",
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: system },
@@ -197,7 +207,7 @@ Rules:
             role: "user",
             content: JSON.stringify({
               event: eventContext,
-              starter_template: templateToPlan(template, totalBudget),
+              starter_template: templateToPlan(template, totalBudget, shopping, invitationGuidance),
             }),
           },
         ],
@@ -212,6 +222,7 @@ Rules:
     return null;
   }
 }
+
 
 export const bootstrapEventPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
