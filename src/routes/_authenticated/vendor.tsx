@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Store, Calendar, MessageSquare, Wallet, Bell, Sparkles,
+  Store, Calendar, Wallet, Bell, Sparkles,
   Plus, UserPlus, FileText, ScrollText, CreditCard, Mail, CalendarSync, CalendarX2,
   TrendingUp, Activity, CheckCircle2, Clock, AlertCircle,
 } from "lucide-react";
@@ -24,7 +24,7 @@ type EventRow = {
 };
 type TaskRow = { id: string; title: string; due_date: string | null; status: string; priority: string | null };
 type NotifRow = { id: string; title: string; body: string | null; category: string | null; created_at: string; read_at: string | null };
-type MsgConvo = { id: string; title: string | null; last_message_preview: string | null; last_message_at: string | null };
+
 
 function greeting() {
   const h = new Date().getHours();
@@ -44,11 +44,11 @@ function formatTime(t: string | null) {
 const QUICK_ACTIONS = [
   { label: "New Event", to: "/events/new", icon: Plus },
   { label: "AI Draft Inbox", to: "/drafts", icon: Sparkles },
-  { label: "New Lead", to: "/messaging", icon: UserPlus },
+  { label: "New Lead", to: "/vendor-portal", icon: UserPlus },
   { label: "Create Quote", to: "/bookings", icon: FileText },
   { label: "Send Contract", to: "/bookings", icon: ScrollText },
   { label: "Collect Payment", to: "/bookings", icon: CreditCard },
-  { label: "Email Client", to: "/messaging", icon: Mail },
+  { label: "Client Notes", to: "/bookings", icon: Mail },
   { label: "Calendar Sync", to: "/settings/calendar", icon: CalendarSync },
   { label: "Block Dates", to: "/calendar/settings", icon: CalendarX2 },
 ] as const;
@@ -60,20 +60,18 @@ function VendorDashboardPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [notifs, setNotifs] = useState<NotifRow[]>([]);
-  const [messages, setMessages] = useState<MsgConvo[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [p, v, e, t, n, m] = await Promise.all([
+      const [p, v, e, t, n] = await Promise.all([
         supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
         supabase.from("vendor_profiles").select("business_name").eq("user_id", user.id).maybeSingle(),
         supabase.from("events").select("id,name,event_date,start_time,status,client_name,deposit_required,deposit_paid,payment_status").eq("owner_id", user.id).is("deleted_at", null).order("event_date", { ascending: true, nullsFirst: false }).limit(50),
         supabase.from("tasks").select("id,title,due_date,status,priority").eq("assigned_to", user.id).is("deleted_at", null).neq("status", "done").order("due_date", { ascending: true, nullsFirst: false }).limit(10),
         supabase.from("notifications").select("id,title,body,category,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6),
-        supabase.from("conversations").select("id,title,last_message_preview,last_message_at").eq("owner_id", user.id).order("last_message_at", { ascending: false, nullsFirst: false }).limit(5),
       ]);
       if (cancelled) return;
       setDisplayName(p.data?.display_name ?? user.email?.split("@")[0] ?? "there");
@@ -81,7 +79,6 @@ function VendorDashboardPage() {
       setEvents((e.data as EventRow[]) ?? []);
       setTasks((t.data as TaskRow[]) ?? []);
       setNotifs((n.data as NotifRow[]) ?? []);
-      setMessages((m.data as MsgConvo[]) ?? []);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -211,7 +208,7 @@ function VendorDashboardPage() {
           <ListCard title="Upcoming bookings" empty="No upcoming bookings yet." to="/events" items={upcomingBookings.slice(0, 5).map((e) => ({
             id: e.id, primary: e.name, secondary: `${e.event_date ?? "TBD"}${e.client_name ? ` · ${e.client_name}` : ""}`, href: `/events/${e.id}`,
           }))} loading={loading} />
-          <ListCard title="New leads" empty="No leads waiting." to="/messaging" items={newLeads.slice(0, 5).map((e) => ({
+          <ListCard title="New leads" empty="No leads waiting." to="/vendor-portal" items={newLeads.slice(0, 5).map((e) => ({
             id: e.id, primary: e.client_name ?? e.name, secondary: e.name, href: `/events/${e.id}`,
           }))} loading={loading} />
           <ListCard title="Awaiting payments" empty="All paid up." to="/bridgepay" items={awaitingPayments.slice(0, 5).map((e) => {
@@ -220,26 +217,9 @@ function VendorDashboardPage() {
           })} loading={loading} />
         </div>
 
-        {/* Messages + Tasks + Notifications */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="border-border/60 p-5 shadow-soft">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-base font-semibold">Recent messages</h2>
-              <Button asChild variant="ghost" size="sm"><Link to="/messaging">Inbox</Link></Button>
-            </div>
-            {messages.length === 0 ? <EmptyRow icon={MessageSquare} text="No messages yet." /> : (
-              <ul className="divide-y divide-border/60">
-                {messages.map((m) => (
-                  <li key={m.id} className="py-2.5">
-                    <Link to="/messaging" className="block">
-                      <p className="truncate text-sm font-medium">{m.title ?? "Conversation"}</p>
-                      <p className="truncate text-xs text-muted-foreground">{m.last_message_preview ?? "—"}</p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+        {/* Tasks + Notifications */}
+        <div className="grid gap-4 lg:grid-cols-2">
+
 
           <Card className="border-border/60 p-5 shadow-soft">
             <div className="mb-3 flex items-center justify-between">

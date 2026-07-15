@@ -9,7 +9,7 @@ import {
   BarChart3,
   Ticket,
   HeartHandshake,
-  MessageSquare,
+  
   FolderOpen,
   FileBarChart,
   Settings,
@@ -65,7 +65,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   { id: "m-intel", kind: "module", title: "Bridge Intelligence™", subtitle: "Community benchmarks", to: "/bridge-intelligence", icon: BarChart3 },
   { id: "m-tickets", kind: "module", title: "Tickets", subtitle: "Sell + track admissions", to: "/tickets", icon: Ticket },
   { id: "m-fund", kind: "module", title: "Fundraising", subtitle: "Campaigns + donors", to: "/fundraising", icon: HeartHandshake },
-  { id: "m-msg", kind: "module", title: "Messaging", subtitle: "Guests, vendors, team", to: "/messaging", icon: MessageSquare },
+  
   { id: "m-files", kind: "module", title: "Files", subtitle: "Docs, media, contracts", to: "/files", icon: FolderOpen },
   { id: "m-reports", kind: "module", title: "Reports", subtitle: "Analytics by event", to: "/reports", icon: FileBarChart },
   { id: "m-settings", kind: "module", title: "Settings", subtitle: "Account, privacy, workspace", to: "/settings", icon: Settings },
@@ -96,9 +96,6 @@ export const SEARCH_INDEX: SearchItem[] = [
   { id: "t2", kind: "task", title: "Send save-the-dates (batch 2)", subtitle: "Due today", to: "/tasks", icon: ClipboardList },
   { id: "t3", kind: "task", title: "Approve caterer tasting menu", subtitle: "Due tomorrow", to: "/tasks", icon: ClipboardList },
 
-  // Messages
-  { id: "msg1", kind: "message", title: "Priya: 'Is a vegan option possible?'", subtitle: "Guest thread · 2h ago", to: "/messaging", icon: MessageSquare },
-  { id: "msg2", kind: "message", title: "Studio Nero sent the shot list", subtitle: "Vendor thread · Yesterday", to: "/messaging", icon: MessageSquare },
 
   // Budget items
   { id: "b1", kind: "budget", title: "Venue — $22,000 committed", subtitle: "32% of budget", to: "/budget", icon: Wallet },

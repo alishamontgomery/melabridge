@@ -33,8 +33,8 @@ export function parseNLCommand(input: string): NLCommand[] {
       out.push({ label: "Browse Marketplace", to: "/marketplace", hint: "Search vendors" });
     }
   }
-  if (has("draft", "write") && has("message", "email", "invite", "note")) {
-    out.push({ label: "Draft with AI", to: "/messaging" });
+  if (has("draft", "write") && has("note", "task")) {
+    out.push({ label: "Draft with AI", to: "/tasks" });
   }
   if (has("ask", "help", "assist") || q.startsWith("how ") || q.startsWith("why ") || q.startsWith("what ")) {
     out.push({ label: "Ask MelaAssist™", to: "/concierge" });

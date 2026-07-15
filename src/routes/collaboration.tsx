@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Handshake, Users, MessageSquare } from "lucide-react";
+import { Handshake, Users } from "lucide-react";
 
 export const Route = createFileRoute("/collaboration")({
   head: () => ({
@@ -35,11 +35,11 @@ function CollabPage() {
             cta="Open Team"
           />
           <ActionCard
-            icon={MessageSquare}
-            title="Message your team"
-            description="Threaded conversations with planners, vendors, and guests."
-            to="/messaging"
-            cta="Open Messages"
+            icon={Handshake}
+            title="Share files"
+            description="Contracts, moodboards, and vendor deliverables in one place."
+            to="/files"
+            cta="Open Files"
           />
         </div>
 

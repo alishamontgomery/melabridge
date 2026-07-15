@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   Activity, ArrowRight, Calendar, CheckCircle2, ClipboardList, Clock,
-  DollarSign, Heart, Map, MapPin, MessageSquare, PartyPopper, Plus,
-  Send, Sparkles, Store, Timer, TrendingUp, Users, Wallet, Zap,
+  DollarSign, Heart, Map, MapPin, PartyPopper, Plus,
+  Sparkles, Store, Timer, TrendingUp, Users, Wallet, Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -301,12 +301,11 @@ export function EventOverview({
       {/* ============ QUICK ACTIONS ============ */}
       <div>
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Quick actions</h3>
-        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <QuickAction icon={Plus} label="Add Task" onClick={() => onOpenTab("tasks")} />
           <QuickAction icon={Users} label="Invite Guests" onClick={() => onOpenTab("guests")} />
           <QuickAction icon={Store} label="Find Vendors" onClick={() => navigate({ to: "/vendors" })} />
           <QuickAction icon={Map} label="Timeline" onClick={() => navigate({ to: "/timeline" })} />
-          <QuickAction icon={Send} label="Send Update" onClick={() => navigate({ to: "/messaging" })} />
         </div>
       </div>
 

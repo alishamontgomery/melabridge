@@ -1,12 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Calendar, Store, MessageSquare, Mail, Users, Wallet, FileText } from "lucide-react";
+import { Sparkles, Calendar, Store, Users, Wallet, FileText, ClipboardList } from "lucide-react";
 
 const ACTIONS = [
   { to: "/timeline", label: "Build timeline", icon: Calendar },
   { to: "/vendors", label: "Find vendors", icon: Store },
-  { to: "/messaging", label: "Send reminders", icon: MessageSquare },
-  { to: "/messaging", label: "Draft invitations", icon: Mail },
+  { to: "/tasks", label: "Track tasks", icon: ClipboardList },
   { to: "/guests", label: "Organize seating", icon: Users },
   { to: "/budget", label: "Track budget", icon: Wallet },
   { to: "/bookings", label: "Compare quotes", icon: FileText },

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/module-page";
-import { Sparkles, Inbox, ClipboardCheck, CalendarClock, TrendingUp, MessageSquare, Loader2 } from "lucide-react";
+import { Sparkles, Inbox, ClipboardCheck, CalendarClock, TrendingUp, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/bridgepilot")({
@@ -46,15 +46,15 @@ function MelaAssistPage() {
         return;
       }
 
-      const [profileRes, tasksRes, convRes] = await Promise.all([
+      const [profileRes, tasksRes, notifRes] = await Promise.all([
         supabase.from("vendor_profiles").select("business_name").eq("user_id", uid).maybeSingle(),
         supabase.from("tasks").select("id", { count: "exact", head: true }).eq("assigned_to", uid).neq("status", "done"),
-        supabase.from("conversation_participants").select("conversation_id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", uid).is("read_at", null),
       ]);
 
       if (cancelled) return;
       setStats({
-        unreadThreads: convRes.count ?? 0,
+        unreadThreads: notifRes.count ?? 0,
         openTasks: tasksRes.count ?? 0,
         upcomingBookings: 0,
         vendorProfile: profileRes.data ? { business_name: profileRes.data.business_name } : null,
@@ -96,7 +96,7 @@ function MelaAssistPage() {
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <StatCard icon={Inbox} label="Active conversations" value={stats.unreadThreads} to="/messaging" />
+              <StatCard icon={Inbox} label="Notifications" value={stats.unreadThreads} to="/notifications" />
               <StatCard icon={ClipboardCheck} label="Open tasks" value={stats.openTasks} to="/tasks" />
               <StatCard icon={CalendarClock} label="Upcoming bookings" value={stats.upcomingBookings} to="/timeline" />
               <StatCard
@@ -110,16 +110,16 @@ function MelaAssistPage() {
             <Section title="Get started">
               <div className="grid gap-4 md:grid-cols-2">
                 <ActionCard
-                  icon={MessageSquare}
-                  title="Reply to your inbox"
-                  description="Manage client conversations and quotes in one thread."
-                  to="/messaging"
-                />
-                <ActionCard
                   icon={ClipboardCheck}
                   title="Review open tasks"
                   description="Stay on top of proposals, deliverables, and follow-ups."
                   to="/tasks"
+                />
+                <ActionCard
+                  icon={CalendarClock}
+                  title="Check the timeline"
+                  description="See what's coming up across your events."
+                  to="/timeline"
                 />
               </div>
             </Section>

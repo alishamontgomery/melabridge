@@ -119,9 +119,9 @@ function HelpPage() {
             <Card className="border-border/60 p-5 shadow-soft">
               <MessageCircle className="mb-2 h-5 w-5 text-primary" />
               <p className="text-sm font-semibold">Ask MelaAssist™</p>
-              <p className="mt-1 text-xs text-muted-foreground">Get planning help from your AI assistant in Messaging.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Get planning help from your AI assistant.</p>
               <Button asChild variant="outline" size="sm" className="mt-3">
-                <a href="/messaging">Open Messaging</a>
+                <a href="/concierge">Open MelaAssist™</a>
               </Button>
             </Card>
           </div>

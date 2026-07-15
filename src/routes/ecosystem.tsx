@@ -11,7 +11,7 @@ import {
   Store,
   ClipboardList,
   Calendar,
-  MessageSquare,
+  Bell,
   Vault,
   Dna,
   BarChart3,
@@ -156,7 +156,7 @@ const RELATIONSHIPS = [
       { m: "Timeline", to: "/timeline", icon: Calendar, note: "Milestones added" },
       { m: "Tasks", to: "/tasks", icon: ClipboardList, note: "Reminders cleared" },
       { m: "Budget", to: "/budget", icon: Wallet, note: "Marks amount committed" },
-      { m: "Collaboration", to: "/collaboration", icon: MessageSquare, note: "Feed post" },
+      { m: "Team", to: "/team", icon: Users, note: "Team notified" },
     ],
   },
   {
@@ -164,7 +164,7 @@ const RELATIONSHIPS = [
     icon: CloudRain,
     reacts: [
       { m: "Decision Center™", to: "/decisions", icon: Lightbulb, note: "AI drafts contingency" },
-      { m: "Messaging", to: "/messaging", icon: MessageSquare, note: "Vendor notifications ready" },
+      { m: "Notifications", to: "/notifications", icon: Bell, note: "Alerts ready" },
       { m: "BridgeVault™", to: "/bridgevault", icon: Vault, note: "Forecast archived" },
       { m: "Intelligence", to: "/bridge-intelligence", icon: BarChart3, note: "Benchmark check" },
     ],

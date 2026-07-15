@@ -9,7 +9,7 @@ import {
   Wallet,
   ClipboardList,
   Calendar,
-  MessageSquare,
+  
   FolderOpen,
   Settings as SettingsIcon,
   Menu,
@@ -73,11 +73,10 @@ const PLANNER_NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Communication",
+    label: "Team",
     items: [
-      { to: "/messaging", label: "Messages", icon: MessageSquare },
-      { to: "/notifications", label: "Scheduled Reminders", icon: BellRing },
       { to: "/team", label: "Team", icon: Users },
+      { to: "/notifications", label: "Notifications", icon: BellRing },
     ],
   },
   {
@@ -113,10 +112,6 @@ const VENDOR_NAV: NavGroup[] = [
     ],
   },
   {
-    label: "Communication",
-    items: [{ to: "/messaging", label: "Messages", icon: MessageSquare }],
-  },
-  {
     label: "Resources",
     items: [{ to: "/files", label: "Files", icon: FolderOpen }],
   },
@@ -138,7 +133,6 @@ const GUEST_NAV: NavGroup[] = [
       { to: "/guest-portal", label: "Event & RSVP", icon: Calendar },
       { to: "/timeline", label: "Schedule", icon: Calendar },
       { to: "/travel", label: "Travel", icon: Boxes },
-      { to: "/messaging", label: "Messages", icon: MessageSquare },
     ],
   },
 ];

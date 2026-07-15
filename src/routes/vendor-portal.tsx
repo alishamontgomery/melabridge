@@ -74,10 +74,10 @@ function VendorPortalPage() {
             <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
             <h3 className="font-display text-lg font-semibold">No leads or bookings yet</h3>
             <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-              As planners contact you through MelaBridge, leads and bookings will appear here. Manage active conversations in your inbox.
+              As planners contact you through MelaBridge, leads and bookings will appear here.
             </p>
             <div className="mt-4 flex justify-center gap-2">
-              <Button asChild variant="outline"><Link to="/messaging">Open inbox</Link></Button>
+              <Button asChild variant="outline"><Link to="/bookings">View bookings</Link></Button>
               <Button asChild><Link to="/bridgepilot">Open MelaAssist™</Link></Button>
             </div>
           </Card>

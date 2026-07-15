@@ -76,7 +76,7 @@ function GuestsPage() {
       const matchQ =
         q === "" ||
         g.full_name.toLowerCase().includes(q.toLowerCase()) ||
-        (g.household ?? "").toLowerCase().includes(q.toLowerCase());
+        (g.email ?? "").toLowerCase().includes(q.toLowerCase());
       return matchFilter && matchQ;
     });
   }, [guests, q, filter]);
@@ -142,7 +142,7 @@ function GuestsPage() {
           <div className="mt-6 mb-3 flex flex-wrap items-center gap-2">
             <div className="relative flex-1 min-w-[220px]">
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search guests or households…" className="pl-9" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search guests by name or email…" className="pl-9" />
             </div>
             {(["all", "confirmed", "pending", "declined"] as const).map((f) => (
               <button
@@ -164,7 +164,7 @@ function GuestsPage() {
               <thead className="bg-muted/50 text-xs uppercase tracking-widest text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2 text-left">Guest</th>
-                  <th className="px-4 py-2 text-left">Household</th>
+                  <th className="px-4 py-2 text-left">Phone</th>
                   <th className="px-4 py-2 text-left">+1s</th>
                   <th className="px-4 py-2 text-left">RSVP</th>
                   <th className="px-4 py-2 text-left">Meal</th>
@@ -179,7 +179,7 @@ function GuestsPage() {
                         <p className="font-medium">{g.full_name}</p>
                         {g.email && <p className="text-xs text-muted-foreground">{g.email}</p>}
                       </td>
-                      <td className="px-4 py-2.5 text-muted-foreground">{g.household ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-muted-foreground">{g.phone ?? "—"}</td>
                       <td className="px-4 py-2.5">{g.plus_ones ?? 0}</td>
                       <td className="px-4 py-2.5">
                         <Badge
