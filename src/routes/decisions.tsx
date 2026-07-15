@@ -30,9 +30,9 @@ function DecisionsPage() {
           <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
           <h3 className="font-display text-lg font-semibold">Decision Center launching soon</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Polls, vendor comparisons, and MelaAssist™ recommendations are on the way. Meanwhile, discuss decisions with your team in messages.
+            Polls, vendor comparisons, and MelaAssist™ recommendations are on the way. In the meantime, plan next steps with your team.
           </p>
-          <Button asChild className="mt-4"><Link to="/messaging">Open messages</Link></Button>
+          <Button asChild className="mt-4"><Link to="/team">Open team</Link></Button>
         </Card>
       </div>
     </AppShell>
