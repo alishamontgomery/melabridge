@@ -65,7 +65,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   { id: "m-intel", kind: "module", title: "Bridge Intelligence™", subtitle: "Community benchmarks", to: "/bridge-intelligence", icon: BarChart3 },
   { id: "m-tickets", kind: "module", title: "Tickets", subtitle: "Sell + track admissions", to: "/tickets", icon: Ticket },
   { id: "m-fund", kind: "module", title: "Fundraising", subtitle: "Campaigns + donors", to: "/fundraising", icon: HeartHandshake },
-  { id: "m-msg", kind: "module", title: "Messaging", subtitle: "Guests, vendors, team", to: "/messaging", icon: MessageSquare },
+  
   { id: "m-files", kind: "module", title: "Files", subtitle: "Docs, media, contracts", to: "/files", icon: FolderOpen },
   { id: "m-reports", kind: "module", title: "Reports", subtitle: "Analytics by event", to: "/reports", icon: FileBarChart },
   { id: "m-settings", kind: "module", title: "Settings", subtitle: "Account, privacy, workspace", to: "/settings", icon: Settings },
