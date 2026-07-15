@@ -407,31 +407,23 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
       }
       // Unlisted tickets can be bought via direct link; no extra check here.
 
-      // Free tickets: skip Stripe entirely
+      // Free tickets: atomic RPC (locks type row, validates, inserts order+attendees, bumps sold_count).
       if (t.price_cents === 0) {
-        const { data: order, error: oErr } = await supabaseAdmin
-          .from("ticket_orders")
-          .insert({
-            event_id: t.event_id, ticket_type_id: t.id,
-            buyer_name: data.buyerName, buyer_email: data.buyerEmail,
-            quantity: data.quantity, amount_cents: 0, currency: t.currency, status: "paid",
-          }).select("id").single();
-        if (oErr || !order) return { error: oErr?.message ?? "Could not reserve free tickets" };
-        const attendees = Array.from({ length: data.quantity }, (_, i) => ({
-          order_id: order.id, event_id: t.event_id,
-          full_name: i === 0 ? data.buyerName : null,
-          email: i === 0 ? data.buyerEmail : null,
-        }));
-        await supabaseAdmin.from("ticket_attendees").insert(attendees);
-        await supabaseAdmin.from("ticket_types")
-          .update({ sold_count: (t.sold_count ?? 0) + data.quantity })
-          .eq("id", t.id);
+        const { data: newOrderId, error: rpcErr } = await supabaseAdmin.rpc("claim_free_tickets", {
+          _ticket_type_id: t.id,
+          _buyer_name: data.buyerName,
+          _buyer_email: data.buyerEmail,
+          _quantity: data.quantity,
+          _promo_code: data.promoCode ?? undefined,
+        });
+        if (rpcErr || !newOrderId) return { error: rpcErr?.message ?? "Could not reserve free tickets" };
         try {
           const { sendOrderConfirmation } = await import("@/lib/tickets-emails.server");
-          await sendOrderConfirmation({ orderId: order.id });
+          await sendOrderConfirmation({ orderId: newOrderId as string });
         } catch (e) { console.error("free ticket email failed", e); }
-        return { clientSecret: `free_${order.id}` };
+        return { clientSecret: `free_${newOrderId}` };
       }
+
 
 
       const stripe = createStripeClient(data.environment);
