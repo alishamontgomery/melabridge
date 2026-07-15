@@ -190,12 +190,15 @@ function FilesPage() {
         multiple
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files;
-          if (f && f.length) {
-            setUploading(true);
-            upload.mutate(f);
-          }
+          // Snapshot into a File[] BEFORE resetting input.value — a live
+          // FileList reference is emptied when we clear the input, which
+          // caused the async mutation to see 0 files ("No files selected").
+          const items = e.target.files ? Array.from(e.target.files) : [];
           e.target.value = "";
+          if (items.length) {
+            setUploading(true);
+            upload.mutate(items);
+          }
         }}
       />
 
