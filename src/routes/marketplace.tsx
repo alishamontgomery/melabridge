@@ -173,11 +173,18 @@ function VendorCard({ v }: { v: VendorRow }) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="flex-1">View profile</Button>
-          <Button size="sm" className="flex-1" onClick={() => save.mutate()} disabled={save.isPending}>
-            <Bookmark className="mr-1 h-3.5 w-3.5" />
-            {save.isPending ? "Saving…" : "Save vendor"}
-          </Button>
+          {user ? (
+            <Button size="sm" className="flex-1" onClick={() => save.mutate()} disabled={save.isPending}>
+              <Bookmark className="mr-1 h-3.5 w-3.5" />
+              {save.isPending ? "Saving…" : "Save vendor"}
+            </Button>
+          ) : (
+            <Button size="sm" className="flex-1" asChild>
+              <Link to="/auth"><Bookmark className="mr-1 h-3.5 w-3.5" /> Sign in to save</Link>
+            </Button>
+          )}
         </div>
+
       </div>
     </Card>
   );
