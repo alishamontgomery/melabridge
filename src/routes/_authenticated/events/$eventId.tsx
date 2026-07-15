@@ -26,6 +26,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { EventOverview } from "@/components/event-overview";
 import { RunsheetTab } from "@/components/runsheet-tab";
 import { VendorNeedsTab } from "@/components/vendor-needs-tab";
+import { ShoppingListTab } from "@/components/shopping-list-tab";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
