@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
+import { PublicShell } from "@/components/public-shell";
+import { useAuth } from "@/lib/auth";
 import { Store, Search, Star, MapPin, BadgeCheck, Sparkles, Filter, Bookmark } from "lucide-react";
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
