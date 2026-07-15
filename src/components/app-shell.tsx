@@ -9,7 +9,7 @@ import {
   Wallet,
   ClipboardList,
   Calendar,
-  MessageSquare,
+  
   FolderOpen,
   Settings as SettingsIcon,
   Menu,
