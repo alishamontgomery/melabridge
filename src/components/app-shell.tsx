@@ -276,10 +276,37 @@ function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: s
 export function AppShell({ active, children }: { active: string; children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { role } = useRole();
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const groups = NAV_BY_ROLE[role];
+
+  useEffect(() => {
+    if (loading || user) return;
+    try {
+      const path = window.location.pathname + window.location.search;
+      if (path && path.startsWith("/") && !path.startsWith("/auth")) {
+        window.sessionStorage.setItem("melabridge.auth.next", path);
+      }
+    } catch {
+      // sessionStorage may be blocked; safe to ignore.
+    }
+    navigate({ to: "/auth", replace: true });
+  }, [loading, user, navigate]);
+
+  if (loading || !user) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background" role="status" aria-live="polite">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-sm">{loading ? "Loading your workspace…" : "Redirecting to sign in…"}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
+
 
       <a
         href="#main-content"
