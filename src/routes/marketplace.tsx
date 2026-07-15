@@ -128,9 +128,10 @@ function MarketplacePage() {
           )}
         </Section>
       </div>
-    </AppShell>
+    </Shell>
   );
 }
+
 
 function VendorCard({ v }: { v: VendorRow }) {
   const location = [v.city, v.state].filter(Boolean).join(", ");
