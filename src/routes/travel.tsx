@@ -30,9 +30,9 @@ function TravelPage() {
           <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
           <h3 className="font-display text-lg font-semibold">Travel coordination launching soon</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Hotel blocks, flight tracking, airport pickups, and live weather forecasts will live here. In the meantime, share travel details with guests through messages.
+            Hotel blocks, flight tracking, airport pickups, and live weather forecasts will live here. In the meantime, share travel details with guests directly.
           </p>
-          <Button asChild className="mt-4"><Link to="/messaging">Message guests</Link></Button>
+          <Button asChild className="mt-4"><Link to="/guests">Manage guests</Link></Button>
         </Card>
       </div>
     </AppShell>
