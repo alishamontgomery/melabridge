@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/module-page";
-import { Sparkles, Inbox, ClipboardCheck, CalendarClock, TrendingUp, MessageSquare, Loader2 } from "lucide-react";
+import { Sparkles, Inbox, ClipboardCheck, CalendarClock, TrendingUp, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/bridgepilot")({
