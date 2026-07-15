@@ -349,3 +349,113 @@ export function getEventTemplate(eventType: string | null | undefined): EventTem
   const key = eventType.trim().toLowerCase();
   return TEMPLATES[key] ?? GENERIC;
 }
+
+// ---------- SHOPPING LISTS ----------
+export type ShoppingTemplate = { category: string; item: string; quantity?: string; notes?: string };
+
+const SHOPPING_WEDDING: ShoppingTemplate[] = [
+  { category: "Ceremony", item: "Marriage certificate holder", quantity: "1" },
+  { category: "Ceremony", item: "Ring pillow or box", quantity: "1" },
+  { category: "Ceremony", item: "Aisle flower petals", quantity: "As needed" },
+  { category: "Reception", item: "Guest book & pens", quantity: "1 book, 3 pens" },
+  { category: "Reception", item: "Card / gift box", quantity: "1" },
+  { category: "Reception", item: "Table numbers & holders", quantity: "1 per table" },
+  { category: "Reception", item: "Place cards", quantity: "1 per guest" },
+  { category: "Reception", item: "Cake knife & server set", quantity: "1" },
+  { category: "Reception", item: "Toast flutes", quantity: "1 per head-table seat" },
+  { category: "Attire", item: "Emergency kit (pins, tape, stain pen)", quantity: "1" },
+  { category: "Attire", item: "Comfortable second pair of shoes", quantity: "1" },
+  { category: "Favors", item: "Guest favors", quantity: "1 per guest" },
+  { category: "Welcome", item: "Welcome bag contents", quantity: "1 per hotel room" },
+  { category: "Day-of", item: "Tips envelopes labeled per vendor", quantity: "1 per vendor" },
+];
+
+const SHOPPING_BIRTHDAY: ShoppingTemplate[] = [
+  { category: "Decor", item: "Balloons + helium", quantity: "1 arch or 30 balloons" },
+  { category: "Decor", item: "Banner or backdrop", quantity: "1" },
+  { category: "Decor", item: "Centerpieces", quantity: "1 per table" },
+  { category: "Cake", item: "Candles + lighter", quantity: "1 set" },
+  { category: "Cake", item: "Cake stand & knife", quantity: "1" },
+  { category: "Tableware", item: "Plates, cups, napkins, cutlery", quantity: "1.25× guest count" },
+  { category: "Tableware", item: "Tablecloths", quantity: "1 per table" },
+  { category: "Activities", item: "Games or activity supplies", quantity: "As planned" },
+  { category: "Favors", item: "Party favors / goodie bags", quantity: "1 per guest" },
+  { category: "Photo", item: "Photo backdrop / props", quantity: "1 set" },
+];
+
+const SHOPPING_CORPORATE: ShoppingTemplate[] = [
+  { category: "Registration", item: "Printed name badges + lanyards", quantity: "1 per attendee" },
+  { category: "Registration", item: "Check-in table signage", quantity: "1" },
+  { category: "Materials", item: "Printed agendas / programs", quantity: "1 per attendee" },
+  { category: "Materials", item: "Notepads & pens", quantity: "1 per attendee" },
+  { category: "Branding", item: "Branded backdrop / step & repeat", quantity: "1" },
+  { category: "Branding", item: "Signage (directional, room names)", quantity: "As needed" },
+  { category: "Swag", item: "Attendee gifts / swag", quantity: "1 per attendee" },
+  { category: "AV", item: "Presenter clickers + spare batteries", quantity: "2 sets" },
+  { category: "Catering", item: "Water bottles for stage / speakers", quantity: "1 per speaker slot" },
+];
+
+const SHOPPING_GENERIC: ShoppingTemplate[] = [
+  { category: "Decor", item: "Basic decor / centerpieces", quantity: "1 per table" },
+  { category: "Tableware", item: "Plates, cups, napkins, cutlery", quantity: "1.25× guest count" },
+  { category: "Signage", item: "Welcome sign", quantity: "1" },
+  { category: "Day-of", item: "Trash bags & cleanup supplies", quantity: "1 pack" },
+  { category: "Day-of", item: "First aid kit", quantity: "1" },
+  { category: "Photo", item: "Backup phone charger / cables", quantity: "2" },
+];
+
+const SHOPPING_BY_KEY: Record<string, ShoppingTemplate[]> = {
+  wedding: SHOPPING_WEDDING,
+  sangeet: SHOPPING_WEDDING,
+  mehndi: SHOPPING_WEDDING,
+  engagement: SHOPPING_WEDDING,
+  "engagement party": SHOPPING_WEDDING,
+  birthday: SHOPPING_BIRTHDAY,
+  "birthday party": SHOPPING_BIRTHDAY,
+  "baby shower": SHOPPING_BIRTHDAY,
+  "bridal shower": SHOPPING_BIRTHDAY,
+  anniversary: SHOPPING_BIRTHDAY,
+  graduation: SHOPPING_BIRTHDAY,
+  reunion: SHOPPING_BIRTHDAY,
+  festival: SHOPPING_BIRTHDAY,
+  "school event": SHOPPING_BIRTHDAY,
+  "community event": SHOPPING_BIRTHDAY,
+  "private celebration": SHOPPING_BIRTHDAY,
+  corporate: SHOPPING_CORPORATE,
+  "corporate event": SHOPPING_CORPORATE,
+  gala: SHOPPING_CORPORATE,
+  fundraiser: SHOPPING_CORPORATE,
+  conference: SHOPPING_CORPORATE,
+};
+
+export function getShoppingTemplate(eventType: string | null | undefined): ShoppingTemplate[] {
+  if (!eventType) return SHOPPING_GENERIC;
+  return SHOPPING_BY_KEY[eventType.trim().toLowerCase()] ?? SHOPPING_GENERIC;
+}
+
+// ---------- INVITATION GUIDANCE ----------
+const INVITE_BY_KEY: Record<string, string> = {
+  wedding:
+    "Send Save-the-Dates about 6 months out (digital is fine), then formal invitations about 10 weeks before. Include ceremony + reception times, dress code, RSVP link, hotel block, and a wedding website URL. Follow up personally with anyone who hasn't RSVP'd 3 weeks out.",
+  birthday:
+    "Send digital invitations 3–4 weeks in advance (Paperless Post, Punchbowl, or a simple RSVP link). Include theme, drop-off / pick-up expectations for kids' events, and any allergy notes. Send a reminder 3 days before.",
+  corporate:
+    "Open registration 6–8 weeks out with a branded landing page + calendar hold. Send a personalized reminder 2 weeks out, a logistics email (parking, badges, agenda) 3 days out, and a same-day 'we're excited to see you' note.",
+  "baby shower":
+    "Send invitations 4–6 weeks in advance. Include the registry link, dress code, and whether it's co-ed. Send a reminder 1 week out with parking and any planned games.",
+  graduation:
+    "Send invitations 3–4 weeks out. Confirm the venue's guest cap first — many ceremonies limit tickets. For the party, follow up 1 week out with parking + timing.",
+  gala:
+    "Send formal invitations 8 weeks out with an early-bird ticket tier. Follow up with sponsors individually and send a final registration push 1 week out.",
+  fundraiser:
+    "Announce 8 weeks out with a compelling ask and matching-gift info. Send tiered email sequences (announce → early-bird close → last week → last day). Personal outreach converts best.",
+};
+
+export function getInvitationGuidance(eventType: string | null | undefined): string {
+  const fallback =
+    "Send invitations 4–6 weeks in advance with a clear RSVP deadline. Include date, time, location, dress code, and any special notes (gifts, dietary preferences). Send one reminder 1 week before to boost response rates.";
+  if (!eventType) return fallback;
+  const key = eventType.trim().toLowerCase();
+  return INVITE_BY_KEY[key] ?? fallback;
+}
+
