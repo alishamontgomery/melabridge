@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { getEventTemplate, type EventTemplate } from "./event-templates";
+import { getEventTemplate, getShoppingTemplate, getInvitationGuidance, type EventTemplate, type ShoppingTemplate } from "./event-templates";
 
 /**
  * AI-first event bootstrap.
@@ -72,6 +72,18 @@ const BootstrapSchema = z.object({
     )
     .max(30)
     .default([]),
+  shopping_list: z
+    .array(
+      z.object({
+        category: z.string().min(1).max(60).default("General"),
+        item: z.string().min(1).max(160),
+        quantity: z.string().max(80).optional().nullable(),
+        notes: z.string().max(300).optional().nullable(),
+      }),
+    )
+    .max(60)
+    .default([]),
+  invitation_guidance: z.string().max(800).optional().default(""),
 });
 
 type BootstrapPlan = z.infer<typeof BootstrapSchema>;
@@ -85,6 +97,8 @@ const Input = z.object({
 function templateToPlan(
   template: EventTemplate,
   totalBudget: number,
+  shopping: ShoppingTemplate[],
+  invitationGuidance: string,
 ): BootstrapPlan {
   const budget_items = template.budget.map((b) => ({
     category: b.category,
@@ -116,8 +130,16 @@ function templateToPlan(
       priority: v.priority,
       notes: v.notes ?? null,
     })),
+    shopping_list: shopping.map((s) => ({
+      category: s.category,
+      item: s.item,
+      quantity: s.quantity ?? null,
+      notes: s.notes ?? null,
+    })),
+    invitation_guidance: invitationGuidance,
   };
 }
+
 
 /** Compose ISO date from event_date + days_before offset. */
 function computeDueDate(eventDate: string | null, daysBefore: number | null | undefined): string | null {
@@ -140,7 +162,13 @@ function computeRunsheetTime(baseStart: string | null, offsetMin: number): strin
   return `${pad(h)}:${pad(m)}:00`;
 }
 
-async function callAI(eventContext: Record<string, unknown>, template: EventTemplate, totalBudget: number): Promise<BootstrapPlan | null> {
+async function callAI(
+  eventContext: Record<string, unknown>,
+  template: EventTemplate,
+  totalBudget: number,
+  shopping: ShoppingTemplate[],
+  invitationGuidance: string,
+): Promise<BootstrapPlan | null> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) return null;
 
@@ -152,14 +180,18 @@ Return ONLY JSON with this exact shape:
   "tasks": [{ "title": "...", "description": "...", "priority": "low|medium|high|urgent", "days_before_event": 30 }],
   "budget_items": [{ "category": "Venue", "label": "Venue rental", "estimated_amount": 12000, "notes": "" }],
   "runsheet": [{ "title": "Guests arrive", "offset_min": 0, "duration_min": 30, "owner": "Ushers", "notes": "" }],
-  "vendor_needs": [{ "category": "Photographer", "status": "required|recommended|optional", "priority": 1, "notes": "" }]
+  "vendor_needs": [{ "category": "Photographer", "status": "required|recommended|optional", "priority": 1, "notes": "" }],
+  "shopping_list": [{ "category": "Reception", "item": "Table numbers", "quantity": "1 per table", "notes": "" }],
+  "invitation_guidance": "2-4 short sentences on WHEN and HOW to invite guests for this specific event"
 }
 Rules:
-- Tasks: adapt count to event scale (birthday ~20, wedding 40+, corporate ~20). Order by days_before_event descending. Include "day of" (days_before_event: 0) and post-event follow-ups (negative days_before_event).
+- Tasks: adapt count to event scale (birthday ~20, wedding 40+, corporate ~20). Order by days_before_event descending. Include "day of" (0) and post-event follow-ups (negative).
 - Budget: sum of estimated_amount should be close to the event's budget_target when provided; otherwise use reasonable numbers for the guest count.
 - Runsheet: offset_min is minutes from event start (negative = setup before start). Include vendor arrival, guest arrival, program, food, entertainment, teardown.
 - Vendor needs: only categories that make sense for this event type.
-- Never omit any of the four arrays.
+- Shopping list: 8-20 concrete physical items the planner must buy or bring. Never repeat vendor deliverables.
+- Invitation guidance: specific to guest count and event type. Include timing (weeks out), channel (paper/digital), and what to include.
+- Never omit any array or field.
 - No markdown. No emojis. Plain concise language.`;
 
   try {
@@ -167,7 +199,7 @@ Rules:
       method: "POST",
       headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "google/gemini-3.5-flash",
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: system },
@@ -175,7 +207,7 @@ Rules:
             role: "user",
             content: JSON.stringify({
               event: eventContext,
-              starter_template: templateToPlan(template, totalBudget),
+              starter_template: templateToPlan(template, totalBudget, shopping, invitationGuidance),
             }),
           },
         ],
@@ -190,6 +222,7 @@ Rules:
     return null;
   }
 }
+
 
 export const bootstrapEventPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -229,8 +262,10 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
       notes: event.event_notes ?? event.description ?? null,
     };
 
-    const aiPlan = await callAI(eventContext, template, totalBudget);
-    const plan = aiPlan ?? templateToPlan(template, totalBudget);
+    const shopping = getShoppingTemplate(event.event_type);
+    const invitationGuidanceDefault = getInvitationGuidance(event.event_type);
+    const aiPlan = await callAI(eventContext, template, totalBudget, shopping, invitationGuidanceDefault);
+    const plan = aiPlan ?? templateToPlan(template, totalBudget, shopping, invitationGuidanceDefault);
     const usedFallback = aiPlan === null;
 
     // Prefer the explicit ceremony start (when the "main event" actually
@@ -314,13 +349,41 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
       vendorNeedsInserted = count ?? rows.length;
     }
 
+    // SHOPPING LIST
+    let shoppingInserted = 0;
+    const { count: shoppingCount } = await supabase
+      .from("event_shopping_items")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", event.id);
+    if ((data.only_if_empty ? (shoppingCount ?? 0) === 0 : true) && plan.shopping_list.length > 0) {
+      const rows = plan.shopping_list.map((s, idx) => ({
+        event_id: event.id,
+        category: s.category || "General",
+        item: s.item,
+        quantity: s.quantity ?? null,
+        notes: s.notes ?? null,
+        sort_order: idx,
+        created_by: userId,
+      }));
+      const { error, count } = await supabase.from("event_shopping_items").insert(rows, { count: "exact" });
+      if (error) throw new Error(`Shopping insert: ${error.message}`);
+      shoppingInserted = count ?? rows.length;
+    }
+
+    // INVITATION GUIDANCE (only write when empty, unless caller opted out of only_if_empty)
+    if (plan.invitation_guidance && (!data.only_if_empty || !(event as { invitation_guidance?: string | null }).invitation_guidance)) {
+      await supabase.from("events").update({ invitation_guidance: plan.invitation_guidance }).eq("id", event.id);
+    }
+
     return {
       ok: true,
-      skipped: tasksInserted + budgetInserted + runsheetInserted + vendorNeedsInserted === 0,
+      skipped:
+        tasksInserted + budgetInserted + runsheetInserted + vendorNeedsInserted + shoppingInserted === 0,
       tasksInserted,
       budgetInserted,
       runsheetInserted,
       vendorNeedsInserted,
+      shoppingInserted,
       summary: plan.summary ?? "",
       usedFallback,
     };
@@ -373,8 +436,10 @@ export const regenerateRunsheet = createServerFn({ method: "POST" })
       notes: event.event_notes ?? event.description ?? null,
     };
 
-    const aiPlan = await callAI(eventContext, template, totalBudget);
-    const plan = aiPlan ?? templateToPlan(template, totalBudget);
+    const shopping = getShoppingTemplate(event.event_type);
+    const invitationGuidanceDefault = getInvitationGuidance(event.event_type);
+    const aiPlan = await callAI(eventContext, template, totalBudget, shopping, invitationGuidanceDefault);
+    const plan = aiPlan ?? templateToPlan(template, totalBudget, shopping, invitationGuidanceDefault);
     const baseStart =
       (event as { ceremony_start_time?: string | null }).ceremony_start_time ??
       event.event_time ??

@@ -26,7 +26,10 @@ import type { Database } from "@/integrations/supabase/types";
 import { EventOverview } from "@/components/event-overview";
 import { RunsheetTab } from "@/components/runsheet-tab";
 import { VendorNeedsTab } from "@/components/vendor-needs-tab";
+import { ShoppingListTab } from "@/components/shopping-list-tab";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -172,6 +175,8 @@ function EventDetailPage() {
             <TabsTrigger value="guests">Guests{guests.length > 0 ? ` (${guests.length})` : ""}</TabsTrigger>
             <TabsTrigger value="runsheet">Runsheet</TabsTrigger>
             <TabsTrigger value="vendors">Vendors</TabsTrigger>
+            <TabsTrigger value="shopping">Shopping</TabsTrigger>
+            <TabsTrigger value="invitations">Invitations</TabsTrigger>
             <TabsTrigger value="details">Details</TabsTrigger>
           </TabsList>
 
@@ -194,6 +199,12 @@ function EventDetailPage() {
           </TabsContent>
           <TabsContent value="vendors" className="mt-6">
             <VendorNeedsTab eventId={eventId} />
+          </TabsContent>
+          <TabsContent value="shopping" className="mt-6">
+            <ShoppingListTab eventId={eventId} />
+          </TabsContent>
+          <TabsContent value="invitations" className="mt-6">
+            <InvitationsTab event={event} onSaved={reload} />
           </TabsContent>
           <TabsContent value="details" className="mt-6">
             <DetailsTab event={event} onSaved={reload} />
@@ -731,3 +742,74 @@ function DetailsTab({ event, onSaved }: { event: Event; onSaved: () => Promise<v
     </Card>
   );
 }
+
+// ============= INVITATIONS =============
+function InvitationsTab({ event, onSaved }: { event: Event; onSaved: () => Promise<void> }) {
+  const [guidance, setGuidance] = useState<string>(event.invitation_guidance ?? "");
+  const [busy, setBusy] = useState(false);
+  const [regen, setRegen] = useState(false);
+  const bootstrap = useServerFn(bootstrapEventPlan);
+
+  useEffect(() => { setGuidance(event.invitation_guidance ?? ""); }, [event.invitation_guidance]);
+
+  async function save() {
+    setBusy(true);
+    const { error } = await supabase.from("events").update({ invitation_guidance: guidance }).eq("id", event.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Invitation notes saved");
+    await onSaved();
+  }
+
+  async function regenerate() {
+    setRegen(true);
+    try {
+      // Force regeneration by passing only_if_empty=false — server will overwrite guidance.
+      await bootstrap({ data: { event_id: event.id, only_if_empty: false } } as never);
+      toast.success("MelaAssist refreshed your invitation plan");
+      await onSaved();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not refresh invitation plan");
+    } finally { setRegen(false); }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-border/60 p-6 shadow-soft">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">
+              <Sparkles className="h-3 w-3" /> MelaAssist recommendation
+            </div>
+            <h2 className="font-display text-xl font-semibold">Invitation plan</h2>
+            <p className="text-sm text-muted-foreground">When to invite guests, how to invite them, and what to include.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={regenerate} disabled={regen} className="gap-1.5">
+            {regen ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {guidance ? "Regenerate" : "Generate"}
+          </Button>
+        </div>
+        <Textarea
+          rows={8}
+          value={guidance}
+          placeholder="MelaAssist hasn't drafted invitation guidance yet. Click Generate to build a tailored plan, or write your own."
+          onChange={(e) => setGuidance(e.target.value)}
+        />
+        <div className="mt-3 flex justify-end">
+          <Button onClick={save} disabled={busy} className="gap-1.5">
+            <Save className="h-4 w-4" /> {busy ? "Saving…" : "Save"}
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="border-dashed border-border/60 p-6 shadow-soft">
+        <h3 className="font-display text-base font-semibold">Manage your guest list</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Add names, track RSVPs, meal choices, and plus-ones from the Guests tab.</p>
+      </Card>
+    </div>
+  );
+}
+
+
+
+
