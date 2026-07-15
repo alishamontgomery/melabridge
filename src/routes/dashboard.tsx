@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useActiveEvent } from "@/lib/use-active-event";
-import { Sparkles, Plus, LayoutDashboard, Loader2 } from "lucide-react";
+import { Sparkles, Plus, LayoutDashboard, Wand2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
 import { WelcomeHeader } from "@/components/dashboard/welcome-header";
 import { CountdownStrip } from "@/components/dashboard/countdown-strip";
 import { DailyCheckIn } from "@/components/dashboard/daily-checkin";
@@ -17,6 +20,8 @@ import { CelebrateProgress } from "@/components/dashboard/celebrate-progress";
 import { AIConcierge } from "@/components/dashboard/ai-concierge";
 import { AISavings } from "@/components/dashboard/ai-savings";
 import { SmartPredictions } from "@/components/dashboard/smart-predictions";
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
+import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
 
 import {
   computeCountdown,
