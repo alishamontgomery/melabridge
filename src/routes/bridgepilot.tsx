@@ -46,15 +46,15 @@ function MelaAssistPage() {
         return;
       }
 
-      const [profileRes, tasksRes, convRes] = await Promise.all([
+      const [profileRes, tasksRes, notifRes] = await Promise.all([
         supabase.from("vendor_profiles").select("business_name").eq("user_id", uid).maybeSingle(),
         supabase.from("tasks").select("id", { count: "exact", head: true }).eq("assigned_to", uid).neq("status", "done"),
-        supabase.from("conversation_participants").select("conversation_id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", uid).is("read_at", null),
       ]);
 
       if (cancelled) return;
       setStats({
-        unreadThreads: convRes.count ?? 0,
+        unreadThreads: notifRes.count ?? 0,
         openTasks: tasksRes.count ?? 0,
         upcomingBookings: 0,
         vendorProfile: profileRes.data ? { business_name: profileRes.data.business_name } : null,
