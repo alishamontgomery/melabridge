@@ -25,7 +25,10 @@ import {
   listTicketTypes, createTicketType, updateTicketType, deleteTicketType,
   duplicateTicketType, listTicketOrders, listAttendees, checkInAttendee,
   undoCheckInAttendee, resendOrderConfirmation, parseTicketPrompt,
+  refundTicketOrder, getOrderTicketsPdf,
 } from "@/lib/tickets.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
+
 
 export const Route = createFileRoute("/tickets")({
   head: () => ({
@@ -323,49 +326,170 @@ function TypeRow({ row, eventId, onEdit, shareUrl }: { row: TicketTypeRow; event
 type OrderRow = {
   id: string; buyer_name: string | null; buyer_email: string; quantity: number;
   amount_cents: number; status: string; created_at: string;
+  refund_amount_cents?: number | null;
   ticket_types: { name?: string } | null;
 };
 function OrdersTab({ orders, loading }: { orders: OrderRow[]; loading: boolean }) {
+  const qc = useQueryClient();
   const resend = useServerFn(resendOrderConfirmation);
+  const pdfFn = useServerFn(getOrderTicketsPdf);
+  const [refundOrder, setRefundOrder] = useState<OrderRow | null>(null);
+
   const send = useMutation({
-    mutationFn: (id: string) => resend({ data: { orderId: id } }),
+    mutationFn: (id: string) => resend({ data: { orderId: id, siteUrl: window.location.origin } }),
     onSuccess: (r) => toast.success(`Confirmation resent to ${r.email}`),
     onError: (e: Error) => toast.error(e.message),
   });
+
+  async function downloadPdf(id: string) {
+    try {
+      const r = await pdfFn({ data: { orderId: id } });
+      const bin = atob(r.base64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = r.filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Could not build PDF"); }
+  }
+
   if (loading) return <CenterSpinner />;
   if (!orders.length) return <EmptyBox msg="No orders yet." />;
+  const statusLabel = (s: string) =>
+    s === "partially_refunded" ? "Partial refund" : s.replace(/_/g, " ");
+  const statusVariant = (s: string): "default" | "secondary" | "destructive" | "outline" =>
+    s === "paid" ? "default" : s === "refunded" || s === "failed" ? "destructive" : "secondary";
   return (
-    <div className="overflow-x-auto rounded-2xl border border-border bg-card">
-      <table className="w-full min-w-[720px] text-sm">
-        <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
-          <tr>
-            <th className="p-3">Buyer</th><th className="p-3">Ticket</th><th className="p-3">Qty</th>
-            <th className="p-3">Total</th><th className="p-3">Status</th><th className="p-3">When</th><th className="p-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((o) => (
-            <tr key={o.id} className="border-t border-border">
-              <td className="p-3"><div className="font-medium">{o.buyer_name ?? "—"}</div><div className="text-xs text-muted-foreground">{o.buyer_email}</div></td>
-              <td className="p-3">{o.ticket_types?.name ?? "—"}</td>
-              <td className="p-3">{o.quantity}</td>
-              <td className="p-3">{money(o.amount_cents ?? 0)}</td>
-              <td className="p-3"><Badge variant={o.status === "paid" ? "default" : "secondary"}>{o.status}</Badge></td>
-              <td className="p-3 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</td>
-              <td className="p-3 text-right">
-                {o.status === "paid" && (
-                  <Button size="sm" variant="ghost" onClick={() => send.mutate(o.id)}>
-                    <Mail className="mr-1.5 h-3.5 w-3.5" />Resend
-                  </Button>
-                )}
-              </td>
+    <>
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <tr>
+              <th className="p-3">Buyer</th><th className="p-3">Ticket</th><th className="p-3">Qty</th>
+              <th className="p-3">Total</th><th className="p-3">Status</th><th className="p-3">When</th><th className="p-3"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {orders.map((o) => (
+              <tr key={o.id} className="border-t border-border">
+                <td className="p-3"><div className="font-medium">{o.buyer_name ?? "—"}</div><div className="text-xs text-muted-foreground">{o.buyer_email}</div></td>
+                <td className="p-3">{o.ticket_types?.name ?? "—"}</td>
+                <td className="p-3">{o.quantity}</td>
+                <td className="p-3">
+                  {money(o.amount_cents ?? 0)}
+                  {(o.refund_amount_cents ?? 0) > 0 && (
+                    <div className="text-[11px] text-muted-foreground">-{money(o.refund_amount_cents ?? 0)} refunded</div>
+                  )}
+                </td>
+                <td className="p-3"><Badge variant={statusVariant(o.status)} className="capitalize">{statusLabel(o.status)}</Badge></td>
+                <td className="p-3 text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</td>
+                <td className="p-3 text-right">
+                  {(o.status === "paid" || o.status === "partially_refunded") && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label="Order actions"><MoreVertical className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuItem onClick={() => downloadPdf(o.id)}><Download className="mr-2 h-4 w-4" />Download tickets (PDF)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => send.mutate(o.id)}><Mail className="mr-2 h-4 w-4" />Resend confirmation</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setRefundOrder(o)}>
+                          <Undo2 className="mr-2 h-4 w-4" />Refund…
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <RefundDialog
+        order={refundOrder}
+        onClose={() => setRefundOrder(null)}
+        onDone={() => {
+          qc.invalidateQueries({ queryKey: ["ticket-orders"] });
+          qc.invalidateQueries({ queryKey: ["ticket-attendees"] });
+          qc.invalidateQueries({ queryKey: ["ticket-types"] });
+        }}
+      />
+    </>
   );
 }
+
+function RefundDialog({ order, onClose, onDone }: { order: OrderRow | null; onClose: () => void; onDone: () => void }) {
+  const refund = useServerFn(refundTicketOrder);
+  const [full, setFull] = useState(true);
+  const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (order) {
+      const max = (order.amount_cents - (order.refund_amount_cents ?? 0)) / 100;
+      setAmount(max.toFixed(2)); setFull(true); setReason("");
+    }
+  }, [order]);
+
+  if (!order) return null;
+  const maxCents = order.amount_cents - (order.refund_amount_cents ?? 0);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const cents = full ? undefined : Math.round(Number(amount || "0") * 100);
+      if (!full && (!cents || cents < 1 || cents > maxCents)) {
+        toast.error(`Amount must be between $0.01 and $${(maxCents / 100).toFixed(2)}`); setBusy(false); return;
+      }
+      const env = getStripeEnvironment();
+      const r = await refund({ data: { orderId: order!.id, amountCents: cents, reason: reason.trim() || undefined, environment: env } });
+      toast.success(r.status === "refunded" ? "Order fully refunded" : "Partial refund issued");
+      onDone(); onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Refund failed");
+    } finally { setBusy(false); }
+  }
+  return (
+    <Dialog open={!!order} onOpenChange={(v) => { if (!busy && !v) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader><DialogTitle>Refund order</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="grid gap-3">
+          <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
+            <div><span className="text-muted-foreground">Buyer: </span>{order.buyer_name ?? order.buyer_email}</div>
+            <div><span className="text-muted-foreground">Charged: </span>{money(order.amount_cents)}</div>
+            <div><span className="text-muted-foreground">Refundable: </span>{money(maxCents)}</div>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant={full ? "default" : "outline"} onClick={() => setFull(true)}>Full refund</Button>
+            <Button type="button" size="sm" variant={!full ? "default" : "outline"} onClick={() => setFull(false)}>Partial</Button>
+          </div>
+          {!full && (
+            <div className="space-y-1.5">
+              <Label htmlFor="r-amt">Refund amount (USD)</Label>
+              <Input id="r-amt" type="number" min="0.01" step="0.01" max={(maxCents / 100).toFixed(2)} value={amount} onChange={(e) => setAmount(e.target.value)} required />
+            </div>
+          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="r-reason">Reason (optional)</Label>
+            <Textarea id="r-reason" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Shared with your records only" />
+          </div>
+          <p className="text-xs text-muted-foreground">Full refunds release inventory and remove attendees who haven't checked in.</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
+            <Button type="submit" variant="destructive" disabled={busy}>
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Issue refund
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 // ---------- Attendees tab ----------
 type AttendeeRow = {
