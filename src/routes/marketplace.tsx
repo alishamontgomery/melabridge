@@ -67,8 +67,12 @@ function MarketplacePage() {
     );
   }, [vendors, query]);
 
+  const Shell = ({ children }: { children: React.ReactNode }) =>
+    !loading && !user ? <PublicShell>{children}</PublicShell> : <AppShell active="/marketplace">{children}</AppShell>;
+
   return (
-    <AppShell active="/marketplace">
+    <Shell>
+
       <div className="space-y-6">
         <PageHeader
           eyebrow="Marketplace"
