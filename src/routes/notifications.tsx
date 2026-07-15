@@ -21,6 +21,8 @@ export const Route = createFileRoute("/notifications")({
     ],
   }),
   component: NotificationsPage,
+  errorComponent: RouteError,
+
 });
 
 const iconFor = (category: string) => {
