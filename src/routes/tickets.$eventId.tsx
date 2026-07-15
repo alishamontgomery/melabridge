@@ -18,7 +18,7 @@ import {
   Loader2, Ticket, MapPin, Calendar, User, ShieldCheck, Lock, Mail, Share2, Clock, CheckCircle2,
 } from "lucide-react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { getPublicEventTickets, createTicketCheckout, finalizeTicketOrder } from "@/lib/tickets.functions";
+import { getPublicEventTickets, createTicketCheckout, finalizeTicketOrder, joinTicketWaitlist } from "@/lib/tickets.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
