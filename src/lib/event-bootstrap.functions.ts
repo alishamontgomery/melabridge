@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { getEventTemplate, type EventTemplate } from "./event-templates";
+import { getEventTemplate, getShoppingTemplate, getInvitationGuidance, type EventTemplate, type ShoppingTemplate } from "./event-templates";
 
 /**
  * AI-first event bootstrap.
