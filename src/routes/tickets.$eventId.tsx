@@ -18,7 +18,7 @@ import {
   Loader2, Ticket, MapPin, Calendar, User, ShieldCheck, Lock, Mail, Share2, Clock, CheckCircle2,
 } from "lucide-react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { getPublicEventTickets, createTicketCheckout, finalizeTicketOrder } from "@/lib/tickets.functions";
+import { getPublicEventTickets, createTicketCheckout, finalizeTicketOrder, joinTicketWaitlist } from "@/lib/tickets.functions";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -406,17 +406,26 @@ function PurchaseCard({ type, eventName, eventId }: { type: TicketType; eventNam
         </div>
         {!open && (
           <Button
-            variant="hero"
-            disabled={soldOut}
+            variant={soldOut ? "outline" : "hero"}
             onClick={() => setOpen(true)}
             className="shrink-0"
           >
-            {soldOut ? "Sold out" : isFree ? "Reserve" : "Get tickets"}
+            {soldOut ? "Join waitlist" : isFree ? "Reserve" : "Get tickets"}
           </Button>
         )}
       </div>
 
-      {open && !clientSecret && (
+      {open && soldOut && (
+        <WaitlistForm
+          type={type}
+          eventId={eventId}
+          eventName={eventName}
+          onCancel={() => setOpen(false)}
+        />
+      )}
+
+
+      {open && !soldOut && !clientSecret && (
         <div className="mt-5 grid gap-3 border-t border-border pt-5">
           <p className="text-xs uppercase tracking-widest text-muted-foreground">
             Buying tickets to {eventName}
@@ -521,3 +530,98 @@ function ReturnPage({ sessionId }: { sessionId: string }) {
     </PublicShell>
   );
 }
+
+function WaitlistForm({
+  type, eventId, eventName, onCancel,
+}: { type: TicketType; eventId: string; eventName: string; onCancel: () => void }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [qty, setQty] = useState(1);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState<null | { alreadyOnList: boolean }>(null);
+  const join = useServerFn(joinTicketWaitlist);
+
+  async function submit() {
+    if (!name.trim() || !email.trim()) { toast.error("Name and email are required"); return; }
+    setBusy(true);
+    try {
+      const res = await join({
+        data: {
+          ticketTypeId: type.id, eventId,
+          fullName: name.trim(), email: email.trim(),
+          quantity: Math.max(1, Math.min(20, qty)),
+          note: note.trim() || null,
+        },
+      });
+      setDone({ alreadyOnList: !!res.alreadyOnList });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not join the waitlist");
+    } finally { setBusy(false); }
+  }
+
+  if (done) {
+    return (
+      <div className="mt-5 rounded-xl border border-primary/30 bg-primary/5 p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <div>
+            <p className="font-medium">
+              {done.alreadyOnList ? "You're already on the list" : "You're on the waitlist"}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              We'll email {email} the moment {type.name} for {eventName} opens back up. No spam — just this one alert.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 grid gap-3 border-t border-border pt-5">
+      <div>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">Waitlist</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          This ticket is sold out. Drop your details and we'll email you if more become available.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor={`wl-name-${type.id}`}>Full name</Label>
+          <Input id={`wl-name-${type.id}`} value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`wl-email-${type.id}`}>Email</Label>
+          <Input id={`wl-email-${type.id}`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`wl-qty-${type.id}`}>How many tickets?</Label>
+        <Input
+          id={`wl-qty-${type.id}`}
+          type="number" min={1} max={20} value={qty}
+          onChange={(e) => setQty(Math.max(1, Math.min(20, Number(e.target.value) || 1)))}
+          className="sm:max-w-[160px]"
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor={`wl-note-${type.id}`}>Note to organizer (optional)</Label>
+        <Input
+          id={`wl-note-${type.id}`}
+          value={note} onChange={(e) => setNote(e.target.value)}
+          maxLength={400}
+          placeholder="Anything the organizer should know?"
+        />
+      </div>
+      <div className="flex flex-col-reverse gap-2 sm:flex-row">
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button variant="hero" onClick={submit} disabled={busy} className="sm:ml-auto">
+          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Notify me
+        </Button>
+      </div>
+    </div>
+  );
+}
+

@@ -341,6 +341,48 @@ export const getPublicEventTickets = createServerFn({ method: "GET" })
     return { event, types: types ?? [], organizer };
   });
 
+// ---------- Public: join waitlist for a sold-out ticket type ----------
+const WaitlistInput = z.object({
+  ticketTypeId: uuid,
+  eventId: uuid,
+  fullName: z.string().trim().min(1).max(120),
+  email: z.string().trim().email().max(200),
+  quantity: z.number().int().min(1).max(20).default(1),
+  note: z.string().trim().max(400).optional().nullable(),
+});
+export const joinTicketWaitlist = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => WaitlistInput.parse(d))
+  .handler(async ({ data }) => {
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
+    const { createClient } = await import("@supabase/supabase-js");
+    const sb = createClient(process.env.SUPABASE_URL!, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        fetch: (input, init) => {
+          const h = new Headers(init?.headers);
+          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
+          h.set("apikey", key);
+          return fetch(input, { ...init, headers: h });
+        },
+      },
+    });
+    const { error } = await sb.from("ticket_waitlist").insert({
+      ticket_type_id: data.ticketTypeId,
+      event_id: data.eventId,
+      full_name: data.fullName,
+      email: data.email.toLowerCase(),
+      quantity: data.quantity,
+      note: data.note ?? null,
+    });
+    if (error) {
+      // Duplicate = already on the list. Treat as success.
+      if (error.code === "23505") return { ok: true, alreadyOnList: true };
+      throw new Error(error.message);
+    }
+    return { ok: true, alreadyOnList: false };
+  });
+
+
 // ---------- Public: create Stripe checkout ----------
 type CheckoutResult = { clientSecret: string } | { error: string };
 const CheckoutInput = z.object({
