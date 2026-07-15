@@ -28,6 +28,8 @@ import { RunsheetTab } from "@/components/runsheet-tab";
 import { VendorNeedsTab } from "@/components/vendor-needs-tab";
 import { ShoppingListTab } from "@/components/shopping-list-tab";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
