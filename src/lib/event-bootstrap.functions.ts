@@ -436,8 +436,10 @@ export const regenerateRunsheet = createServerFn({ method: "POST" })
       notes: event.event_notes ?? event.description ?? null,
     };
 
-    const aiPlan = await callAI(eventContext, template, totalBudget);
-    const plan = aiPlan ?? templateToPlan(template, totalBudget);
+    const shopping = getShoppingTemplate(event.event_type);
+    const invitationGuidanceDefault = getInvitationGuidance(event.event_type);
+    const aiPlan = await callAI(eventContext, template, totalBudget, shopping, invitationGuidanceDefault);
+    const plan = aiPlan ?? templateToPlan(template, totalBudget, shopping, invitationGuidanceDefault);
     const baseStart =
       (event as { ceremony_start_time?: string | null }).ceremony_start_time ??
       event.event_time ??
