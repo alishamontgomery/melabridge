@@ -536,7 +536,7 @@ function TicketTypeDialog({
   const [busy, setBusy] = useState(false);
 
   // Re-init when `existing` changes
-  useMemo(() => {
+  useEffect(() => {
     setName(existing?.name ?? "");
     setDescription(existing?.description ?? "");
     setPrice(existing ? String(existing.price_cents / 100) : "");
