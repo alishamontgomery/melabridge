@@ -133,7 +133,6 @@ const GUEST_NAV: NavGroup[] = [
       { to: "/guest-portal", label: "Event & RSVP", icon: Calendar },
       { to: "/timeline", label: "Schedule", icon: Calendar },
       { to: "/travel", label: "Travel", icon: Boxes },
-      { to: "/messaging", label: "Messages", icon: MessageSquare },
     ],
   },
 ];
