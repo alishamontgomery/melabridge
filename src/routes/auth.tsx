@@ -307,7 +307,7 @@ function AuthPage() {
       setStatusMessage("Setting up your workspace...");
       await ensureProfile(data.session.user, nm);
       toast.success("Account created — welcome to MelaBridge");
-      navigate({ to: "/onboarding", search: { type: accountType } });
+      navigate({ to: "/onboarding", search: { type: accountType === "vendor" ? "vendor" : "personal" } });
     });
   }
 
