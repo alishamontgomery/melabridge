@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock, FlaskConical, Trash2 } from "lucide-react";
+import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock, FlaskConical, Trash2, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
