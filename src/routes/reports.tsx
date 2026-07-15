@@ -8,6 +8,8 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
+
 
 export const Route = createFileRoute("/reports")({
   head: () => ({
