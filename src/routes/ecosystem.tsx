@@ -11,7 +11,7 @@ import {
   Store,
   ClipboardList,
   Calendar,
-  MessageSquare,
+  Bell,
   Vault,
   Dna,
   BarChart3,
