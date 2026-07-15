@@ -82,7 +82,7 @@ export function ModuleLoading({
 /** Full-route pending state (for `pendingComponent`). */
 export function RoutePending({ label = "Loading" }: { label?: string }) {
   return (
-    <AppShell>
+    <AppShell active="">
       <div
         className="mt-8 grid min-h-[320px] place-items-center rounded-3xl border border-border bg-card text-muted-foreground"
         aria-busy="true"
@@ -106,7 +106,7 @@ export function RouteError({
   reset?: () => void;
 }) {
   return (
-    <AppShell>
+    <AppShell active="">
       <ModuleError
         title="This page hit a snag"
         description={error?.message || "An unexpected error occurred while loading this page."}
