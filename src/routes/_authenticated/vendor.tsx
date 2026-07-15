@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Store, Calendar, MessageSquare, Wallet, Bell, Sparkles,
+  Store, Calendar, Wallet, Bell, Sparkles,
   Plus, UserPlus, FileText, ScrollText, CreditCard, Mail, CalendarSync, CalendarX2,
   TrendingUp, Activity, CheckCircle2, Clock, AlertCircle,
 } from "lucide-react";
