@@ -81,6 +81,12 @@ function ReportsPage() {
           </Button>
         }
       />
+      {eventsQ.isLoading ? (
+        <ModuleLoading rows={2} />
+      ) : eventsQ.isError ? (
+        <ModuleError error={eventsQ.error} onRetry={() => eventsQ.refetch()} />
+      ) : (
+      <>
       <section className="mt-8 grid gap-4 sm:grid-cols-4">
         <StatCard k="Events tracked" v={String(tracked)} />
         <StatCard k="With scheduled dates" v={String(withDates)} />
@@ -88,6 +94,7 @@ function ReportsPage() {
         <StatCard k="Data freshness" v="Live" hint="Real-time sync" />
       </section>
       <section className="mt-8">
+
         <Card className="border-border/60 p-6 shadow-soft">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
