@@ -72,8 +72,8 @@ function AdminPage() {
 
   const metricCards: Array<{ label: string; value: string; hint?: string; to: string }> = [
     { label: "Total users", value: fmt(stats.data?.activeUsers), to: "/admin/users" },
-    { label: "Events in flight", value: fmt(stats.data?.eventsInFlight), to: "/events" },
     { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review", to: "/vendors" },
+    { label: "Open reports", value: fmt(stats.data?.openReports), to: "/reports" },
     { label: "System status", value: "Operational", hint: "All services green", to: "/admin" },
   ];
 
@@ -91,8 +91,8 @@ function AdminPage() {
       <div className="space-y-6">
         <PageHeader
           eyebrow="AdminOS™"
-          title="Enterprise controls, in one calm surface"
-          description="Manage users, vendors, safety, subscriptions, and platform health across your organization."
+          title="Platform controls"
+          description="Users, vendors, safety, billing, and platform health."
           icon={ShieldCheck}
           actions={<Button asChild size="sm"><Link to="/admin/invite">Invite users</Link></Button>}
         />
