@@ -338,7 +338,11 @@ export function AppShell({ active, children }: { active: string; children: React
                   <NavList groups={groups} active={active} onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
               </Sheet>
-              <Link to="/" className="flex items-center gap-2">
+              <Link
+                to={(role === "admin" ? "/admin" : role === "vendor" ? "/vendor" : "/dashboard") as "/dashboard"}
+                className="flex items-center gap-2"
+                aria-label="Home"
+              >
                 <BrandMark size="md" />
                 <span className="font-display text-lg font-semibold">MelaBridge</span>
                 <Badge variant="secondary" className="ml-1 hidden sm:inline-flex bg-accent text-accent-foreground capitalize">
