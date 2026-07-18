@@ -145,7 +145,6 @@ const ADMIN_NAV: NavGroup[] = [
     label: "Dashboard",
     items: [
       { to: "/admin", label: "AdminOS™", icon: ShieldCheck },
-      { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
     ],
   },
   {
