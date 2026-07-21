@@ -274,9 +274,23 @@ function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: s
   );
 }
 
+// Paths that are exclusive to a single role. Any signed-in user whose role does
+// not match will be redirected to their own role home.
+const ROLE_EXCLUSIVE: Array<{ prefix: string; allow: AppRole[] }> = [
+  { prefix: "/admin", allow: ["admin"] },
+  { prefix: "/vendor-portal", allow: ["vendor"] },
+  { prefix: "/vendor-settings", allow: ["vendor"] },
+  { prefix: "/vendor", allow: ["vendor"] }, // matches /vendor and /vendor/*
+  { prefix: "/dashboard", allow: ["personal", "organization"] },
+];
+
+function roleHome(role: AppRole): "/dashboard" {
+  return (role === "admin" ? "/admin" : role === "vendor" ? "/vendor" : "/dashboard") as "/dashboard";
+}
+
 export function AppShell({ active, children }: { active: string; children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { role } = useRole();
+  const { role, loading: roleLoading } = useRole();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const groups = NAV_BY_ROLE[role];
@@ -296,7 +310,20 @@ export function AppShell({ active, children }: { active: string; children: React
     navigate({ to: "/auth", replace: true });
   }, [loading, user, navigate]);
 
-  if (loading || !user) {
+  // Cross-role access block: redirect to the user's own home when they land on
+  // a surface that is reserved for a different role.
+  useEffect(() => {
+    if (loading || roleLoading || !user) return;
+    const path = typeof window !== "undefined" ? window.location.pathname : active;
+    const match = ROLE_EXCLUSIVE.find(
+      (r) => path === r.prefix || path.startsWith(`${r.prefix}/`),
+    );
+    if (match && !match.allow.includes(role)) {
+      navigate({ to: roleHome(role), replace: true });
+    }
+  }, [loading, roleLoading, user, role, active, navigate]);
+
+  if (loading || roleLoading || !user) {
     return (
       <div className="grid min-h-screen place-items-center bg-background" role="status" aria-live="polite">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
