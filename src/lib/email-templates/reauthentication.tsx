@@ -6,9 +6,12 @@ import {
   Head,
   Heading,
   Html,
+  Link,
   Preview,
+  Section,
   Text,
 } from '@react-email/components'
+import { BRAND, styles } from './_brand'
 
 interface ReauthenticationEmailProps {
   token: string
@@ -17,42 +20,42 @@ interface ReauthenticationEmailProps {
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your verification code</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm reauthentication</Heading>
-        <Text style={text}>Use the code below to confirm your identity:</Text>
-        <Text style={codeStyle}>{token}</Text>
-        <Text style={footer}>
-          This code will expire shortly. If you didn't request this, you can
-          safely ignore this email.
-        </Text>
-      </Container>
+    <Preview>Your MelaBridge verification code</Preview>
+    <Body style={styles.main}>
+      <Section style={styles.wrapper}>
+        <Container style={styles.container}>
+          <Section style={styles.header}>
+            <Text style={styles.brandName}>MelaBridge</Text>
+            <Text style={styles.brandTagline}>Verification code</Text>
+          </Section>
+          <Section style={styles.content}>
+            <Heading style={styles.h1}>Confirm it's you</Heading>
+            <Text style={styles.text}>
+              Enter the code below in MelaBridge to confirm your identity. It
+              expires shortly.
+            </Text>
+            <Text style={styles.code}>{token}</Text>
+            <Text style={styles.helper}>
+              Didn't request this? You can safely ignore this email — no changes
+              will be made to your account.
+            </Text>
+          </Section>
+          <Section style={styles.footer}>
+            <Text style={styles.footerText}>
+              Questions?{' '}
+              <Link href={`mailto:${BRAND.supportEmail}`} style={styles.link}>
+                {BRAND.supportEmail}
+              </Link>{' '}
+              ·{' '}
+              <Link href={BRAND.siteUrl} style={styles.link}>
+                melabridge.com
+              </Link>
+            </Text>
+          </Section>
+        </Container>
+      </Section>
     </Body>
   </Html>
 )
 
 export default ReauthenticationEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const codeStyle = {
-  fontFamily: 'Courier, monospace',
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 30px',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

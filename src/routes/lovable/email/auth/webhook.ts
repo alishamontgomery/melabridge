@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "melabridge"
+const SITE_NAME = "MelaBridge"
 const SENDER_DOMAIN = "notify.melabridge.com"
 const ROOT_DOMAIN = "melabridge.com"
 const FROM_DOMAIN = "notify.melabridge.com"
