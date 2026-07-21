@@ -6,18 +6,17 @@ import {
   Container,
   Head,
   Heading,
+  Hr,
   Html,
   Link,
   Preview,
+  Section,
   Text,
 } from '@react-email/components'
+import { BRAND, styles } from './_brand'
 
 interface EmailChangeEmailProps {
   siteName: string
-  // oldEmail is the user's current address (HookData.OldEmail). For the
-  // NEW-recipient half of a secure email_change fanout, `email` equals the
-  // recipient (NEW), so the "from" line must render oldEmail to read
-  // "from OLD to NEW" instead of "from NEW to NEW".
   oldEmail: string
   email: string
   newEmail: string
@@ -25,66 +24,64 @@ interface EmailChangeEmailProps {
 }
 
 export const EmailChangeEmail = ({
-  siteName,
   oldEmail,
   newEmail,
   confirmationUrl,
 }: EmailChangeEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
-        <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
-          <Link href={`mailto:${oldEmail}`} style={link}>
-            {oldEmail}
-          </Link>{' '}
-          to{' '}
-          <Link href={`mailto:${newEmail}`} style={link}>
-            {newEmail}
-          </Link>
-          .
-        </Text>
-        <Text style={text}>
-          Click the button below to confirm this change:
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
-        </Button>
-        <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
-        </Text>
-      </Container>
+    <Preview>Confirm your new MelaBridge email address</Preview>
+    <Body style={styles.main}>
+      <Section style={styles.wrapper}>
+        <Container style={styles.container}>
+          <Section style={styles.header}>
+            <Text style={styles.brandName}>MelaBridge</Text>
+            <Text style={styles.brandTagline}>Account update</Text>
+          </Section>
+          <Section style={styles.content}>
+            <Heading style={styles.h1}>Confirm your email change</Heading>
+            <Text style={styles.text}>
+              You requested to change the email on your MelaBridge account
+              from{' '}
+              <Link href={`mailto:${oldEmail}`} style={styles.link}>
+                <strong>{oldEmail}</strong>
+              </Link>{' '}
+              to{' '}
+              <Link href={`mailto:${newEmail}`} style={styles.link}>
+                <strong>{newEmail}</strong>
+              </Link>
+              .
+            </Text>
+            <Button style={styles.button} href={confirmationUrl}>
+              Confirm email change
+            </Button>
+            <Hr style={styles.hr} />
+            <Text style={styles.helper}>
+              Button not working? Paste this link into your browser:
+              <br />
+              <Link href={confirmationUrl} style={styles.link}>
+                {confirmationUrl}
+              </Link>
+            </Text>
+          </Section>
+          <Section style={styles.footer}>
+            <Text style={styles.footerText}>
+              If you didn't request this change, contact us immediately at{' '}
+              <Link href={`mailto:${BRAND.supportEmail}`} style={styles.link}>
+                {BRAND.supportEmail}
+              </Link>{' '}
+              to secure your account.
+            </Text>
+            <Text style={styles.footerText}>
+              <Link href={BRAND.siteUrl} style={styles.link}>
+                melabridge.com
+              </Link>
+            </Text>
+          </Section>
+        </Container>
+      </Section>
     </Body>
   </Html>
 )
 
 export default EmailChangeEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

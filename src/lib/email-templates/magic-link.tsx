@@ -6,63 +6,67 @@ import {
   Container,
   Head,
   Heading,
+  Hr,
   Html,
+  Link,
   Preview,
+  Section,
   Text,
 } from '@react-email/components'
+import { BRAND, styles } from './_brand'
 
 interface MagicLinkEmailProps {
   siteName: string
   confirmationUrl: string
 }
 
-export const MagicLinkEmail = ({
-  siteName,
-  confirmationUrl,
-}: MagicLinkEmailProps) => (
+export const MagicLinkEmail = ({ confirmationUrl }: MagicLinkEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
-        <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
-        </Text>
-        <Button style={button} href={confirmationUrl}>
-          Log In
-        </Button>
-        <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
-        </Text>
-      </Container>
+    <Preview>Your MelaBridge sign-in link</Preview>
+    <Body style={styles.main}>
+      <Section style={styles.wrapper}>
+        <Container style={styles.container}>
+          <Section style={styles.header}>
+            <Text style={styles.brandName}>MelaBridge</Text>
+            <Text style={styles.brandTagline}>Secure sign-in</Text>
+          </Section>
+          <Section style={styles.content}>
+            <Heading style={styles.h1}>Your sign-in link</Heading>
+            <Text style={styles.text}>
+              Click the button below to sign in to your MelaBridge workspace.
+              This link expires shortly, so use it soon.
+            </Text>
+            <Button style={styles.button} href={confirmationUrl}>
+              Sign in to MelaBridge
+            </Button>
+            <Hr style={styles.hr} />
+            <Text style={styles.helper}>
+              Or paste this URL into your browser:
+              <br />
+              <Link href={confirmationUrl} style={styles.link}>
+                {confirmationUrl}
+              </Link>
+            </Text>
+          </Section>
+          <Section style={styles.footer}>
+            <Text style={styles.footerText}>
+              Didn't request this link? You can safely ignore this email.
+            </Text>
+            <Text style={styles.footerText}>
+              <Link href={`mailto:${BRAND.supportEmail}`} style={styles.link}>
+                {BRAND.supportEmail}
+              </Link>{' '}
+              ·{' '}
+              <Link href={BRAND.siteUrl} style={styles.link}>
+                melabridge.com
+              </Link>
+            </Text>
+          </Section>
+        </Container>
+      </Section>
     </Body>
   </Html>
 )
 
 export default MagicLinkEmail
-
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
