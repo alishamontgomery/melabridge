@@ -122,9 +122,9 @@ function AdminUsersPage() {
               <SelectContent>
                 <SelectItem value="all">All roles</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="planner">Planner</SelectItem>
+                <SelectItem value="personal">Personal</SelectItem>
+                <SelectItem value="organization">Organization</SelectItem>
                 <SelectItem value="vendor">Vendor</SelectItem>
-                <SelectItem value="guest">Guest</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
