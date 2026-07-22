@@ -7,7 +7,7 @@ import {
   Dna,
   Globe2,
   BarChart3,
-  Ticket,
+  
   HeartHandshake,
   
   FolderOpen,
@@ -63,7 +63,7 @@ export const SEARCH_INDEX: SearchItem[] = [
   { id: "m-dna", kind: "module", title: "BridgeDNA™", subtitle: "Personalization engine", to: "/bridgedna", icon: Dna },
   { id: "m-world", kind: "module", title: "BridgeWorld™", subtitle: "Life journey timeline", to: "/bridgeworld", icon: Globe2 },
   { id: "m-intel", kind: "module", title: "Bridge Intelligence™", subtitle: "Community benchmarks", to: "/bridge-intelligence", icon: BarChart3 },
-  { id: "m-tickets", kind: "module", title: "Tickets", subtitle: "Sell + track admissions", to: "/tickets", icon: Ticket },
+  
   { id: "m-fund", kind: "module", title: "Fundraising", subtitle: "Campaigns + donors", to: "/fundraising", icon: HeartHandshake },
   
   { id: "m-files", kind: "module", title: "Files", subtitle: "Docs, media, contracts", to: "/files", icon: FolderOpen },
