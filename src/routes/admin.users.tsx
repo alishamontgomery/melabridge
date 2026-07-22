@@ -19,7 +19,7 @@ import {
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useRole } from "@/lib/use-role";
 import { useAuth } from "@/lib/auth";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
