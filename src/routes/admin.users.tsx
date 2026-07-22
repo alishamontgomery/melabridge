@@ -163,7 +163,7 @@ function AdminUsersPage() {
                 </thead>
                 <tbody className="divide-y">
                   {rows.map((u) => {
-                    const primary = (u.roles[0] ?? u.account_type ?? "planner") as Role;
+                    const primary = (u.roles[0] ?? u.account_type ?? "personal") as Role;
                     const suspended = !!u.banned_until && new Date(u.banned_until) > new Date();
                     return (
                       <tr key={u.id} className="hover:bg-muted/30">
@@ -188,7 +188,7 @@ function AdminUsersPage() {
                               <Button variant="ghost" size="sm">Actions</Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              {(["admin","planner","vendor","guest"] as Role[]).filter((r) => r !== primary).map((r) => (
+                              {(["admin","personal","organization","vendor"] as Role[]).filter((r) => r !== primary).map((r) => (
                                 <DropdownMenuItem key={r} onClick={() => roleMut.mutate({ userId: u.id, role: r })}>
                                   Set as {r}
                                 </DropdownMenuItem>
