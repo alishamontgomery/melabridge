@@ -490,7 +490,7 @@ function EditUserDialog({
   const isSelf = user && selfId === user.id;
 
   // Reset form whenever a new user opens
-  useMemo(() => {
+  useEffect(() => {
     if (user) {
       setFirstName(user.first_name ?? "");
       setLastName(user.last_name ?? "");
