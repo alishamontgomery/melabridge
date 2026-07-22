@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Calendar, Store, Users, Wallet, Ticket, ClipboardList, Loader2, ArrowUp } from "lucide-react";
+import { Sparkles, Calendar, Store, Users, Wallet, ClipboardList, Loader2, ArrowUp } from "lucide-react";
 import { askMelaAssist } from "@/lib/melaassist.functions";
 
 const SHORTCUTS = [
@@ -12,7 +12,6 @@ const SHORTCUTS = [
   { to: "/tasks", label: "Tasks", icon: ClipboardList },
   { to: "/guests", label: "Guests", icon: Users },
   { to: "/budget", label: "Budget", icon: Wallet },
-  { to: "/tickets", label: "Tickets", icon: Ticket },
 ] as const;
 
 const SUGGESTIONS = [
