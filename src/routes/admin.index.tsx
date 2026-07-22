@@ -16,7 +16,7 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "AdminOS™ — MelaBridge" },
