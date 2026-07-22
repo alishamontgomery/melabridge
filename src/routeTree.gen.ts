@@ -59,11 +59,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AiPlanningRouteImport } from './routes/ai-planning'
 import { Route as AiMemoryRouteImport } from './routes/ai-memory'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
@@ -339,11 +339,6 @@ const AiMemoryRoute = AiMemoryRouteImport.update({
   path: '/ai-memory',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AccessibilityRoute = AccessibilityRouteImport.update({
   id: '/accessibility',
   path: '/accessibility',
@@ -363,6 +358,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -374,14 +374,14 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminInviteRoute = AdminInviteRouteImport.update({
-  id: '/invite',
-  path: '/invite',
-  getParentRoute: () => AdminRoute,
+  id: '/admin/invite',
+  path: '/admin/invite',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedVendorSettingsRoute =
   AuthenticatedVendorSettingsRouteImport.update({
@@ -500,7 +500,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRouteWithChildren
   '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
@@ -560,6 +559,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/admin/': typeof AdminIndexRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -580,7 +580,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRouteWithChildren
   '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
@@ -639,6 +638,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/admin': typeof AdminIndexRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -661,7 +661,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
-  '/admin': typeof AdminRouteWithChildren
   '/ai-memory': typeof AiMemoryRoute
   '/ai-planning': typeof AiPlanningRoute
   '/analytics': typeof AnalyticsRoute
@@ -721,6 +720,7 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/admin/': typeof AdminIndexRoute
   '/_authenticated/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/_authenticated/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/_authenticated/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
@@ -743,7 +743,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/accessibility'
-    | '/admin'
     | '/ai-memory'
     | '/ai-planning'
     | '/analytics'
@@ -803,6 +802,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/admin/'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
@@ -823,7 +823,6 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/accessibility'
-    | '/admin'
     | '/ai-memory'
     | '/ai-planning'
     | '/analytics'
@@ -882,6 +881,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/admin'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
@@ -903,7 +903,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/accessibility'
-    | '/admin'
     | '/ai-memory'
     | '/ai-planning'
     | '/analytics'
@@ -963,6 +962,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/auth/callback'
     | '/checkout/return'
+    | '/admin/'
     | '/_authenticated/bookings/$id'
     | '/_authenticated/calendar/dashboard'
     | '/_authenticated/calendar/requests'
@@ -985,7 +985,6 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
   AccessibilityRoute: typeof AccessibilityRoute
-  AdminRoute: typeof AdminRouteWithChildren
   AiMemoryRoute: typeof AiMemoryRoute
   AiPlanningRoute: typeof AiPlanningRoute
   AnalyticsRoute: typeof AnalyticsRoute
@@ -1036,7 +1035,10 @@ export interface RootRouteChildren {
   VendorsRoute: typeof VendorsRoute
   VisionRoute: typeof VisionRoute
   WorkspaceRoute: typeof WorkspaceRoute
+  AdminInviteRoute: typeof AdminInviteRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -1395,13 +1397,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AiMemoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/accessibility': {
       id: '/accessibility'
       path: '/accessibility'
@@ -1430,6 +1425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -1446,17 +1448,17 @@ declare module '@tanstack/react-router' {
     }
     '/admin/users': {
       id: '/admin/users'
-      path: '/users'
+      path: '/admin/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/invite': {
       id: '/admin/invite'
-      path: '/invite'
+      path: '/admin/invite'
       fullPath: '/admin/invite'
       preLoaderRoute: typeof AdminInviteRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/vendor-settings': {
       id: '/_authenticated/vendor-settings'
@@ -1653,18 +1655,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface AdminRouteChildren {
-  AdminInviteRoute: typeof AdminInviteRoute
-  AdminUsersRoute: typeof AdminUsersRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminInviteRoute: AdminInviteRoute,
-  AdminUsersRoute: AdminUsersRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
 }
@@ -1680,7 +1670,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
   AccessibilityRoute: AccessibilityRoute,
-  AdminRoute: AdminRouteWithChildren,
   AiMemoryRoute: AiMemoryRoute,
   AiPlanningRoute: AiPlanningRoute,
   AnalyticsRoute: AnalyticsRoute,
@@ -1731,7 +1720,10 @@ const rootRouteChildren: RootRouteChildren = {
   VendorsRoute: VendorsRoute,
   VisionRoute: VisionRoute,
   WorkspaceRoute: WorkspaceRoute,
+  AdminInviteRoute: AdminInviteRoute,
+  AdminUsersRoute: AdminUsersRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  AdminIndexRoute: AdminIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
@@ -1740,13 +1732,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

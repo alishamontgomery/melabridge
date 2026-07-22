@@ -16,7 +16,7 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({
     meta: [
       { title: "AdminOS™ — MelaBridge" },
@@ -74,7 +74,7 @@ function AdminPage() {
     { label: "Total users", value: fmt(stats.data?.activeUsers), to: "/admin/users" },
     { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review", to: "/vendors" },
     { label: "Open reports", value: fmt(stats.data?.openReports), to: "/reports" },
-    { label: "System status", value: "Operational", hint: "All services green", to: "/admin" },
+    { label: "System status", value: "Operational", hint: "All services green", to: "/analytics" },
   ];
 
   const moduleTiles: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; detail: string; to: string }> = [
