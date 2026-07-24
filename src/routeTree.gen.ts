@@ -69,6 +69,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminInviteRouteImport } from './routes/admin.invite'
 import { Route as AuthenticatedVendorSettingsRouteImport } from './routes/_authenticated/vendor-settings'
+import { Route as AuthenticatedVendorProfileBuilderRouteImport } from './routes/_authenticated/vendor-profile-builder'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDraftsRouteImport } from './routes/_authenticated/drafts'
@@ -389,6 +390,12 @@ const AuthenticatedVendorSettingsRoute =
     path: '/vendor-settings',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedVendorProfileBuilderRoute =
+  AuthenticatedVendorProfileBuilderRouteImport.update({
+    id: '/vendor-profile-builder',
+    path: '/vendor-profile-builder',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedVendorRoute = AuthenticatedVendorRouteImport.update({
   id: '/vendor',
   path: '/vendor',
@@ -554,6 +561,7 @@ export interface FileRoutesByFullPath {
   '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
+  '/vendor-profile-builder': typeof AuthenticatedVendorProfileBuilderRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
   '/admin/invite': typeof AdminInviteRoute
   '/admin/users': typeof AdminUsersRoute
@@ -633,6 +641,7 @@ export interface FileRoutesByTo {
   '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
+  '/vendor-profile-builder': typeof AuthenticatedVendorProfileBuilderRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
   '/admin/invite': typeof AdminInviteRoute
   '/admin/users': typeof AdminUsersRoute
@@ -715,6 +724,7 @@ export interface FileRoutesById {
   '/_authenticated/drafts': typeof AuthenticatedDraftsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
+  '/_authenticated/vendor-profile-builder': typeof AuthenticatedVendorProfileBuilderRoute
   '/_authenticated/vendor-settings': typeof AuthenticatedVendorSettingsRoute
   '/admin/invite': typeof AdminInviteRoute
   '/admin/users': typeof AdminUsersRoute
@@ -797,6 +807,7 @@ export interface FileRouteTypes {
     | '/drafts'
     | '/onboarding'
     | '/vendor'
+    | '/vendor-profile-builder'
     | '/vendor-settings'
     | '/admin/invite'
     | '/admin/users'
@@ -876,6 +887,7 @@ export interface FileRouteTypes {
     | '/drafts'
     | '/onboarding'
     | '/vendor'
+    | '/vendor-profile-builder'
     | '/vendor-settings'
     | '/admin/invite'
     | '/admin/users'
@@ -957,6 +969,7 @@ export interface FileRouteTypes {
     | '/_authenticated/drafts'
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
+    | '/_authenticated/vendor-profile-builder'
     | '/_authenticated/vendor-settings'
     | '/admin/invite'
     | '/admin/users'
@@ -1467,6 +1480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedVendorSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/vendor-profile-builder': {
+      id: '/_authenticated/vendor-profile-builder'
+      path: '/vendor-profile-builder'
+      fullPath: '/vendor-profile-builder'
+      preLoaderRoute: typeof AuthenticatedVendorProfileBuilderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/vendor': {
       id: '/_authenticated/vendor'
       path: '/vendor'
@@ -1629,6 +1649,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDraftsRoute: typeof AuthenticatedDraftsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedVendorRoute: typeof AuthenticatedVendorRoute
+  AuthenticatedVendorProfileBuilderRoute: typeof AuthenticatedVendorProfileBuilderRoute
   AuthenticatedVendorSettingsRoute: typeof AuthenticatedVendorSettingsRoute
   AuthenticatedBookingsIdRoute: typeof AuthenticatedBookingsIdRoute
   AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
@@ -1643,6 +1664,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDraftsRoute: AuthenticatedDraftsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedVendorRoute: AuthenticatedVendorRoute,
+  AuthenticatedVendorProfileBuilderRoute:
+    AuthenticatedVendorProfileBuilderRoute,
   AuthenticatedVendorSettingsRoute: AuthenticatedVendorSettingsRoute,
   AuthenticatedBookingsIdRoute: AuthenticatedBookingsIdRoute,
   AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
