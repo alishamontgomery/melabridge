@@ -63,6 +63,7 @@ export const autocompletePlaces = createServerFn({ method: "POST" })
   });
 
 export const getPlaceDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => DetailsInput.parse(d))
   .handler(async ({ data }) => {
     const res = await fetch(`${GATEWAY}/places/v1/places/${encodeURIComponent(data.placeId)}`, {
