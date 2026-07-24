@@ -174,7 +174,7 @@ function MarketplacePage() {
       if (typeof navigator !== "undefined" && "share" in navigator) {
         await (navigator as Navigator).share({ title, url });
       } else {
-        await navigator.clipboard.writeText(url);
+        await window.navigator.clipboard.writeText(url);
         toast.success("Link copied");
       }
     } catch {
