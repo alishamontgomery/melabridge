@@ -39,6 +39,22 @@ type ExecutableKind =
   | "create_event_draft"
   | "add_timeline_milestone";
 
+function pickThinkingLabel(question: string, pathname: string): string {
+  const q = question.toLowerCase();
+  if (/timeline|runsheet|schedule|milestone/.test(q)) return "Building your timeline…";
+  if (/budget|cost|spend|save|price/.test(q)) return "Crunching your budget…";
+  if (/vendor|florist|caterer|dj|photograph|match|recommend/.test(q)) return "Matching vendors…";
+  if (/guest|rsvp|invite|seating/.test(q)) return "Reviewing your guest list…";
+  if (/package|service|tier|offering/.test(q)) return "Drafting your packages…";
+  if (/faq|question/.test(q)) return "Writing FAQs…";
+  if (/profile|description|bio|about/.test(q)) return "Polishing your profile…";
+  if (/elegant|luxury|shorten|rewrite|tone|corporate|casual|family|option/.test(q)) return "Rewriting with a fresh angle…";
+  if (/event|plan|create/.test(q)) return "Reviewing your event…";
+  if (pathname.startsWith("/vendor")) return "Reviewing your vendor workspace…";
+  if (pathname.startsWith("/admin")) return "Scanning platform activity…";
+  return "Thinking it through…";
+}
+
 export function MelaAssistPanel() {
   const {
     open,
@@ -75,10 +91,11 @@ export function MelaAssistPanel() {
 
       const userMsg: MelaAssistMessage = { id: uid(), role: "user", content: question, createdAt: Date.now() };
       const pendingId = uid();
+      const thinkingLabel = pickThinkingLabel(question, context.pathname);
       setMessages((prev) => [
         ...prev,
         userMsg,
-        { id: pendingId, role: "assistant", content: "", createdAt: Date.now(), pending: true },
+        { id: pendingId, role: "assistant", content: thinkingLabel, createdAt: Date.now(), pending: true },
       ]);
       if (!opts?.silent) setInput("");
       setBusy(true);
@@ -165,7 +182,7 @@ export function MelaAssistPanel() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === pendingId
-              ? { ...m, content: "MelaAssist couldn't respond. Please try again.", pending: false, error: true }
+              ? { ...m, content: "I couldn't reach the planning engine just now. Tap Retry to try again, or rephrase your request and I'll take another swing.", pending: false, error: true }
               : m,
           ),
         );
@@ -288,7 +305,20 @@ export function MelaAssistPanel() {
             </>
           ) : (
             <div className="space-y-3 px-4 py-4">
-              <MelaAssistConversation messages={messages} />
+              <MelaAssistConversation
+                messages={messages}
+                onRetry={() => {
+                  const last = lastQuestionRef.current;
+                  if (last) void send(last, { silent: true });
+                }}
+                onEditRequest={() => {
+                  const last = lastQuestionRef.current;
+                  if (last) {
+                    setInput(last);
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }
+                }}
+              />
               {/* Render action cards under the latest assistant message */}
               {messages
                 .filter((m) => m.role === "assistant" && m.actions && m.actions.length > 0)
