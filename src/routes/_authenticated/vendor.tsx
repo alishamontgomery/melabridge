@@ -68,16 +68,12 @@ function VendorDashboardPage() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [p, v, e, t, n] = await Promise.all([
-        supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
-        supabase.from("vendor_profiles").select("business_name").eq("user_id", user.id).maybeSingle(),
+      const [e, t, n] = await Promise.all([
         supabase.from("events").select("id,name,event_date,start_time,status,client_name,deposit_required,deposit_paid,payment_status").eq("owner_id", user.id).is("deleted_at", null).order("event_date", { ascending: true, nullsFirst: false }).limit(50),
         supabase.from("tasks").select("id,title,due_date,status,priority").eq("assigned_to", user.id).is("deleted_at", null).neq("status", "done").order("due_date", { ascending: true, nullsFirst: false }).limit(10),
         supabase.from("notifications").select("id,title,body,category,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6),
       ]);
       if (cancelled) return;
-      setDisplayName(p.data?.display_name ?? user.email?.split("@")[0] ?? "there");
-      setBusinessName(v.data?.business_name ?? null);
       setEvents((e.data as EventRow[]) ?? []);
       setTasks((t.data as TaskRow[]) ?? []);
       setNotifs((n.data as NotifRow[]) ?? []);
