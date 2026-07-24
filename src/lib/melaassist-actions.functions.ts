@@ -152,7 +152,7 @@ export const melaAssistTurn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => TurnInput.parse(input))
   .handler(async ({ data, context }) => {
-    type OutAction = { kind: string; title: string; summary: string | null; payload: Record<string, unknown> };
+    type OutAction = { kind: string; title: string; summary: string | null; payloadJson: string };
     type TurnResult = { answer: string; actions: OutAction[]; nextSteps: string[]; degraded: boolean };
     const makeResult = (r: TurnResult): TurnResult => r;
 
