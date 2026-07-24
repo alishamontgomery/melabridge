@@ -152,14 +152,17 @@ export const melaAssistTurn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => TurnInput.parse(input))
   .handler(async ({ data, context }) => {
+    type OutAction = { kind: string; title: string; summary?: string; payload: Record<string, unknown> };
+    type TurnResult = { answer: string; actions: OutAction[]; nextSteps: string[]; degraded: boolean };
     const key = process.env.LOVABLE_API_KEY;
     if (!key) {
-      return {
+      const r: TurnResult = {
         answer: "MelaAssist is temporarily unavailable. Please try again shortly.",
-        actions: [] as unknown[],
-        nextSteps: [] as string[],
+        actions: [],
+        nextSteps: [],
         degraded: true,
       };
+      return r;
     }
 
     const supaCtx = context as SupabaseCtx;
