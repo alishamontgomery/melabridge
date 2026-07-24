@@ -14,7 +14,8 @@ import { ActionCard } from "./ActionCard";
 import { ActionHistory } from "./ActionHistory";
 import { NextSteps } from "./NextSteps";
 import { getActionMeta } from "./action-registry";
-import { getSuggestionsForRole, greetingForRole } from "./suggestions";
+import { getPageContext } from "./page-context";
+import { ContinueWorkBanner } from "./ContinueWorkBanner";
 import type { MelaAssistAction, MelaAssistActionKind, MelaAssistMessage } from "./types";
 
 function uid() {
@@ -61,8 +62,10 @@ export function MelaAssistPanel() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const lastQuestionRef = useRef<string | null>(null);
 
-  const suggestions = useMemo(() => getSuggestionsForRole(context.role), [context.role]);
-  const greeting = useMemo(() => greetingForRole(context.role), [context.role]);
+  const pageContext = useMemo(
+    () => getPageContext(context.pathname, context.role),
+    [context.pathname, context.role],
+  );
 
   const send = useCallback(
     async (raw: string, opts?: { silent?: boolean }) => {
@@ -265,11 +268,24 @@ export function MelaAssistPanel() {
 
         <div className="flex-1 overflow-y-auto">
           {!hasMessages ? (
-            <MelaAssistSuggestions
-              suggestions={suggestions}
-              greeting={greeting}
-              onPick={(p) => void send(p)}
-            />
+            <>
+              {memory.currentTask && (
+                <ContinueWorkBanner
+                  task={memory.currentTask}
+                  onContinue={() => void send(`Continue helping me with: ${memory.currentTask}`, { silent: true })}
+                  onStartNew={() => setMemory({ currentTask: null, currentDraft: null })}
+                  onDiscard={() => setMemory({ currentTask: null, currentDraft: null })}
+                />
+              )}
+              <MelaAssistSuggestions
+                suggestions={pageContext.suggestions}
+                greeting={pageContext.greeting}
+                surface={pageContext.surface}
+                tip={pageContext.tip}
+                tipKey={pageContext.tipKey}
+                onPick={(p) => void send(p)}
+              />
+            </>
           ) : (
             <div className="space-y-3 px-4 py-4">
               <MelaAssistConversation messages={messages} />

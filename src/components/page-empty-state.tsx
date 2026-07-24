@@ -3,6 +3,7 @@ import { Sparkles, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
+import { useMelaAssistOptional } from "@/components/melaassist";
 
 type Action = {
   label: string;
@@ -18,6 +19,8 @@ export function PageEmptyState({
   primary,
   secondary,
   aiSuggestion,
+  aiPrompt,
+  aiPromptLabel = "Ask MelaAssist",
   className,
   children,
 }: {
@@ -27,9 +30,13 @@ export function PageEmptyState({
   primary?: Action;
   secondary?: Action;
   aiSuggestion?: string;
+  /** When set, renders an "Ask MelaAssist" button that opens the assistant with this prompt. */
+  aiPrompt?: string;
+  aiPromptLabel?: string;
   className?: string;
   children?: ReactNode;
 }) {
+  const assist = useMelaAssistOptional();
   return (
     <div
       className={cn(
@@ -57,6 +64,17 @@ export function PageEmptyState({
               <Sparkles className="h-3 w-3" /> MelaAssist™
             </div>
             {aiSuggestion}
+            {aiPrompt && assist && (
+              <div className="mt-3">
+                <Button
+                  size="sm"
+                  variant="hero"
+                  onClick={() => assist.openAssistant({ initialPrompt: aiPrompt, task: title })}
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" /> {aiPromptLabel}
+                </Button>
+              </div>
+            )}
           </div>
         )}
         {children}
