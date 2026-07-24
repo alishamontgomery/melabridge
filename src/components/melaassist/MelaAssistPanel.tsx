@@ -39,6 +39,22 @@ type ExecutableKind =
   | "create_event_draft"
   | "add_timeline_milestone";
 
+function pickThinkingLabel(question: string, pathname: string): string {
+  const q = question.toLowerCase();
+  if (/timeline|runsheet|schedule|milestone/.test(q)) return "Building your timeline…";
+  if (/budget|cost|spend|save|price/.test(q)) return "Crunching your budget…";
+  if (/vendor|florist|caterer|dj|photograph|match|recommend/.test(q)) return "Matching vendors…";
+  if (/guest|rsvp|invite|seating/.test(q)) return "Reviewing your guest list…";
+  if (/package|service|tier|offering/.test(q)) return "Drafting your packages…";
+  if (/faq|question/.test(q)) return "Writing FAQs…";
+  if (/profile|description|bio|about/.test(q)) return "Polishing your profile…";
+  if (/elegant|luxury|shorten|rewrite|tone|corporate|casual|family|option/.test(q)) return "Rewriting with a fresh angle…";
+  if (/event|plan|create/.test(q)) return "Reviewing your event…";
+  if (pathname.startsWith("/vendor")) return "Reviewing your vendor workspace…";
+  if (pathname.startsWith("/admin")) return "Scanning platform activity…";
+  return "Thinking it through…";
+}
+
 export function MelaAssistPanel() {
   const {
     open,
