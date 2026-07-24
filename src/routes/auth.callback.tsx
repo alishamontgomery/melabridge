@@ -106,7 +106,8 @@ function AuthCallbackPage() {
         await ensureProfile(user);
         if (cancelled) return;
         window.clearTimeout(timeout);
-        navigate({ to: safeNextPath() as "/events", replace: true });
+        const landing = await landingRouteForUser(user.id);
+        navigate({ to: safeNextPath(landing) as "/events", replace: true });
       } catch (err) {
         if (!cancelled) {
           window.clearTimeout(timeout);
