@@ -91,10 +91,11 @@ export function MelaAssistPanel() {
 
       const userMsg: MelaAssistMessage = { id: uid(), role: "user", content: question, createdAt: Date.now() };
       const pendingId = uid();
+      const thinkingLabel = pickThinkingLabel(question, context.pathname);
       setMessages((prev) => [
         ...prev,
         userMsg,
-        { id: pendingId, role: "assistant", content: "", createdAt: Date.now(), pending: true },
+        { id: pendingId, role: "assistant", content: thinkingLabel, createdAt: Date.now(), pending: true },
       ]);
       if (!opts?.silent) setInput("");
       setBusy(true);
