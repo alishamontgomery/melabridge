@@ -26,7 +26,9 @@ export type MelaAssistActionKind =
   | "generate_timeline"
   | "generate_budget"
   | "recommend_vendors"
-  | "draft_message";
+  | "draft_message"
+  | "create_event_draft"
+  | "add_timeline_milestone";
 
 export type MelaAssistActionStatus = "pending" | "editing" | "approved" | "cancelled" | "executed" | "failed";
 

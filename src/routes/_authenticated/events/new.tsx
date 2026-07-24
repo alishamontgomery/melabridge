@@ -156,6 +156,17 @@ function NewEventPage() {
           </p>
         </div>
 
+        <Link
+          to="/events/ai-new"
+          className="flex items-center justify-between gap-3 rounded-xl border border-primary/25 bg-gradient-to-r from-primary/8 via-primary/5 to-transparent p-3 text-sm shadow-soft transition-colors hover:border-primary/40"
+        >
+          <span className="inline-flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span><strong className="font-medium">Prefer to chat?</strong> Describe your event in plain language and MelaAssist drafts everything.</span>
+          </span>
+          <span className="text-xs font-medium text-primary">Try AI Builder →</span>
+        </Link>
+
         <form onSubmit={submit} className="space-y-4">
           <Card className="border-border/60 p-6 shadow-soft space-y-4">
             <div className="space-y-1.5">

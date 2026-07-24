@@ -131,9 +131,14 @@ function EventsListPage() {
           description="Every event you own or collaborate on lives here."
           icon={Calendar}
           actions={
-            <Button onClick={() => navigate({ to: "/events/new" })} className="gap-1.5" variant="hero">
-              <Plus className="h-4 w-4" /> New event
-            </Button>
+            <div className="flex flex-wrap gap-1.5">
+              <Button onClick={() => navigate({ to: "/events/ai-new" })} className="gap-1.5" variant="hero">
+                <Sparkles className="h-4 w-4" /> Plan with MelaAssist
+              </Button>
+              <Button onClick={() => navigate({ to: "/events/new" })} className="gap-1.5" variant="outline">
+                <Plus className="h-4 w-4" /> New event
+              </Button>
+            </div>
           }
         />
 

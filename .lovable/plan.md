@@ -1,45 +1,65 @@
-# MelaBridge Refinement Sprint — Execution Plan
+# MelaAssist AI Event Builder
 
-This is a large sprint (16 areas). I'll execute in ordered batches, verifying between them so nothing regresses. No redesign — same theme, layout, branding.
+Adds a conversational event-creation experience on top of the existing MelaAssist Context Engine + Action Framework. No AI pipelines are duplicated, no existing routes/APIs are broken, and nothing is saved without approval.
 
-Please confirm the batch order below (or tell me to reorder / drop items) and I'll start immediately.
+## What the user gets
 
-## Batch 1 — Structural cleanup (fastest wins, unblocks other work)
-1. **Remove Messaging entirely** (§1): delete `/messaging`, `/notifications`-message templates, scheduled reminders, email template registry surfaces, nav items, dashboard cards, command palette entries, search index refs. Rebalance sidebar spacing.
-2. **Rename "Guest Target" → "Expected Guests"** (§7) everywhere (labels only; DB column `guest_target` stays).
-3. **Remove `household` from Guests UI** (§5). Column stays in DB; hide from forms/tables. Add Role, Tags UI.
-4. **Nav audit** (§13): remove duplicate CTAs, dead links surfaced by rg sweep.
+A new page at `/events/ai-new` where the planner describes an event in plain language ("wedding for 120 in Atlanta next October, $25k") and MelaAssist:
+1. Extracts what it can (title, type, date, time, city, venue, guests, budget, theme, notes).
+2. Asks a short follow-up for anything missing.
+3. Produces a **Draft Event card** + a **Timeline**, **Budget**, **Checklist**, and **Vendor Recommendations** — each as its own approvable card.
+4. Nothing hits the database until the user clicks Approve on the specific card.
 
-## Batch 2 — Budget correctness (§3, §4, §8)
-5. Replace Budget Summary cards → **Budget / Committed / Paid / Remaining**.
-6. **"Add Line Item" modal** on `/budget` (currently links to event overview). Fields: Category, Description, Vendor, Estimated, Deposit, Paid, Due Date, Notes.
-7. Make every budget row inline-editable (amount, name, paid, deposit, due date, notes, vendor, delete). Totals recompute live.
+Existing `/events/new` form stays untouched and is still linked from `/events`. A "Plan with MelaAssist" CTA on `/events` and `/events/new` links to the new flow.
 
-## Batch 3 — Runsheet & Tasks intelligence (§2, §6)
-8. Rewrite `event-bootstrap.functions.ts` runsheet seeding: anchor to `event_time`, generate pre-event items with negative offsets (load-in, hair, makeup, decor, photographer, guest arrival), ceremony at T0, then post-event blocks. Templates per `event_type`.
-9. Rewrite task due-date seeding: offsets counted back from `event_date` (venue -180d, photographer -150d, invites -90d, cake -45d, etc.). Only mark overdue when actually past today.
-10. Runsheet edit UX: inline time edit, rename, delete, add, assign owner. (Drag & drop deferred unless required — will implement with dnd-kit if you confirm.)
+## UI
 
-## Batch 4 — Ticketing module (§9, §10)
-11. Migration: `event_tickets`, `ticket_types`, `ticket_orders`, `ticket_attendees` with RLS + GRANTs. Add `tickets_enabled boolean` to `events`.
-12. Event-create wizard: "Will this event require ticket sales or registration?" toggle. Auto-ON for Conference/Festival/Fundraiser/Community; OFF for Wedding/Birthday/Baby Shower/Graduation.
-13. `/events/$eventId/tickets` tab: types CRUD, sales window, quantity, promo codes, custom questions, orders list, QR check-in stub, exports, analytics cards (sales, revenue, attendance, inventory).
-14. Public `/tickets/$eventId` checkout page (Stripe via existing BridgePay integration; refund arch scaffolded but not wired).
+- New route: `src/routes/_authenticated/events/ai-new.tsx` (mobile-first, single column, sticky composer, progress header).
+- Reuses `<ActionCard />` for every card so the Approve / Edit / Regenerate / Cancel / Copy workflow stays consistent with the assistant panel.
+- Header shows a small progress ring: how many required fields are known (title, type, date, city, guests, budget) — updates as the chat fills them in.
+- Next-step chips ("Move ceremony to 5 PM", "Increase budget to 30k", "Add a photo booth") come straight from the model's `nextSteps`.
 
-## Batch 5 — AI, empty states, polish (§11, §12, §14, §15)
-15. Extend `nl-commands.ts` MelaAssist parser: recognize the listed intents; dispatch to existing mutations.
-16. Replace remaining blank pages with `PageEmptyState` (Guests, Budget, Files, Tickets, Runsheet).
-17. Responsive sweep at 375/768/1280 via Playwright, screenshot every route, patch overflow/clipping.
-18. Loading skeletons, delete confirms, success toasts across CRUD.
+## Server (extends existing engine — no new pipeline)
 
-## Batch 6 — Final QA (§16)
-19. Playwright walkthrough of full event lifecycle (create → guests → budget → runsheet → tickets → publish share link).
-20. Console-error sweep, dead-link sweep, role-based nav check (Planner/Vendor/Professional).
+`src/lib/melaassist-actions.functions.ts`:
+- Add two new **executable** kinds so approval actually saves:
+  - `create_event_draft` — inserts the row into `events` (owner = caller), then calls the existing `bootstrapEventPlan({ only_if_empty: true })` so tasks/budget/runsheet/vendor needs are auto-scaffolded. Returns `{ eventId }`.
+  - `add_timeline_milestone` — inserts a `tasks` row with a due date computed from an offset (`months_before` / `days_before`) against the event's `event_date`.
+- Add `builderMode?: "event_builder"` to `TurnInput`. When set, the system prompt is tightened: always propose a `create_event_draft` first when title+type+date are known, then follow-up cards; only ask ONE missing question at a time.
+- Role kinds for `personal` / `organization` gain `create_event_draft` and `add_timeline_milestone`. Existing kinds keep their current behavior for the panel.
 
-## Notes / assumptions
-- Preserving DB columns for anything I only hide in UI (safe rollback).
-- Ticketing checkout uses the existing Stripe wiring; go-live requires publishable keys already in the project.
-- Drag & drop for runsheet: I'll use `@dnd-kit/core` if you want it; otherwise inline up/down buttons only.
-- "Email Templates" removal (§1): confirming you also want the *auth email templates* under `src/lib/email-templates/` gone, or only the in-app messaging templates? Auth emails (signup, magic link, recovery) are required by Supabase Auth — I'll keep those and remove only the in-app template registry.
+`src/components/melaassist/types.ts` + `action-registry.ts`:
+- Register the two new kinds (`executable: true`, approval copy).
 
-**Reply "go"** to execute Batch 1 immediately, or tell me to reorder/split further. Given the size, I'd recommend approving batch-by-batch so you can review between.
+## Reused components
+
+- `melaAssistTurn` server function — same gateway, same model, same JSON-block contract.
+- `executeMelaAction` server function — extended enum, existing switch pattern.
+- `ActionCard`, `NextSteps`, `MelaAssistConversation` — dropped into the new page unchanged.
+- `MelaAssistProvider` context — the page reads/writes the same `memory.currentEventId` so the floating panel picks up the freshly-created event automatically.
+
+## Safety
+
+- No auto-save. `create_event_draft` is gated by explicit Approve; every follow-up card (timeline milestone, budget line, checklist item) is its own Approve.
+- After the event row is created, the memory sets `currentEventId` so later cards target the new event; the existing owner check + RLS handles authorization.
+- No changes to Stripe, subscriptions, auth, messaging, vendor code, dashboards, or existing routes.
+- Backward compatible: `/events/new` unchanged, `/events` list unchanged.
+
+## Files touched
+
+Edits:
+- `src/lib/melaassist-actions.functions.ts` — add builder mode, add two executor cases.
+- `src/components/melaassist/types.ts` — add two `MelaAssistActionKind` values.
+- `src/components/melaassist/action-registry.ts` — register the two new kinds.
+- `src/routes/_authenticated/events/index.tsx` (or wherever the events list header lives) — small "Plan with MelaAssist" link.
+- `src/routes/_authenticated/events/new.tsx` — small banner linking to `/events/ai-new`.
+
+New:
+- `src/routes/_authenticated/events/ai-new.tsx` — the AI Event Builder page.
+
+## QA
+
+- `bunx tsgo --noEmit` clean.
+- Manual: create wedding via chat, approve draft, verify event + bootstrap workspace loaded, approve a timeline milestone → task appears in `/tasks` scoped to that event.
+- Manual: existing `/events/new` form still creates events; assistant panel on other pages still opens and works.
+- Mobile viewport check (390px) on `/events/ai-new`.
