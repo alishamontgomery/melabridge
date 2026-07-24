@@ -23,6 +23,7 @@ import { AISavings } from "@/components/dashboard/ai-savings";
 import { SmartPredictions } from "@/components/dashboard/smart-predictions";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
+import { MelaAssistInsights, MelaAssistActivityFeed, type MelaAssistInsight } from "@/components/melaassist";
 
 import {
   computeCountdown,
@@ -131,9 +132,11 @@ function DashboardPage() {
                 <AIConcierge eventId={event.id} />
               </div>
               <div className="space-y-6">
+                <MelaAssistInsights insights={buildDashboardInsights(derived, event)} />
                 <EventHealthScore health={derived.health} />
                 <SmartPredictions items={derived.predictions} />
                 <AISavings items={derived.savings.items} total={derived.savings.total} />
+                <MelaAssistActivityFeed />
               </div>
             </div>
           </>
