@@ -146,7 +146,51 @@ function DashboardPage() {
   );
 }
 
-function EmptyDashboard({ firstName }: { firstName: string }) {
+function buildDashboardInsights(derived: NonNullable<ReturnType<typeof useMemo<any>>>, event: { id: string; name?: string | null }): MelaAssistInsight[] {
+  const out: MelaAssistInsight[] = [];
+  const health = derived.health?.overall ?? 100;
+  if (health < 70) {
+    out.push({
+      id: "health-low",
+      label: `Event health at ${health}%`,
+      detail: "A few areas are slipping — let's tighten them up.",
+      tone: "warn",
+      prompt: `My event health score is ${health}%. What are the top 3 things I should fix this week?`,
+    });
+  }
+  const focus = derived.focus;
+  if (focus?.title) {
+    out.push({
+      id: "focus-today",
+      label: `Today's focus: ${focus.title}`,
+      detail: focus.reason ?? "Knock this one out first.",
+      prompt: `Help me complete: ${focus.title}.`,
+    });
+  }
+  const brief = (derived.brief ?? []) as Array<{ title: string; detail?: string; tone?: string }>;
+  const warn = brief.find((b) => b.tone === "warn" || b.tone === "risk");
+  if (warn) {
+    out.push({
+      id: "brief-warn",
+      label: warn.title,
+      detail: warn.detail,
+      tone: "warn",
+      prompt: `Help me address: ${warn.title}.`,
+    });
+  }
+  const days = derived.countdown?.days;
+  if (typeof days === "number" && days <= 14 && days >= 0) {
+    out.push({
+      id: "countdown-tight",
+      label: `${days} days until "${event.name ?? "your event"}"`,
+      detail: "I can build a final-stretch checklist for you.",
+      prompt: `Draft a final ${days}-day checklist to run "${event.name ?? "my event"}" smoothly.`,
+    });
+  }
+  return out.slice(0, 4);
+}
+
+
   const seed = useServerFn(seedSampleWorkspace);
   const [busy, setBusy] = useState(false);
 
