@@ -24,6 +24,7 @@ import { SmartPredictions } from "@/components/dashboard/smart-predictions";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
 import { MelaAssistInsights, MelaAssistActivityFeed, type MelaAssistInsight } from "@/components/melaassist";
+import { useDisplayName } from "@/lib/use-display-name";
 
 import {
   computeCountdown,
