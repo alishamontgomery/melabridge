@@ -113,7 +113,7 @@ function VendorDashboardPage() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{greeting()},</p>
-            <h1 className="truncate font-display text-3xl font-semibold">{displayName}</h1>
+            <h1 className="truncate font-display text-3xl font-semibold">{firstName}</h1>
             {businessName && <p className="mt-1 text-sm text-muted-foreground">{businessName}</p>}
           </div>
           <Button asChild variant="hero" size="sm" className="shrink-0">
