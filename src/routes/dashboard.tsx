@@ -190,7 +190,7 @@ function buildDashboardInsights(derived: NonNullable<ReturnType<typeof useMemo<a
   return out.slice(0, 4);
 }
 
-
+function EmptyDashboard({ firstName }: { firstName: string }) {
   const seed = useServerFn(seedSampleWorkspace);
   const [busy, setBusy] = useState(false);
 
