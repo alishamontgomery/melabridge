@@ -4,33 +4,62 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, ArrowUp } from "lucide-react";
-import { askMelaAssist } from "@/lib/melaassist.functions";
+import { toast } from "sonner";
+import { melaAssistTurn, executeMelaAction } from "@/lib/melaassist-actions.functions";
 import { useMelaAssist } from "./context";
 import { MelaAssistHeader } from "./MelaAssistHeader";
 import { MelaAssistSuggestions } from "./MelaAssistSuggestions";
 import { MelaAssistConversation } from "./MelaAssistConversation";
+import { ActionCard } from "./ActionCard";
+import { ActionHistory } from "./ActionHistory";
+import { NextSteps } from "./NextSteps";
+import { getActionMeta } from "./action-registry";
 import { getSuggestionsForRole, greetingForRole } from "./suggestions";
-import type { MelaAssistMessage } from "./types";
+import type { MelaAssistAction, MelaAssistActionKind, MelaAssistMessage } from "./types";
 
 function uid() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+const EXECUTABLE_KINDS = new Set<MelaAssistActionKind>([
+  "update_business_description",
+  "update_event_notes",
+  "create_budget_item",
+  "create_task",
+]);
+
 export function MelaAssistPanel() {
-  const { open, closeAssistant, context, initialPrompt, consumeInitialPrompt } = useMelaAssist();
-  const ask = useServerFn(askMelaAssist);
+  const {
+    open,
+    closeAssistant,
+    context,
+    initialPrompt,
+    consumeInitialPrompt,
+    memory,
+    setMemory,
+    history,
+    recordHistory,
+  } = useMelaAssist();
+
+  const turn = useServerFn(melaAssistTurn);
+  const execute = useServerFn(executeMelaAction);
+
   const [messages, setMessages] = useState<MelaAssistMessage[]>([]);
+  const [nextSteps, setNextSteps] = useState<string[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const lastQuestionRef = useRef<string | null>(null);
 
   const suggestions = useMemo(() => getSuggestionsForRole(context.role), [context.role]);
   const greeting = useMemo(() => greetingForRole(context.role), [context.role]);
 
   const send = useCallback(
-    async (raw: string) => {
+    async (raw: string, opts?: { silent?: boolean }) => {
       const question = raw.trim();
       if (!question || busy) return;
+      lastQuestionRef.current = question;
+
       const userMsg: MelaAssistMessage = { id: uid(), role: "user", content: question, createdAt: Date.now() };
       const pendingId = uid();
       setMessages((prev) => [
@@ -38,12 +67,59 @@ export function MelaAssistPanel() {
         userMsg,
         { id: pendingId, role: "assistant", content: "", createdAt: Date.now(), pending: true },
       ]);
-      setInput("");
+      if (!opts?.silent) setInput("");
       setBusy(true);
+      // Track current task in workspace memory
+      setMemory({ currentTask: question.slice(0, 200) });
+
       try {
-        const res = await ask({ data: { question, eventId: context.eventId ?? undefined } });
-        // Typewriter-style reveal for a premium feel
+        // Send trimmed conversation history for natural follow-ups
+        const historyPayload = messages
+          .filter((m) => !m.pending && !m.error)
+          .slice(-10)
+          .map((m) => ({ role: m.role, content: m.content }));
+
+        const res = await turn({
+          data: {
+            question,
+            eventId: context.eventId ?? undefined,
+            vendorId: context.vendorId ?? undefined,
+            role: context.role,
+            pathname: context.pathname,
+            history: historyPayload,
+            memory: {
+              currentTask: memory.currentTask ?? null,
+              currentDraft: memory.currentDraft ?? null,
+              currentEventId: memory.currentEventId ?? context.eventId ?? null,
+              currentVendorId: memory.currentVendorId ?? context.vendorId ?? null,
+            },
+          },
+        });
+
         const full = res.answer ?? "";
+        const inflatedActions: MelaAssistAction[] = (res.actions ?? []).map((a) => {
+          let payload: Record<string, unknown> = {};
+          try {
+            const parsed = JSON.parse(a.payloadJson);
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed))
+              payload = parsed as Record<string, unknown>;
+          } catch {
+            payload = { text: a.payloadJson };
+          }
+          const kind = a.kind as MelaAssistActionKind;
+          return {
+            id: uid(),
+            kind,
+            title: a.title,
+            summary: a.summary ?? undefined,
+            payload,
+            previewOnly: !EXECUTABLE_KINDS.has(kind),
+            status: "pending",
+            createdAt: Date.now(),
+          };
+        });
+
+        // Typewriter reveal
         const chunkSize = Math.max(2, Math.ceil(full.length / 60));
         let i = 0;
         await new Promise<void>((resolve) => {
@@ -51,13 +127,27 @@ export function MelaAssistPanel() {
             i = Math.min(full.length, i + chunkSize);
             const partial = full.slice(0, i);
             setMessages((prev) =>
-              prev.map((m) => (m.id === pendingId ? { ...m, content: partial, pending: i < full.length } : m)),
+              prev.map((m) =>
+                m.id === pendingId
+                  ? {
+                      ...m,
+                      content: partial,
+                      pending: i < full.length,
+                      actions: i >= full.length ? inflatedActions : undefined,
+                    }
+                  : m,
+              ),
             );
             if (i < full.length) window.setTimeout(tick, 18);
             else resolve();
           };
           tick();
         });
+
+        setNextSteps(res.nextSteps ?? []);
+        if (inflatedActions.length > 0) {
+          setMemory({ currentDraft: JSON.stringify(inflatedActions[0].payload).slice(0, 4000) });
+        }
       } catch {
         setMessages((prev) =>
           prev.map((m) =>
@@ -68,11 +158,10 @@ export function MelaAssistPanel() {
         );
       } finally {
         setBusy(false);
-        // Refocus composer
         requestAnimationFrame(() => inputRef.current?.focus());
       }
     },
-    [ask, busy, context.eventId],
+    [busy, turn, context, memory, setMemory, messages],
   );
 
   // Handle inbound initialPrompt when panel opens
@@ -80,20 +169,80 @@ export function MelaAssistPanel() {
     if (!open) return;
     if (initialPrompt) {
       const p = consumeInitialPrompt();
-      if (p) void send(p);
+      if (p) void send(p, { silent: true });
     }
     requestAnimationFrame(() => inputRef.current?.focus());
-  }, [open, initialPrompt, consumeInitialPrompt, send]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialPrompt]);
+
+  // ------- Action lifecycle -------
+  const updateAction = useCallback(
+    (messageId: string, actionId: string, patch: Partial<MelaAssistAction>) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId && m.actions
+            ? { ...m, actions: m.actions.map((a) => (a.id === actionId ? { ...a, ...patch } : a)) }
+            : m,
+        ),
+      );
+    },
+    [],
+  );
+
+  const approveAction = useCallback(
+    async (messageId: string, action: MelaAssistAction) => {
+      if (action.previewOnly) {
+        // Client-only accept: mark executed but note it's preview.
+        updateAction(messageId, action.id, { status: "executed" });
+        recordHistory({ kind: action.kind, title: `${getActionMeta(action.kind).label} (preview)`, status: "executed" });
+        toast.success("Draft accepted — copy or apply manually.");
+        return;
+      }
+      try {
+        await execute({
+          data: {
+            kind: action.kind as "update_business_description" | "update_event_notes" | "create_budget_item" | "create_task",
+            payload: action.payload,
+            eventId: context.eventId ?? undefined,
+          },
+        });
+        updateAction(messageId, action.id, { status: "executed" });
+        recordHistory({ kind: action.kind, title: getActionMeta(action.kind).label, status: "executed" });
+        toast.success(`${getActionMeta(action.kind).label} applied`);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Action failed";
+        updateAction(messageId, action.id, { status: "failed", error: msg });
+        recordHistory({ kind: action.kind, title: getActionMeta(action.kind).label, status: "failed", note: msg });
+        toast.error(msg);
+      }
+    },
+    [execute, context.eventId, updateAction, recordHistory],
+  );
+
+  const regenerateAction = useCallback(
+    (action: MelaAssistAction) => {
+      const last = lastQuestionRef.current;
+      const prompt = last
+        ? `Regenerate the "${action.title}" — try a different angle. Keep it aligned with the current task.`
+        : `Regenerate the "${action.title}".`;
+      void send(prompt);
+    },
+    [send],
+  );
 
   function reset() {
     setMessages([]);
+    setNextSteps([]);
     setInput("");
+    setMemory({ currentTask: null, currentDraft: null });
   }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     void send(input);
   }
+
+  const hasMessages = messages.length > 0;
 
   return (
     <Sheet open={open} onOpenChange={(v) => (v ? null : closeAssistant())}>
@@ -105,16 +254,48 @@ export function MelaAssistPanel() {
         <MelaAssistHeader onClose={closeAssistant} onReset={reset} />
 
         <div className="flex-1 overflow-y-auto">
-          {messages.length === 0 ? (
+          {!hasMessages ? (
             <MelaAssistSuggestions
               suggestions={suggestions}
               greeting={greeting}
               onPick={(p) => void send(p)}
             />
           ) : (
-            <MelaAssistConversation messages={messages} />
+            <div className="space-y-3 px-4 py-4">
+              <MelaAssistConversation messages={messages} />
+              {/* Render action cards under the latest assistant message */}
+              {messages
+                .filter((m) => m.role === "assistant" && m.actions && m.actions.length > 0)
+                .slice(-1)
+                .map((m) => (
+                  <div key={`${m.id}-actions`} className="space-y-2">
+                    {m.actions!.map((a) => (
+                      <ActionCard
+                        key={a.id}
+                        action={a}
+                        onApprove={() => approveAction(m.id, a)}
+                        onEditSave={(nextPayload) => updateAction(m.id, a.id, { payload: nextPayload })}
+                        onRegenerate={() => regenerateAction(a)}
+                        onCancel={() => {
+                          updateAction(m.id, a.id, { status: "cancelled" });
+                          recordHistory({
+                            kind: a.kind,
+                            title: getActionMeta(a.kind).label,
+                            status: "cancelled",
+                          });
+                        }}
+                      />
+                    ))}
+                  </div>
+                ))}
+              {nextSteps.length > 0 && (
+                <NextSteps steps={nextSteps} onPick={(s) => void send(s)} />
+              )}
+            </div>
           )}
         </div>
+
+        <ActionHistory history={history} />
 
         <form onSubmit={onSubmit} className="border-t border-border/60 bg-background/80 p-3 backdrop-blur">
           <div className="relative">
