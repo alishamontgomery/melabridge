@@ -148,6 +148,14 @@ function extractJsonBlock(raw: string): unknown | null {
   return null;
 }
 
+function safeStringify(v: unknown): string {
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return "{}";
+  }
+}
+
 export const melaAssistTurn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => TurnInput.parse(input))
