@@ -130,7 +130,13 @@ function BudgetPage() {
               const pct = c.committed > 0 ? Math.round((c.actual / c.committed) * 100) : 0;
               const over = pct > 100;
               return (
-                <div key={c.name} className="rounded-2xl border border-border bg-card p-4">
+                <button
+                  type="button"
+                  key={c.name}
+                  onClick={() => setOpenCategory(c.name)}
+                  className="block w-full rounded-2xl border border-border bg-card p-4 text-left transition hover:border-primary/40 hover:bg-accent/30 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  aria-label={`Open ${c.name} category`}
+                >
                   <div className="flex items-center justify-between">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{c.name}</p>
@@ -151,11 +157,22 @@ function BudgetPage() {
                     </Badge>
                   </div>
                   <Progress value={Math.min(100, pct)} className="mt-3" />
-                </div>
+                </button>
               );
             })}
           </section>
         </>
+      )}
+
+      {hasEvent && openCategory && (
+        <CategoryEditorDialog
+          open={!!openCategory}
+          onOpenChange={(v) => { if (!v) setOpenCategory(null); }}
+          category={openCategory}
+          items={items.filter((it) => (it.category?.trim() || "Uncategorized") === openCategory)}
+          eventId={event.id!}
+          onChanged={async () => { await qc.invalidateQueries({ queryKey: ["budget-items", event.id] }); }}
+        />
       )}
 
       {hasEvent && (
