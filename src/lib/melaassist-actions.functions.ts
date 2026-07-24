@@ -152,17 +152,18 @@ export const melaAssistTurn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => TurnInput.parse(input))
   .handler(async ({ data, context }) => {
-    type OutAction = { kind: string; title: string; summary?: string; payload: Record<string, unknown> };
+    type OutAction = { kind: string; title: string; summary: string | null; payload: Record<string, unknown> };
     type TurnResult = { answer: string; actions: OutAction[]; nextSteps: string[]; degraded: boolean };
+    const makeResult = (r: TurnResult): TurnResult => r;
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) {
-      const r: TurnResult = {
+      return makeResult({
         answer: "MelaAssist is temporarily unavailable. Please try again shortly.",
         actions: [],
         nextSteps: [],
         degraded: true,
-      };
-      return r;
+      });
     }
 
     const supaCtx = context as SupabaseCtx;
@@ -200,18 +201,11 @@ When the user asks for a concrete change (create, update, draft, generate, add, 
 
 JSON schema:
 {
-  "answer": string,               // same as the prose above; short
+  "answer": string,
   "actions": [
-    {
-      "kind": "<one of the allowed kinds>",
-      "title": string,             // human-facing card title
-      "summary": string,           // one-line description
-      "payload": {                 // free-form structured content the user will approve
-        // For text-heavy actions include a "text" or "description" string.
-      }
-    }
+    { "kind": "<one of the allowed kinds>", "title": string, "summary": string, "payload": { } }
   ],
-  "nextSteps": [string]            // 2-4 short next-step labels the user could tap
+  "nextSteps": [string]
 }
 
 Rules:
@@ -227,10 +221,7 @@ Rules:
       content: m.content,
     }));
 
-    const userMessage = `Workspace (JSON):
-${JSON.stringify(workspace)}
-
-User message: ${data.question}`;
+    const userMessage = `Workspace (JSON):\n${JSON.stringify(workspace)}\n\nUser message: ${data.question}`;
 
     try {
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -246,62 +237,66 @@ User message: ${data.question}`;
         }),
       });
       if (resp.status === 429)
-        return { answer: "MelaAssist is busy right now — please try again in a moment.", actions: [], nextSteps: [], degraded: true };
+        return makeResult({ answer: "MelaAssist is busy right now — please try again in a moment.", actions: [], nextSteps: [], degraded: true });
       if (resp.status === 402)
-        return { answer: "MelaAssist is temporarily paused on this workspace. Please contact your admin.", actions: [], nextSteps: [], degraded: true };
+        return makeResult({ answer: "MelaAssist is temporarily paused on this workspace. Please contact your admin.", actions: [], nextSteps: [], degraded: true });
       if (!resp.ok)
-        return { answer: "MelaAssist couldn't reach the planning engine. Please try again.", actions: [], nextSteps: [], degraded: true };
+        return makeResult({ answer: "MelaAssist couldn't reach the planning engine. Please try again.", actions: [], nextSteps: [], degraded: true });
 
       const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
       const raw = (json.choices?.[0]?.message?.content ?? "").trim();
 
-      // Parse structured block if present.
       const parsed = extractJsonBlock(raw) as
-        | { answer?: string; actions?: any[]; nextSteps?: string[] }
+        | { answer?: string; actions?: unknown[]; nextSteps?: unknown[] }
         | null;
 
       let answer = parsed?.answer;
       if (!answer) {
-        // Strip fenced JSON block from prose so the user only sees the answer.
         answer = raw.replace(/```(?:json)?\s*[\s\S]*?```/i, "").trim();
       }
 
       const validKinds = new Set(kinds);
-      const actions = Array.isArray(parsed?.actions)
-        ? parsed!.actions
-            .filter(
-              (a: any): a is { kind: string; title: string; summary?: string; payload?: any } =>
-                a && typeof a.kind === "string" && typeof a.title === "string" && validKinds.has(a.kind),
-            )
-            .slice(0, 6)
-            .map((a: any) => ({
-              kind: a.kind,
-              title: String(a.title).slice(0, 140),
-              summary: typeof a.summary === "string" ? a.summary.slice(0, 240) : undefined,
-              payload:
-                a.payload && typeof a.payload === "object" && !Array.isArray(a.payload)
-                  ? a.payload
-                  : { text: String(a.payload ?? "") },
-            }))
-        : [];
+      const rawActions = Array.isArray(parsed?.actions) ? parsed!.actions : [];
+      const actions: OutAction[] = [];
+      for (const a of rawActions) {
+        if (!a || typeof a !== "object") continue;
+        const obj = a as Record<string, unknown>;
+        const kind = typeof obj.kind === "string" ? obj.kind : "";
+        const title = typeof obj.title === "string" ? obj.title : "";
+        if (!validKinds.has(kind) || !title) continue;
+        const payload =
+          obj.payload && typeof obj.payload === "object" && !Array.isArray(obj.payload)
+            ? (obj.payload as Record<string, unknown>)
+            : { text: String(obj.payload ?? "") };
+        actions.push({
+          kind,
+          title: title.slice(0, 140),
+          summary: typeof obj.summary === "string" ? obj.summary.slice(0, 240) : null,
+          payload,
+        });
+        if (actions.length >= 6) break;
+      }
 
-      const nextSteps = Array.isArray(parsed?.nextSteps)
-        ? parsed!.nextSteps.filter((s: unknown): s is string => typeof s === "string").slice(0, 6)
-        : [];
+      const rawSteps = Array.isArray(parsed?.nextSteps) ? parsed!.nextSteps : [];
+      const nextSteps: string[] = [];
+      for (const s of rawSteps) {
+        if (typeof s === "string") nextSteps.push(s);
+        if (nextSteps.length >= 6) break;
+      }
 
-      return {
+      return makeResult({
         answer: answer || "I don't have a good answer for that yet — try rephrasing.",
         actions,
         nextSteps,
         degraded: false,
-      };
+      });
     } catch {
-      return {
+      return makeResult({
         answer: "MelaAssist couldn't reach the planning engine. Please try again.",
         actions: [],
         nextSteps: [],
         degraded: true,
-      };
+      });
     }
   });
 
