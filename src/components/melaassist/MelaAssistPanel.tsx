@@ -305,7 +305,20 @@ export function MelaAssistPanel() {
             </>
           ) : (
             <div className="space-y-3 px-4 py-4">
-              <MelaAssistConversation messages={messages} />
+              <MelaAssistConversation
+                messages={messages}
+                onRetry={() => {
+                  const last = lastQuestionRef.current;
+                  if (last) void send(last, { silent: true });
+                }}
+                onEditRequest={() => {
+                  const last = lastQuestionRef.current;
+                  if (last) {
+                    setInput(last);
+                    requestAnimationFrame(() => inputRef.current?.focus());
+                  }
+                }}
+              />
               {/* Render action cards under the latest assistant message */}
               {messages
                 .filter((m) => m.role === "assistant" && m.actions && m.actions.length > 0)
