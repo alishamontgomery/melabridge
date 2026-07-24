@@ -44,6 +44,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNotifications } from "@/hooks/use-notifications";
 
 import { CommandPalette, CommandTrigger } from "@/components/command-palette";
+import { MelaAssistFloatingButton } from "@/components/melaassist";
 import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
@@ -403,6 +404,7 @@ export function AppShell({ active, children }: { active: string; children: React
         </div>
 
         <CommandPalette />
+        <MelaAssistFloatingButton />
       </div>
     </>
   );
