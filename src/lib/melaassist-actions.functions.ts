@@ -272,7 +272,7 @@ Rules:
           kind,
           title: title.slice(0, 140),
           summary: typeof obj.summary === "string" ? obj.summary.slice(0, 240) : null,
-          payload,
+          payloadJson: safeStringify(payload),
         });
         if (actions.length >= 6) break;
       }
