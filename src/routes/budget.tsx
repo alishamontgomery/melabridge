@@ -330,3 +330,164 @@ function AddLineItemDialog({
     </Dialog>
   );
 }
+
+function CategoryEditorDialog({
+  open,
+  onOpenChange,
+  category,
+  items,
+  eventId,
+  onChanged,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  category: string;
+  items: BudgetItem[];
+  eventId: string;
+  onChanged: () => Promise<void>;
+}) {
+  const totals = items.reduce(
+    (acc, it) => {
+      acc.est += Number(it.estimated_amount ?? 0);
+      acc.actual += Number(it.actual_amount ?? 0);
+      acc.paid += Number(it.paid_amount ?? 0);
+      return acc;
+    },
+    { est: 0, actual: 0, paid: 0 },
+  );
+  const pct = totals.est > 0 ? Math.round((totals.actual / totals.est) * 100) : 0;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{category}</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid gap-2 sm:grid-cols-3">
+          <Stat label="Allocated" value={`$${totals.est.toLocaleString()}`} sub={`${items.length} item${items.length === 1 ? "" : "s"}`} />
+          <Stat label="Committed" value={`$${totals.actual.toLocaleString()}`} sub={`${pct}% of allocated`} />
+          <Stat label="Paid" value={`$${totals.paid.toLocaleString()}`} sub="Cleared so far" />
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {items.map((it) => (
+            <CategoryLineItemRow
+              key={it.id}
+              item={it}
+              eventId={eventId}
+              onSaved={onChanged}
+            />
+          ))}
+          {items.length === 0 && (
+            <p className="text-sm text-muted-foreground">No line items in this category yet.</p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CategoryLineItemRow({
+  item,
+  eventId,
+  onSaved,
+}: {
+  item: BudgetItem;
+  eventId: string;
+  onSaved: () => Promise<void>;
+}) {
+  const [allocated, setAllocated] = useState(String(item.estimated_amount ?? ""));
+  const [committed, setCommitted] = useState(String(item.actual_amount ?? ""));
+  const [paid, setPaid] = useState(String(item.paid_amount ?? ""));
+  const [depositAmount, setDepositAmount] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const dirty =
+    allocated !== String(item.estimated_amount ?? "") ||
+    committed !== String(item.actual_amount ?? "") ||
+    paid !== String(item.paid_amount ?? "");
+
+  async function save() {
+    setSaving(true);
+    try {
+      const nextAllocated = allocated === "" ? 0 : Number(allocated);
+      const nextCommitted = committed === "" ? 0 : Number(committed);
+      const addDeposit = depositAmount === "" ? 0 : Number(depositAmount);
+      const addPayment = paymentAmount === "" ? 0 : Number(paymentAmount);
+      const currentPaid = paid === "" ? 0 : Number(paid);
+      const nextPaid = currentPaid + addDeposit + addPayment;
+
+      const { error } = await supabase
+        .from("budget_items")
+        .update({
+          estimated_amount: nextAllocated,
+          actual_amount: nextCommitted,
+          paid_amount: nextPaid,
+        })
+        .eq("id", item.id)
+        .eq("event_id", eventId);
+      if (error) throw error;
+      toast.success("Saved");
+      setDepositAmount("");
+      setPaymentAmount("");
+      setPaid(String(nextPaid));
+      await onSaved();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-medium">{item.label ?? "Untitled item"}</p>
+          {item.vendor_name && (
+            <p className="truncate text-xs text-muted-foreground">Vendor · {item.vendor_name}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <Label htmlFor={`alloc-${item.id}`}>Allocated</Label>
+          <Input id={`alloc-${item.id}`} type="number" min="0" step="0.01" value={allocated} onChange={(e) => setAllocated(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`comm-${item.id}`}>Committed</Label>
+          <Input id={`comm-${item.id}`} type="number" min="0" step="0.01" value={committed} onChange={(e) => setCommitted(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`paid-${item.id}`}>Paid to date</Label>
+          <Input id={`paid-${item.id}`} type="number" min="0" step="0.01" value={paid} onChange={(e) => setPaid(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor={`dep-${item.id}`}>Record deposit</Label>
+          <Input id={`dep-${item.id}`} type="number" min="0" step="0.01" placeholder="0" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor={`pay-${item.id}`}>Record payment</Label>
+          <Input id={`pay-${item.id}`} type="number" min="0" step="0.01" placeholder="0" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="mt-3 flex justify-end">
+        <Button size="sm" onClick={save} disabled={saving || (!dirty && !depositAmount && !paymentAmount)} className="gap-1.5">
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          Save changes
+        </Button>
+      </div>
+    </div>
+  );
+}
