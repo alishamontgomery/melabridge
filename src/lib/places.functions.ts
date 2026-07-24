@@ -30,6 +30,7 @@ function authHeaders() {
 }
 
 export const autocompletePlaces = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => AutocompleteInput.parse(d))
   .handler(async ({ data }) => {
     const res = await fetch(`${GATEWAY}/places/v1/places:autocomplete`, {
