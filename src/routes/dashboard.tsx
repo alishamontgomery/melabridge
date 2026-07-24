@@ -146,7 +146,7 @@ function DashboardPage() {
   );
 }
 
-function buildDashboardInsights(derived: NonNullable<ReturnType<typeof useMemo<any>>>, event: { id: string; name?: string | null }): MelaAssistInsight[] {
+function buildDashboardInsights(derived: any, event: { id: string; name?: string | null }): MelaAssistInsight[] {
   const out: MelaAssistInsight[] = [];
   const health = derived.health?.overall ?? 100;
   if (health < 70) {
