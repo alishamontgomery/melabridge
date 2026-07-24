@@ -83,7 +83,7 @@ function DashboardPage() {
     return { countdown, health, brief, focus, predictions, savings, milestones };
   }, [event, dashQ.data]);
 
-  const firstName = firstNameFromUser(user);
+  const { firstName } = useDisplayName();
 
   return (
     <AppShell active="/dashboard">
