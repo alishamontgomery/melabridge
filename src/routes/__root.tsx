@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
+import { MelaAssistProvider } from "@/components/melaassist";
 import { Toaster } from "sonner";
 
 function NotFoundComponent() {
@@ -152,9 +153,11 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <EcosystemProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <Toaster richColors position="top-right" closeButton />
+          <MelaAssistProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <Toaster richColors position="top-right" closeButton />
+          </MelaAssistProvider>
         </EcosystemProvider>
       </AuthProvider>
     </QueryClientProvider>
