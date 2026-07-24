@@ -276,6 +276,45 @@ function VendorDashboardPage() {
   );
 }
 
+function buildVendorInsights({
+  awaitingPayments,
+  overdueTasks,
+  newLeads,
+}: {
+  awaitingPayments: unknown[];
+  overdueTasks: unknown[];
+  newLeads: unknown[];
+}): MelaAssistInsight[] {
+  const out: MelaAssistInsight[] = [];
+  if (newLeads.length > 0) {
+    out.push({
+      id: "new-leads",
+      label: `${newLeads.length} inquiry lead${newLeads.length === 1 ? "" : "s"} to answer`,
+      detail: "Reply within 24h to boost conversion.",
+      tone: "warn",
+      prompt: "Draft a warm, professional reply for each of my new inquiry leads.",
+    });
+  }
+  if (awaitingPayments.length > 0) {
+    out.push({
+      id: "deposits-out",
+      label: `${awaitingPayments.length} deposit${awaitingPayments.length === 1 ? "" : "s"} outstanding`,
+      detail: "Send a friendly reminder to keep bookings moving.",
+      tone: "warn",
+      prompt: "Draft a friendly deposit reminder I can send to clients with outstanding payments.",
+    });
+  }
+  if (overdueTasks.length > 0) {
+    out.push({
+      id: "overdue-tasks",
+      label: `${overdueTasks.length} task${overdueTasks.length === 1 ? "" : "s"} overdue`,
+      detail: "Reschedule or mark them done.",
+      prompt: "Help me triage my overdue tasks — what should I do first?",
+    });
+  }
+  return out;
+}
+
 function StatTile({ icon: Icon, label, value }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string }) {
   return (
     <Card className="border-border/60 p-4 shadow-soft">
