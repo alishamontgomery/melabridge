@@ -1,65 +1,65 @@
-# MelaAssist AI Event Builder
+# MelaAssist Everywhere — Platform Integration
 
-Adds a conversational event-creation experience on top of the existing MelaAssist Context Engine + Action Framework. No AI pipelines are duplicated, no existing routes/APIs are broken, and nothing is saved without approval.
+Reuse the existing `MelaAssistProvider`, action engine, Event Builder, and Vendor Profile Builder. No new providers, no duplicate AI calls.
 
-## What the user gets
+## 1. Page-aware greeting + "continue previous work"
+- Extend `src/components/melaassist/suggestions.ts` with a `getPageContext(pathname, role)` helper returning `{ greeting, suggestions, tip }` per surface: vendor profile, event page, events index, dashboard, admin, marketplace, budget, timeline, tickets-removed fallback, etc.
+- Update `MelaAssistSuggestions` to render the page-aware greeting, contextual chips, and a single dismissible "AI Tip".
+- In `MelaAssistPanel`, when opening with existing `memory.currentTask` or `currentDraft`, show a "Welcome back — you were working on **{task}**" banner with `Continue` / `Start new` / `Discard` buttons (calls existing `send`, `reset`, and `clearMemory`).
 
-A new page at `/events/ai-new` where the planner describes an event in plain language ("wedding for 120 in Atlanta next October, $25k") and MelaAssist:
-1. Extracts what it can (title, type, date, time, city, venue, guests, budget, theme, notes).
-2. Asks a short follow-up for anything missing.
-3. Produces a **Draft Event card** + a **Timeline**, **Budget**, **Checklist**, and **Vendor Recommendations** — each as its own approvable card.
-4. Nothing hits the database until the user clicks Approve on the specific card.
+## 2. Smart suggestions (role + page)
+- Replace `getSuggestionsForRole` usage with `getPageContext(pathname, role).suggestions` inside the panel.
+- Sets: Vendor (improve profile, create packages, portfolio audit, FAQs), Planner on event page (timeline, budget, vendors, guest list), Planner dashboard (continue draft, plan new event), Admin (review vendors, platform health, subscription metrics).
 
-Existing `/events/new` form stays untouched and is still linked from `/events`. A "Plan with MelaAssist" CTA on `/events` and `/events/new` links to the new flow.
+## 3. MelaAssist Insights card (collapsible)
+- New `src/components/melaassist/MelaAssistInsights.tsx`: collapsible card with role-specific bullets computed from data already available on the page (props-driven). No new server calls.
+- Mount on:
+  - Planner dashboard (`src/routes/dashboard.tsx`): overdue tasks, missing vendor categories, budget %, timeline %.
+  - Vendor dashboard (`src/routes/_authenticated/vendor.tsx`): profile completion %, photo count hint, packages count.
+  - Admin (`src/routes/admin.index.tsx`): new users this week, vendor growth, active subscriptions.
+- Each insight has a "Fix with MelaAssist" button that calls `openAssistant({ initialPrompt, task })`.
 
-## UI
+## 4. AI Activity Feed
+- Reuse existing session `history` from `MelaAssistProvider`.
+- New `src/components/melaassist/MelaAssistActivityFeed.tsx` — compact list showing last 5 executed actions with icons and a "Reopen" button that pushes a prompt back into the panel.
+- Add to dashboard + vendor + admin index next to Insights.
 
-- New route: `src/routes/_authenticated/events/ai-new.tsx` (mobile-first, single column, sticky composer, progress header).
-- Reuses `<ActionCard />` for every card so the Approve / Edit / Regenerate / Cancel / Copy workflow stays consistent with the assistant panel.
-- Header shows a small progress ring: how many required fields are known (title, type, date, city, guests, budget) — updates as the chat fills them in.
-- Next-step chips ("Move ceremony to 5 PM", "Increase budget to 30k", "Add a photo booth") come straight from the model's `nextSteps`.
+## 5. Empty-state hooks
+- Extend `src/components/page-empty-state.tsx` (or wrap) with an optional `assistantPrompt` prop that renders a "Do it with MelaAssist" CTA calling `openAssistant`.
+- Wire empty states on: events index, vendor packages/FAQ sections, marketplace (planner side no vendors saved), budget, timeline, guest list.
 
-## Server (extends existing engine — no new pipeline)
+## 6. AI Tips
+- One dismissible tip per page context (stored in `sessionStorage` by key). Rendered in `MelaAssistSuggestions` and optionally under empty states.
 
-`src/lib/melaassist-actions.functions.ts`:
-- Add two new **executable** kinds so approval actually saves:
-  - `create_event_draft` — inserts the row into `events` (owner = caller), then calls the existing `bootstrapEventPlan({ only_if_empty: true })` so tasks/budget/runsheet/vendor needs are auto-scaffolded. Returns `{ eventId }`.
-  - `add_timeline_milestone` — inserts a `tasks` row with a due date computed from an offset (`months_before` / `days_before`) against the event's `event_date`.
-- Add `builderMode?: "event_builder"` to `TurnInput`. When set, the system prompt is tightened: always propose a `create_event_draft` first when title+type+date are known, then follow-up cards; only ask ONE missing question at a time.
-- Role kinds for `personal` / `organization` gain `create_event_draft` and `add_timeline_milestone`. Existing kinds keep their current behavior for the panel.
+## 7. Panel wiring
+- `MelaAssistPanel` reads `context.pathname` and passes it to `getPageContext`.
+- Greeting/suggestions swap live when route changes (pathname already reactive in context).
+- Continue-work banner only shows when `!hasMessages && memory.currentTask`.
 
-`src/components/melaassist/types.ts` + `action-registry.ts`:
-- Register the two new kinds (`executable: true`, approval copy).
+## 8. Performance
+- All additions are presentation-only; no new server functions.
+- Insights compute from existing loader data via props.
+- Tips/continue-work state in local component + sessionStorage.
 
-## Reused components
+## 9. QA
+- Manual pass: open assistant on `/dashboard`, `/vendor`, `/admin`, `/events`, `/events/$id`, `/marketplace`; verify greeting + suggestions differ.
+- Verify Event Builder (`/events/ai-new`) and Vendor Profile Builder still function untouched.
+- Verify approve/edit/regenerate flow unchanged.
+- Mobile viewport (402px) — panel + insights card + activity feed stack cleanly.
+- `bun run build` passes.
 
-- `melaAssistTurn` server function — same gateway, same model, same JSON-block contract.
-- `executeMelaAction` server function — extended enum, existing switch pattern.
-- `ActionCard`, `NextSteps`, `MelaAssistConversation` — dropped into the new page unchanged.
-- `MelaAssistProvider` context — the page reads/writes the same `memory.currentEventId` so the floating panel picks up the freshly-created event automatically.
-
-## Safety
-
-- No auto-save. `create_event_draft` is gated by explicit Approve; every follow-up card (timeline milestone, budget line, checklist item) is its own Approve.
-- After the event row is created, the memory sets `currentEventId` so later cards target the new event; the existing owner check + RLS handles authorization.
-- No changes to Stripe, subscriptions, auth, messaging, vendor code, dashboards, or existing routes.
-- Backward compatible: `/events/new` unchanged, `/events` list unchanged.
-
-## Files touched
-
-Edits:
-- `src/lib/melaassist-actions.functions.ts` — add builder mode, add two executor cases.
-- `src/components/melaassist/types.ts` — add two `MelaAssistActionKind` values.
-- `src/components/melaassist/action-registry.ts` — register the two new kinds.
-- `src/routes/_authenticated/events/index.tsx` (or wherever the events list header lives) — small "Plan with MelaAssist" link.
-- `src/routes/_authenticated/events/new.tsx` — small banner linking to `/events/ai-new`.
-
-New:
-- `src/routes/_authenticated/events/ai-new.tsx` — the AI Event Builder page.
-
-## QA
-
-- `bunx tsgo --noEmit` clean.
-- Manual: create wedding via chat, approve draft, verify event + bootstrap workspace loaded, approve a timeline milestone → task appears in `/tasks` scoped to that event.
-- Manual: existing `/events/new` form still creates events; assistant panel on other pages still opens and works.
-- Mobile viewport check (390px) on `/events/ai-new`.
+## Technical notes
+- Files created:
+  - `src/components/melaassist/page-context.ts`
+  - `src/components/melaassist/MelaAssistInsights.tsx`
+  - `src/components/melaassist/MelaAssistActivityFeed.tsx`
+  - `src/components/melaassist/ContinueWorkBanner.tsx`
+- Files edited:
+  - `src/components/melaassist/MelaAssistPanel.tsx`
+  - `src/components/melaassist/MelaAssistSuggestions.tsx`
+  - `src/components/melaassist/suggestions.ts` (kept as thin re-export)
+  - `src/routes/dashboard.tsx`
+  - `src/routes/_authenticated/vendor.tsx`
+  - `src/routes/admin.index.tsx`
+  - `src/components/page-empty-state.tsx` (add optional CTA)
+- No schema changes, no new server functions, no new provider.
