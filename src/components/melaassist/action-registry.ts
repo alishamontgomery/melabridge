@@ -67,6 +67,16 @@ export const ACTION_REGISTRY: Record<MelaAssistActionKind, ActionMeta> = {
     executable: false,
     approvalCopy: "Preview only — copy this message.",
   },
+  create_event_draft: {
+    label: "Create event",
+    executable: true,
+    approvalCopy: "Create this event in your workspace. You can edit anything after.",
+  },
+  add_timeline_milestone: {
+    label: "Add timeline milestone",
+    executable: true,
+    approvalCopy: "Add this milestone as a task on your event timeline.",
+  },
 };
 
 export function getActionMeta(kind: MelaAssistActionKind): ActionMeta {

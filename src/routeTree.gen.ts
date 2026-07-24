@@ -79,6 +79,7 @@ import { Route as AuthenticatedCalendarIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedBookingsIndexRouteImport } from './routes/_authenticated/bookings.index'
 import { Route as AuthenticatedSettingsCalendarRouteImport } from './routes/_authenticated/settings.calendar'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
+import { Route as AuthenticatedEventsAiNewRouteImport } from './routes/_authenticated/events/ai-new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
 import { Route as AuthenticatedCalendarSettingsRouteImport } from './routes/_authenticated/calendar.settings'
 import { Route as AuthenticatedCalendarRequestsRouteImport } from './routes/_authenticated/calendar.requests'
@@ -445,6 +446,12 @@ const AuthenticatedEventsNewRoute = AuthenticatedEventsNewRouteImport.update({
   path: '/events/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEventsAiNewRoute =
+  AuthenticatedEventsAiNewRouteImport.update({
+    id: '/events/ai-new',
+    path: '/events/ai-new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEventsEventIdRoute =
   AuthenticatedEventsEventIdRouteImport.update({
     id: '/events/$eventId',
@@ -573,6 +580,7 @@ export interface FileRoutesByFullPath {
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
   '/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
+  '/events/ai-new': typeof AuthenticatedEventsAiNewRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/bookings/': typeof AuthenticatedBookingsIndexRoute
@@ -653,6 +661,7 @@ export interface FileRoutesByTo {
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
   '/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
+  '/events/ai-new': typeof AuthenticatedEventsAiNewRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/bookings': typeof AuthenticatedBookingsIndexRoute
@@ -736,6 +745,7 @@ export interface FileRoutesById {
   '/_authenticated/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
   '/_authenticated/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
+  '/_authenticated/events/ai-new': typeof AuthenticatedEventsAiNewRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
   '/_authenticated/bookings/': typeof AuthenticatedBookingsIndexRoute
@@ -819,6 +829,7 @@ export interface FileRouteTypes {
     | '/calendar/requests'
     | '/calendar/settings'
     | '/events/$eventId'
+    | '/events/ai-new'
     | '/events/new'
     | '/settings/calendar'
     | '/bookings/'
@@ -899,6 +910,7 @@ export interface FileRouteTypes {
     | '/calendar/requests'
     | '/calendar/settings'
     | '/events/$eventId'
+    | '/events/ai-new'
     | '/events/new'
     | '/settings/calendar'
     | '/bookings'
@@ -981,6 +993,7 @@ export interface FileRouteTypes {
     | '/_authenticated/calendar/requests'
     | '/_authenticated/calendar/settings'
     | '/_authenticated/events/$eventId'
+    | '/_authenticated/events/ai-new'
     | '/_authenticated/events/new'
     | '/_authenticated/settings/calendar'
     | '/_authenticated/bookings/'
@@ -1550,6 +1563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEventsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/events/ai-new': {
+      id: '/_authenticated/events/ai-new'
+      path: '/events/ai-new'
+      fullPath: '/events/ai-new'
+      preLoaderRoute: typeof AuthenticatedEventsAiNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/events/$eventId': {
       id: '/_authenticated/events/$eventId'
       path: '/events/$eventId'
@@ -1653,6 +1673,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedVendorSettingsRoute: typeof AuthenticatedVendorSettingsRoute
   AuthenticatedBookingsIdRoute: typeof AuthenticatedBookingsIdRoute
   AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
+  AuthenticatedEventsAiNewRoute: typeof AuthenticatedEventsAiNewRoute
   AuthenticatedEventsNewRoute: typeof AuthenticatedEventsNewRoute
   AuthenticatedSettingsCalendarRoute: typeof AuthenticatedSettingsCalendarRoute
   AuthenticatedBookingsIndexRoute: typeof AuthenticatedBookingsIndexRoute
@@ -1669,6 +1690,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedVendorSettingsRoute: AuthenticatedVendorSettingsRoute,
   AuthenticatedBookingsIdRoute: AuthenticatedBookingsIdRoute,
   AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
+  AuthenticatedEventsAiNewRoute: AuthenticatedEventsAiNewRoute,
   AuthenticatedEventsNewRoute: AuthenticatedEventsNewRoute,
   AuthenticatedSettingsCalendarRoute: AuthenticatedSettingsCalendarRoute,
   AuthenticatedBookingsIndexRoute: AuthenticatedBookingsIndexRoute,
@@ -1755,13 +1777,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

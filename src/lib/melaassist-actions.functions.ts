@@ -26,6 +26,8 @@ const ROLE_KINDS: Record<string, string[]> = {
     "generate_budget",
     "recommend_vendors",
     "draft_message",
+    "create_event_draft",
+    "add_timeline_milestone",
   ],
   organization: [
     "update_event_notes",
@@ -35,6 +37,8 @@ const ROLE_KINDS: Record<string, string[]> = {
     "generate_budget",
     "recommend_vendors",
     "draft_message",
+    "create_event_draft",
+    "add_timeline_milestone",
   ],
   admin: [],
   guest: [],
@@ -66,6 +70,7 @@ const TurnInput = z.object({
   pathname: z.string().max(200).optional(),
   history: z.array(HistoryMsg).max(20).optional(),
   memory: MemoryShape,
+  builderMode: z.enum(["event_builder"]).optional(),
 });
 
 type SupabaseCtx = { supabase: any; userId: string };
@@ -201,6 +206,21 @@ export const melaAssistTurn = createServerFn({ method: "POST" })
         ? `Available action kinds: ${kinds.join(", ")}. Only use these kinds. Include actions ONLY when the user's request calls for a concrete change; otherwise return an empty array.`
         : `Do not propose actions for this role. Return an empty actions array.`;
 
+    const builderAddendum =
+      data.builderMode === "event_builder"
+        ? `\n\nEVENT BUILDER MODE:
+- The user is creating a brand new event conversationally.
+- Extract: name, event_type, event_date (YYYY-MM-DD), event_time (HH:MM 24h), city, venue, guest_target (int), budget_target (number), theme, notes.
+- If the user has given AT LEAST a rough event_type + name (or clear intent like "a wedding"), immediately propose ONE 'create_event_draft' action with every field you have so far (unknown fields as null). Keep it editable.
+- After (or alongside) the draft, propose:
+    * 3-6 'add_timeline_milestone' actions with fields { title, months_before?, weeks_before?, days_before?, priority: "low"|"medium"|"high" }. Use months_before/weeks_before/days_before relative to the event_date so the executor can compute due_date.
+    * 4-8 'create_budget_item' actions with { category, estimated_amount } — if budget is unknown, estimate percentages of a $10000 baseline and note it in summary.
+    * 4-8 'create_task' actions covering setup/logistics.
+    * One 'recommend_vendors' preview action with { categories: string[], notes: string } appropriate for the event_type.
+- If a required field is missing (event_type, event_date, guest_target, city), ask ONE concise follow-up question in the answer AND still return the actions you can with what you have.
+- Do not invent vendor names. Do not set prices as fixed unless the user provided a budget.`
+        : "";
+
     const system = `You are MelaAssist, the AI concierge inside MelaBridge.
 You are aware of workspace context (user, role, page, current event, current vendor, current task).
 When the user asks for a concrete change (create, update, draft, generate, add, rewrite), respond with:
@@ -222,7 +242,7 @@ Rules:
 - Do NOT execute anything. You only propose. The user approves or edits.
 - Follow up naturally on prior conversation and the current task in workspace memory.
 - If the user says "another one", "make them premium", "shorten this", assume they mean the last action/topic.
-- If you have nothing to change, return actions: [] and give a helpful answer.`;
+- If you have nothing to change, return actions: [] and give a helpful answer.${builderAddendum}`;
 
     const historyMessages = (data.history ?? []).slice(-10).map((m) => ({
       role: m.role,
@@ -282,7 +302,7 @@ Rules:
           summary: typeof obj.summary === "string" ? obj.summary.slice(0, 240) : null,
           payloadJson: safeStringify(payload),
         });
-        if (actions.length >= 6) break;
+        if (actions.length >= (data.builderMode === "event_builder" ? 24 : 6)) break;
       }
 
       const rawSteps = Array.isArray(parsed?.nextSteps) ? parsed!.nextSteps : [];
@@ -319,6 +339,8 @@ const ExecInput = z.object({
     "update_event_notes",
     "create_budget_item",
     "create_task",
+    "create_event_draft",
+    "add_timeline_milestone",
   ]),
   payload: z.record(z.unknown()),
   eventId: z.string().uuid().optional(),
@@ -407,7 +429,96 @@ export const executeMelaAction = createServerFn({ method: "POST" })
         if (error) throw new Error(error.message);
         return { ok: true };
       }
+      case "create_event_draft": {
+        const name = String((p.name ?? p.title ?? "") as string).trim().slice(0, 120);
+        if (name.length < 1) throw new Error("Event name is required.");
+        const eventType = String((p.event_type ?? p.type ?? "Other") as string).slice(0, 60) || "Other";
+        const eventDate = normalizeDate(p.event_date ?? p.date);
+        const eventTime = normalizeTime(p.event_time ?? p.time);
+        const city = p.city ? String(p.city).slice(0, 120) : null;
+        const venue = p.venue ? String(p.venue).slice(0, 200) : null;
+        const location = venue && city ? `${venue}, ${city}` : venue ?? city ?? null;
+        const guestTarget = p.guest_target != null ? Number(p.guest_target) || null : null;
+        const budgetTarget = p.budget_target != null ? Number(p.budget_target) || null : null;
+        const notesPieces: string[] = [];
+        if (p.theme) notesPieces.push(`Theme: ${String(p.theme).slice(0, 200)}`);
+        if (p.notes) notesPieces.push(String(p.notes).slice(0, 800));
+        const notes = notesPieces.length ? notesPieces.join("\n\n") : null;
+
+        const { data: inserted, error } = await supabase
+          .from("events")
+          .insert({
+            owner_id: userId,
+            name,
+            event_type: eventType,
+            event_date: eventDate,
+            event_time: eventTime,
+            ceremony_start_time: eventTime,
+            location,
+            venue_city: city,
+            guest_target: guestTarget,
+            budget_target: budgetTarget,
+            event_notes: notes,
+            status: "confirmed",
+          })
+          .select("id")
+          .single();
+        if (error) throw new Error(error.message);
+        return { ok: true, eventId: inserted.id as string };
+      }
+      case "add_timeline_milestone": {
+        const eventId = await resolveEventId();
+        if (!eventId) throw new Error("No event selected.");
+        const title = String((p.title ?? p.name ?? p.text ?? "") as string).trim().slice(0, 200);
+        if (!title) throw new Error("Milestone title required.");
+        const priority = (p.priority ?? "medium") as string;
+
+        // Resolve base date from event
+        const { data: evt } = await supabase
+          .from("events")
+          .select("event_date")
+          .eq("id", eventId)
+          .maybeSingle();
+        const base = evt?.event_date ? new Date(evt.event_date) : null;
+        let dueDate: string | null = normalizeDate(p.due_date);
+        if (!dueDate && base) {
+          const months = Number(p.months_before ?? 0) || 0;
+          const weeks = Number(p.weeks_before ?? 0) || 0;
+          const days = Number(p.days_before ?? 0) || 0;
+          const d = new Date(base);
+          d.setMonth(d.getMonth() - months);
+          d.setDate(d.getDate() - weeks * 7 - days);
+          dueDate = d.toISOString().slice(0, 10);
+        }
+        const description = p.category ? `Timeline: ${String(p.category).slice(0, 80)}` : null;
+        const { error } = await supabase.from("tasks").insert({
+          event_id: eventId,
+          title,
+          status: "todo",
+          priority: ["low", "medium", "high"].includes(priority) ? priority : "medium",
+          due_date: dueDate,
+          description,
+        });
+        if (error) throw new Error(error.message);
+        return { ok: true };
+      }
       default:
         throw new Error("Unsupported action kind.");
     }
   });
+
+function normalizeDate(v: unknown): string | null {
+  if (!v || typeof v !== "string") return null;
+  const trimmed = v.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const d = new Date(trimmed);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString().slice(0, 10);
+}
+
+function normalizeTime(v: unknown): string | null {
+  if (!v || typeof v !== "string") return null;
+  const trimmed = v.trim();
+  if (/^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) return trimmed.slice(0, 5);
+  return null;
+}

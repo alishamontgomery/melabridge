@@ -26,7 +26,17 @@ const EXECUTABLE_KINDS = new Set<MelaAssistActionKind>([
   "update_event_notes",
   "create_budget_item",
   "create_task",
+  "create_event_draft",
+  "add_timeline_milestone",
 ]);
+
+type ExecutableKind =
+  | "update_business_description"
+  | "update_event_notes"
+  | "create_budget_item"
+  | "create_task"
+  | "create_event_draft"
+  | "add_timeline_milestone";
 
 export function MelaAssistPanel() {
   const {
@@ -201,7 +211,7 @@ export function MelaAssistPanel() {
       try {
         await execute({
           data: {
-            kind: action.kind as "update_business_description" | "update_event_notes" | "create_budget_item" | "create_task",
+            kind: action.kind as ExecutableKind,
             payload: action.payload,
             eventId: context.eventId ?? undefined,
           },
