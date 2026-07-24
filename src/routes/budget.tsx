@@ -48,6 +48,7 @@ function BudgetPage() {
   const { event, hasEvent, loading: eventLoading } = useEcosystem();
   const qc = useQueryClient();
   const [openAdd, setOpenAdd] = useState(false);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
 
   const q = useQuery({
     queryKey: ["budget-items", event.id],
