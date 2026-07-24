@@ -58,8 +58,7 @@ const QUICK_ACTIONS = [
 
 function VendorDashboardPage() {
   const { user } = useAuth();
-  const [displayName, setDisplayName] = useState<string>("there");
-  const [businessName, setBusinessName] = useState<string | null>(null);
+  const { firstName, businessName } = useDisplayName();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [notifs, setNotifs] = useState<NotifRow[]>([]);
