@@ -182,7 +182,7 @@ export function MelaAssistPanel() {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === pendingId
-              ? { ...m, content: "MelaAssist couldn't respond. Please try again.", pending: false, error: true }
+              ? { ...m, content: "I couldn't reach the planning engine just now. Tap Retry to try again, or rephrase your request and I'll take another swing.", pending: false, error: true }
               : m,
           ),
         );
