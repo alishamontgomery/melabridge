@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useDisplayName } from "@/lib/use-display-name";
 import { MelaAssistInsights, MelaAssistActivityFeed, type MelaAssistInsight } from "@/components/melaassist";
 
 export const Route = createFileRoute("/_authenticated/vendor")({
@@ -57,8 +58,7 @@ const QUICK_ACTIONS = [
 
 function VendorDashboardPage() {
   const { user } = useAuth();
-  const [displayName, setDisplayName] = useState<string>("there");
-  const [businessName, setBusinessName] = useState<string | null>(null);
+  const { firstName, businessName } = useDisplayName();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [notifs, setNotifs] = useState<NotifRow[]>([]);
@@ -68,16 +68,12 @@ function VendorDashboardPage() {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [p, v, e, t, n] = await Promise.all([
-        supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
-        supabase.from("vendor_profiles").select("business_name").eq("user_id", user.id).maybeSingle(),
+      const [e, t, n] = await Promise.all([
         supabase.from("events").select("id,name,event_date,start_time,status,client_name,deposit_required,deposit_paid,payment_status").eq("owner_id", user.id).is("deleted_at", null).order("event_date", { ascending: true, nullsFirst: false }).limit(50),
         supabase.from("tasks").select("id,title,due_date,status,priority").eq("assigned_to", user.id).is("deleted_at", null).neq("status", "done").order("due_date", { ascending: true, nullsFirst: false }).limit(10),
         supabase.from("notifications").select("id,title,body,category,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6),
       ]);
       if (cancelled) return;
-      setDisplayName(p.data?.display_name ?? user.email?.split("@")[0] ?? "there");
-      setBusinessName(v.data?.business_name ?? null);
       setEvents((e.data as EventRow[]) ?? []);
       setTasks((t.data as TaskRow[]) ?? []);
       setNotifs((n.data as NotifRow[]) ?? []);
@@ -117,7 +113,7 @@ function VendorDashboardPage() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-center sm:justify-between">
           <div className="min-w-0">
             <p className="text-sm text-muted-foreground">{greeting()},</p>
-            <h1 className="truncate font-display text-3xl font-semibold">{displayName}</h1>
+            <h1 className="truncate font-display text-3xl font-semibold">{firstName}</h1>
             {businessName && <p className="mt-1 text-sm text-muted-foreground">{businessName}</p>}
           </div>
           <Button asChild variant="hero" size="sm" className="shrink-0">

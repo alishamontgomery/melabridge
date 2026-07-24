@@ -60,10 +60,24 @@ async function ensureProfile(user: User) {
   if (error) throw new Error(`Workspace setup failed: ${error.message}`);
 }
 
-function safeNextPath() {
+async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor" | "/admin"> {
+  const [rolesRes, profileRes, vendorRes] = await Promise.all([
+    supabase.from("user_roles").select("role").eq("user_id", userId),
+    supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle(),
+    supabase.from("vendor_profiles").select("id").eq("user_id", userId).maybeSingle(),
+  ]);
+  const roles = (rolesRes.data ?? []).map((r) => r.role as string);
+  if (roles.includes("admin")) return "/admin";
+  if (roles.includes("vendor")) return "/vendor";
+  if (profileRes.data?.account_type === "vendor") return "/vendor";
+  if (vendorRes.data?.id) return "/vendor";
+  return "/events";
+}
+
+function safeNextPath(fallback: string) {
   const stored = window.sessionStorage.getItem("melabridge.auth.next");
   window.sessionStorage.removeItem("melabridge.auth.next");
-  if (!stored || !stored.startsWith("/") || stored.startsWith("//")) return "/events";
+  if (!stored || !stored.startsWith("/") || stored.startsWith("//")) return fallback;
   return stored;
 }
 
@@ -92,7 +106,8 @@ function AuthCallbackPage() {
         await ensureProfile(user);
         if (cancelled) return;
         window.clearTimeout(timeout);
-        navigate({ to: safeNextPath() as "/events", replace: true });
+        const landing = await landingRouteForUser(user.id);
+        navigate({ to: safeNextPath(landing) as "/events", replace: true });
       } catch (err) {
         if (!cancelled) {
           window.clearTimeout(timeout);

@@ -24,6 +24,7 @@ import { SmartPredictions } from "@/components/dashboard/smart-predictions";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
 import { MelaAssistInsights, MelaAssistActivityFeed, type MelaAssistInsight } from "@/components/melaassist";
+import { useDisplayName } from "@/lib/use-display-name";
 
 import {
   computeCountdown,
@@ -47,16 +48,6 @@ export const Route = createFileRoute("/dashboard")({
   errorComponent: RouteError,
 });
 
-function firstNameFromUser(user: { email?: string | null; user_metadata?: Record<string, unknown> } | null): string {
-  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
-  const raw = (meta.full_name as string) || (meta.name as string) || (meta.first_name as string) || "";
-  const trimmed = raw.trim();
-  if (trimmed) return trimmed.split(/\s+/)[0];
-  const email = user?.email ?? "";
-  if (!email) return "there";
-  const local = email.split("@")[0].split(/[._-]/)[0];
-  return local ? local[0].toUpperCase() + local.slice(1) : "there";
-}
 
 function DashboardPage() {
   const { user } = useRequireAuth();
@@ -92,7 +83,7 @@ function DashboardPage() {
     return { countdown, health, brief, focus, predictions, savings, milestones };
   }, [event, dashQ.data]);
 
-  const firstName = firstNameFromUser(user);
+  const { firstName } = useDisplayName();
 
   return (
     <AppShell active="/dashboard">
