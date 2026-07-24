@@ -48,16 +48,6 @@ export const Route = createFileRoute("/dashboard")({
   errorComponent: RouteError,
 });
 
-function firstNameFromUser(user: { email?: string | null; user_metadata?: Record<string, unknown> } | null): string {
-  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
-  const raw = (meta.full_name as string) || (meta.name as string) || (meta.first_name as string) || "";
-  const trimmed = raw.trim();
-  if (trimmed) return trimmed.split(/\s+/)[0];
-  const email = user?.email ?? "";
-  if (!email) return "there";
-  const local = email.split("@")[0].split(/[._-]/)[0];
-  return local ? local[0].toUpperCase() + local.slice(1) : "there";
-}
 
 function DashboardPage() {
   const { user } = useRequireAuth();
