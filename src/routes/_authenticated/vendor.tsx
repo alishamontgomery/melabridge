@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { MelaAssistInsights, MelaAssistActivityFeed, type MelaAssistInsight } from "@/components/melaassist";
 
 export const Route = createFileRoute("/_authenticated/vendor")({
   head: () => ({ meta: [{ title: "Vendor Dashboard — MelaBridge" }] }),
@@ -261,27 +262,15 @@ function VendorDashboardPage() {
           </Card>
         </div>
 
-        {/* MelaAssist recommendations */}
-        <Card className="border-primary/30 bg-primary/5 p-5 shadow-soft">
-          <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-base font-semibold">MelaAssist™ recommendations</h2>
-          </div>
-          <ul className="space-y-2 text-sm">
-            {awaitingPayments.length > 0 && (
-              <RecLine text={`${awaitingPayments.length} deposit${awaitingPayments.length === 1 ? "" : "s"} outstanding — send a friendly reminder?`} />
-            )}
-            {overdueTasks.length > 0 && (
-              <RecLine text={`${overdueTasks.length} task${overdueTasks.length === 1 ? "" : "s"} overdue — reschedule or mark done?`} />
-            )}
-            {newLeads.length > 0 && (
-              <RecLine text={`${newLeads.length} inquiry lead${newLeads.length === 1 ? "" : "s"} — respond within 24h to boost conversion.`} />
-            )}
-            {awaitingPayments.length === 0 && overdueTasks.length === 0 && newLeads.length === 0 && (
-              <p className="text-sm text-muted-foreground">All clear. MelaAssist™ will surface tasks as they come in.</p>
-            )}
-          </ul>
-        </Card>
+        {/* MelaAssist insights + activity */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <MelaAssistInsights
+            insights={buildVendorInsights({ awaitingPayments, overdueTasks, newLeads })}
+            emptyLabel="All clear. MelaAssist will surface work as it comes in."
+          />
+          <MelaAssistActivityFeed />
+        </div>
+
       </div>
     </AppShell>
   );
