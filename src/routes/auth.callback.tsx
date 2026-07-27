@@ -60,7 +60,7 @@ async function ensureProfile(user: User) {
   if (error) throw new Error(`Workspace setup failed: ${error.message}`);
 }
 
-async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor" | "/admin"> {
+async function landingRouteForUser(userId: string): Promise<"/dashboard" | "/vendor" | "/admin"> {
   const [rolesRes, profileRes, vendorRes] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", userId),
     supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle(),
@@ -71,7 +71,7 @@ async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor
   if (roles.includes("vendor")) return "/vendor";
   if (profileRes.data?.account_type === "vendor") return "/vendor";
   if (vendorRes.data?.id) return "/vendor";
-  return "/events";
+  return "/dashboard";
 }
 
 function safeNextPath(fallback: string) {
@@ -107,7 +107,7 @@ function AuthCallbackPage() {
         if (cancelled) return;
         window.clearTimeout(timeout);
         const landing = await landingRouteForUser(user.id);
-        navigate({ to: safeNextPath(landing) as "/events", replace: true });
+        navigate({ to: safeNextPath(landing) as "/dashboard", replace: true });
       } catch (err) {
         if (!cancelled) {
           window.clearTimeout(timeout);

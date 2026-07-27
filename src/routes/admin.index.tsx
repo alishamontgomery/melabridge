@@ -133,7 +133,7 @@ function AdminPage() {
           </div>
         </Section>
 
-        <TestSeedSection />
+        {import.meta.env.DEV ? <TestSeedSection /> : null}
 
         <EmailDomainTestSection />
 
