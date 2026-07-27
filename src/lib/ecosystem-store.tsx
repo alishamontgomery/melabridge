@@ -119,7 +119,7 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
       const taskList = tasks ?? [];
       const items = budgetItems ?? [];
       const guestCount = guestList.reduce((s, g: any) => s + 1 + Number(g.plus_ones ?? 0), 0);
-      const rsvpCount = guestList.filter((g: any) => g.rsvp_status === "confirmed" || g.rsvp_status === "attending").length;
+      const rsvpCount = guestList.filter((g: any) => g.rsvp_status === "yes").length;
       const tasksDone = taskList.filter((t: any) => t.status === "done" || t.status === "completed").length;
       const spent = items.reduce((s, i: any) => s + Number(i.paid_amount ?? i.actual_amount ?? 0), 0);
       setEvent({
