@@ -49,6 +49,7 @@ import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
 import { useIdleSignout } from "@/hooks/use-idle-signout";
+import { useDisplayName } from "@/lib/use-display-name";
 import { LogOut, Loader2 } from "lucide-react";
 
 
@@ -116,13 +117,19 @@ const VENDOR_NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Marketplace",
+    items: [
+      { to: "/profile", label: "Marketplace Listing", icon: Store },
+      { to: "/vendor-profile-builder", label: "Complete with MelaAssist", icon: Sparkles },
+    ],
+  },
+  {
     label: "Resources",
     items: [{ to: "/files", label: "Files", icon: FolderOpen }],
   },
   {
     label: "Account",
     items: [
-      { to: "/profile", label: "Business Profile", icon: Building2 },
       { to: "/subscription", label: "Subscription", icon: Crown },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
       { to: "/help", label: "Help", icon: LifeBuoy },
@@ -190,6 +197,7 @@ export const NAV_GROUPS: NavGroup[] = PLANNER_NAV;
 function UserMenu() {
   const { user } = useAuth();
   const { role } = useRole();
+  const { firstName, fullName, businessName } = useDisplayName();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -201,7 +209,8 @@ function UserMenu() {
     );
   }
 
-  const initial = (user.user_metadata?.display_name || user.email || "U").toString().charAt(0).toUpperCase();
+  const displayLabel = role === "vendor" ? (businessName || fullName) : fullName;
+  const initial = (displayLabel || firstName || "U").charAt(0).toUpperCase();
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -224,12 +233,12 @@ function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="truncate">
-          <div className="truncate text-sm font-medium">{user.email}</div>
+          <div className="truncate text-sm font-medium">{displayLabel}</div>
           <div className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">{role}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate({ to: home as "/dashboard" })}>Home</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>{role === "vendor" ? "Marketplace Listing" : "Profile"}</DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
@@ -275,14 +284,23 @@ function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: s
   );
 }
 
-// Paths that are exclusive to a single role. Any signed-in user whose role does
+// Paths that are exclusive to a set of roles. Any signed-in user whose role does
 // not match will be redirected to their own role home.
 const ROLE_EXCLUSIVE: Array<{ prefix: string; allow: AppRole[] }> = [
   { prefix: "/admin", allow: ["admin"] },
   { prefix: "/vendor-portal", allow: ["vendor"] },
   { prefix: "/vendor-settings", allow: ["vendor"] },
+  { prefix: "/vendor-profile-builder", allow: ["vendor"] },
   { prefix: "/vendor", allow: ["vendor"] }, // matches /vendor and /vendor/*
-  { prefix: "/dashboard", allow: ["personal", "organization"] },
+  { prefix: "/dashboard", allow: ["personal", "organization", "admin"] },
+  // Planner-only surfaces — vendors must not reach them via direct nav or refresh.
+  { prefix: "/guests", allow: ["personal", "organization", "admin"] },
+  { prefix: "/budget", allow: ["personal", "organization", "admin"] },
+  { prefix: "/timeline", allow: ["personal", "organization", "admin"] },
+  { prefix: "/team", allow: ["personal", "organization", "admin"] },
+  { prefix: "/vendors", allow: ["personal", "organization", "admin"] },
+  { prefix: "/events", allow: ["personal", "organization", "admin"] },
+  { prefix: "/tasks", allow: ["personal", "organization", "admin"] },
 ];
 
 function roleHome(role: AppRole): "/dashboard" {

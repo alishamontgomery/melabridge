@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Store, Calendar, Wallet, Bell, Sparkles,
-  Plus, UserPlus, FileText, ScrollText, CreditCard, Mail, CalendarSync, CalendarX2,
-  TrendingUp, Activity, CheckCircle2, Clock, AlertCircle,
+  UserPlus, FileText, ScrollText, CreditCard, Mail, CalendarSync, CalendarX2,
+  TrendingUp, Activity, CheckCircle2, Clock, AlertCircle, Briefcase, Inbox, Building2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -45,7 +45,7 @@ function formatTime(t: string | null) {
 
 const QUICK_ACTIONS = [
   { label: "Complete with MelaAssist", to: "/vendor-profile-builder", icon: Sparkles },
-  { label: "New Event", to: "/events/new", icon: Plus },
+  { label: "Marketplace Listing", to: "/profile", icon: Store },
   { label: "AI Draft Inbox", to: "/drafts", icon: Sparkles },
   { label: "New Lead", to: "/vendor-portal", icon: UserPlus },
   { label: "Create Quote", to: "/bookings", icon: FileText },
@@ -62,25 +62,44 @@ function VendorDashboardPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [notifs, setNotifs] = useState<NotifRow[]>([]);
+  const [vendorProfile, setVendorProfile] = useState<Record<string, unknown> | null>(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [e, t, n] = await Promise.all([
+      const [e, t, n, vp, cr] = await Promise.all([
         supabase.from("events").select("id,name,event_date,start_time,status,client_name,deposit_required,deposit_paid,payment_status").eq("owner_id", user.id).is("deleted_at", null).order("event_date", { ascending: true, nullsFirst: false }).limit(50),
         supabase.from("tasks").select("id,title,due_date,status,priority").eq("assigned_to", user.id).is("deleted_at", null).neq("status", "done").order("due_date", { ascending: true, nullsFirst: false }).limit(10),
         supabase.from("notifications").select("id,title,body,category,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6),
+        supabase.from("vendor_profiles").select("business_name,business_category,business_description,phone,email,website,logo_url,city,state,starting_price,portfolio_urls,business_hours,years_in_business").eq("user_id", user.id).maybeSingle(),
+        supabase.from("calendar_booking_requests").select("id", { count: "exact", head: true }).eq("vendor_id", user.id).eq("status", "pending"),
       ]);
       if (cancelled) return;
       setEvents((e.data as EventRow[]) ?? []);
       setTasks((t.data as TaskRow[]) ?? []);
       setNotifs((n.data as NotifRow[]) ?? []);
+      setVendorProfile((vp.data as Record<string, unknown> | null) ?? null);
+      setPendingRequests(cr.count ?? 0);
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [user]);
+
+  const profileCompletion = useMemo(() => {
+    if (!vendorProfile) return 0;
+    const fields = ["business_name","business_category","business_description","phone","email","website","logo_url","city","starting_price","portfolio_urls","business_hours","years_in_business"];
+    let filled = 0;
+    for (const f of fields) {
+      const v = vendorProfile[f];
+      if (Array.isArray(v)) { if (v.length > 0) filled++; }
+      else if (v && typeof v === "object") { if (Object.keys(v as Record<string, unknown>).length > 0) filled++; }
+      else if (v != null && String(v).trim() !== "") { filled++; }
+    }
+    return Math.round((filled / fields.length) * 100);
+  }, [vendorProfile]);
 
   const today = new Date().toISOString().slice(0, 10);
   const startOfMonth = new Date(); startOfMonth.setDate(1);
@@ -150,13 +169,25 @@ function VendorDashboardPage() {
           </div>
         </Card>
 
+        {/* Business modules — every card is a working destination */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <ModuleTile icon={UserPlus} label="Leads" value={String(newLeads.length)} hint="Inquiries to reply" to="/vendor-portal" />
+          <ModuleTile icon={Briefcase} label="Bookings" value={String(upcomingBookings.length)} hint="Confirmed & tentative" to="/bookings" />
+          <ModuleTile icon={Inbox} label="Requests" value={String(pendingRequests)} hint="Pending calendar" to="/calendar/requests" />
+          <ModuleTile icon={Calendar} label="Calendar" value={String(todaysEvents.length)} hint="Today" to="/calendar" />
+          <ModuleTile icon={Wallet} label="Revenue" value={`$${revenueThisMonth.toLocaleString()}`} hint="This month" to="/bookings" />
+          <ModuleTile icon={CheckCircle2} label="Tasks" value={String(tasks.length)} hint={overdueTasks.length ? `${overdueTasks.length} overdue` : "Up to date"} to="/vendor-portal" />
+          <ModuleTile icon={Store} label="Marketplace Listing" value={vendorProfile ? "Live" : "Set up"} hint="Public page" to="/profile" />
+          <ModuleTile icon={Building2} label="Profile Completion" value={`${profileCompletion}%`} hint={profileCompletion < 100 ? "Finish with MelaAssist" : "Complete"} to="/vendor-profile-builder" progress={profileCompletion} />
+        </div>
+
         {/* Two column: Today / side */}
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           {/* Today's schedule */}
           <Card className="border-border/60 p-5 shadow-soft">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-base font-semibold">Today's schedule</h2>
-              <Button asChild variant="ghost" size="sm"><Link to="/timeline">Open calendar</Link></Button>
+              <Button asChild variant="ghost" size="sm"><Link to="/calendar">Open calendar</Link></Button>
             </div>
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
@@ -209,9 +240,9 @@ function VendorDashboardPage() {
           <ListCard title="New leads" empty="No leads waiting." to="/vendor-portal" items={newLeads.slice(0, 5).map((e) => ({
             id: e.id, primary: e.client_name ?? e.name, secondary: e.name, href: `/events/${e.id}`,
           }))} loading={loading} />
-          <ListCard title="Awaiting payments" empty="All paid up." to="/bridgepay" items={awaitingPayments.slice(0, 5).map((e) => {
+          <ListCard title="Awaiting payments" empty="All paid up." to="/bookings" items={awaitingPayments.slice(0, 5).map((e) => {
             const rem = (Number(e.deposit_required) || 0) - (Number(e.deposit_paid) || 0);
-            return { id: e.id, primary: e.name, secondary: `$${rem.toLocaleString()} outstanding`, href: `/events/${e.id}` };
+            return { id: e.id, primary: e.name, secondary: `$${rem.toLocaleString()} outstanding`, href: `/bookings` };
           })} loading={loading} />
         </div>
 
@@ -320,6 +351,32 @@ function StatTile({ icon: Icon, label, value }: { icon: React.ComponentType<{ cl
       </div>
       <p className="mt-1 font-display text-2xl font-semibold">{value}</p>
     </Card>
+  );
+}
+
+function ModuleTile({ icon: Icon, label, value, hint, to, progress }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; value: string; hint: string; to: string; progress?: number;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group block rounded-xl border border-border bg-card p-4 shadow-soft transition hover:border-primary hover:bg-primary/5"
+    >
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground">
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-xs font-medium">{label}</p>
+      </div>
+      <p className="mt-2 font-display text-xl font-semibold">{value}</p>
+      <p className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</p>
+      {typeof progress === "number" && (
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-glow" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+    </Link>
   );
 }
 
