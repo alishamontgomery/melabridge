@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, UserPlus, Search } from "lucide-react";
+import { toast } from "sonner";
 import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
+import type { Database } from "@/integrations/supabase/types";
 
 
 
@@ -24,30 +27,38 @@ export const Route = createFileRoute("/guests")({
   errorComponent: RouteError,
 });
 
+type Rsvp = Database["public"]["Enums"]["guest_rsvp"];
 type Guest = {
   id: string;
   full_name: string;
   email: string | null;
   phone: string | null;
   household: string | null;
-  rsvp_status: string | null;
+  rsvp_status: Rsvp | null;
   plus_ones: number | null;
   meal_choice: string | null;
   notes: string | null;
 };
 
-const RSVP_LABEL: Record<string, string> = {
+const RSVP_LABEL: Record<Rsvp, string> = {
   pending: "Pending",
-  confirmed: "Confirmed",
-  attending: "Confirmed",
-  declined: "Declined",
+  yes: "Attending",
+  no: "Declined",
   maybe: "Maybe",
+};
+
+const RSVP_TONE: Record<Rsvp, string> = {
+  yes: "bg-emerald-500/10 text-emerald-700",
+  no: "bg-rose-500/10 text-rose-700",
+  maybe: "bg-sky-500/10 text-sky-700",
+  pending: "bg-amber-500/10 text-amber-700",
 };
 
 function GuestsPage() {
   const { event, hasEvent, loading: eventLoading } = useEcosystem();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "confirmed" | "pending" | "declined">("all");
+  const [filter, setFilter] = useState<"all" | Rsvp>("all");
 
   const gq = useQuery({
     queryKey: ["guests", event.id],
@@ -66,17 +77,24 @@ function GuestsPage() {
 
   const guests = gq.data ?? [];
 
+  async function updateRsvp(id: string, next: Rsvp) {
+    const prev = qc.getQueryData<Guest[]>(["guests", event.id]);
+    qc.setQueryData<Guest[]>(["guests", event.id], (list) =>
+      (list ?? []).map((g) => (g.id === id ? { ...g, rsvp_status: next } : g)),
+    );
+    const { error } = await supabase.from("guests").update({ rsvp_status: next }).eq("id", id);
+    if (error) {
+      qc.setQueryData(["guests", event.id], prev);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("RSVP updated");
+  }
+
   const filtered = useMemo(() => {
     return guests.filter((g) => {
-      const rs = (g.rsvp_status ?? "pending").toLowerCase();
-      const matchFilter =
-        filter === "all"
-          ? true
-          : filter === "confirmed"
-          ? rs === "confirmed" || rs === "attending"
-          : filter === "pending"
-          ? rs === "pending"
-          : rs === "declined";
+      const rs: Rsvp = (g.rsvp_status ?? "pending") as Rsvp;
+      const matchFilter = filter === "all" ? true : rs === filter;
       const matchQ =
         q === "" ||
         g.full_name.toLowerCase().includes(q.toLowerCase()) ||
@@ -88,12 +106,9 @@ function GuestsPage() {
   const counts = useMemo(
     () => ({
       total: guests.reduce((s, g) => s + 1 + Number(g.plus_ones ?? 0), 0),
-      confirmed: guests.filter((g) => {
-        const rs = (g.rsvp_status ?? "").toLowerCase();
-        return rs === "confirmed" || rs === "attending";
-      }).length,
-      pending: guests.filter((g) => (g.rsvp_status ?? "pending").toLowerCase() === "pending").length,
-      declined: guests.filter((g) => (g.rsvp_status ?? "").toLowerCase() === "declined").length,
+      yes: guests.filter((g) => (g.rsvp_status ?? "pending") === "yes").length,
+      pending: guests.filter((g) => (g.rsvp_status ?? "pending") === "pending").length,
+      no: guests.filter((g) => (g.rsvp_status ?? "pending") === "no").length,
     }),
     [guests],
   );
