@@ -209,9 +209,9 @@ function VendorDashboardPage() {
           <ListCard title="New leads" empty="No leads waiting." to="/vendor-portal" items={newLeads.slice(0, 5).map((e) => ({
             id: e.id, primary: e.client_name ?? e.name, secondary: e.name, href: `/events/${e.id}`,
           }))} loading={loading} />
-          <ListCard title="Awaiting payments" empty="All paid up." to="/bridgepay" items={awaitingPayments.slice(0, 5).map((e) => {
+          <ListCard title="Awaiting payments" empty="All paid up." to="/bookings" items={awaitingPayments.slice(0, 5).map((e) => {
             const rem = (Number(e.deposit_required) || 0) - (Number(e.deposit_paid) || 0);
-            return { id: e.id, primary: e.name, secondary: `$${rem.toLocaleString()} outstanding`, href: `/events/${e.id}` };
+            return { id: e.id, primary: e.name, secondary: `$${rem.toLocaleString()} outstanding`, href: `/bookings` };
           })} loading={loading} />
         </div>
 
