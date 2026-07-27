@@ -154,9 +154,9 @@ function GuestsPage() {
         <>
           <section className="mt-8 grid gap-3 md:grid-cols-4">
             <Stat label="On list" value={String(guests.length)} sub={`${counts.total} incl. +1s`} />
-            <Stat label="Confirmed" value={String(counts.confirmed)} sub="Attending" />
+            <Stat label="Attending" value={String(counts.yes)} sub="Confirmed yes" />
             <Stat label="Pending" value={String(counts.pending)} sub="Awaiting reply" />
-            <Stat label="Declined" value={String(counts.declined)} sub="Not attending" />
+            <Stat label="Declined" value={String(counts.no)} sub="Not attending" />
           </section>
 
           <div className="mt-6 mb-3 flex flex-wrap items-center gap-2">
@@ -164,17 +164,17 @@ function GuestsPage() {
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search guests by name or email…" className="pl-9" />
             </div>
-            {(["all", "confirmed", "pending", "declined"] as const).map((f) => (
+            {(["all", "yes", "pending", "maybe", "no"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
                   filter === f
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {f}
+                {f === "all" ? "All" : RSVP_LABEL[f]}
               </button>
             ))}
           </div>
@@ -192,7 +192,7 @@ function GuestsPage() {
               </thead>
               <tbody>
                 {filtered.map((g) => {
-                  const rs = (g.rsvp_status ?? "pending").toLowerCase();
+                  const rs: Rsvp = (g.rsvp_status ?? "pending") as Rsvp;
                   return (
                     <tr key={g.id} className="border-t border-border">
                       <td className="px-4 py-2.5">
@@ -202,17 +202,20 @@ function GuestsPage() {
                       <td className="px-4 py-2.5 text-muted-foreground">{g.phone ?? "—"}</td>
                       <td className="px-4 py-2.5">{g.plus_ones ?? 0}</td>
                       <td className="px-4 py-2.5">
-                        <Badge
-                          className={
-                            rs === "confirmed" || rs === "attending"
-                              ? "bg-emerald-500/10 text-emerald-700"
-                              : rs === "declined"
-                              ? "bg-rose-500/10 text-rose-700"
-                              : "bg-amber-500/10 text-amber-700"
-                          }
-                        >
-                          {RSVP_LABEL[rs] ?? "Pending"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={RSVP_TONE[rs]}>{RSVP_LABEL[rs]}</Badge>
+                          <Select value={rs} onValueChange={(v) => updateRsvp(g.id, v as Rsvp)}>
+                            <SelectTrigger className="h-7 w-[120px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="yes">Attending</SelectItem>
+                              <SelectItem value="maybe">Maybe</SelectItem>
+                              <SelectItem value="no">Declined</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </td>
                       <td className="px-4 py-2.5">{g.meal_choice ?? "—"}</td>
                     </tr>
