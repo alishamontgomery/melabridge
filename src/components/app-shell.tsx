@@ -116,13 +116,19 @@ const VENDOR_NAV: NavGroup[] = [
     ],
   },
   {
+    label: "Marketplace",
+    items: [
+      { to: "/profile", label: "Marketplace Listing", icon: Store },
+      { to: "/vendor-profile-builder", label: "Complete with MelaAssist", icon: Sparkles },
+    ],
+  },
+  {
     label: "Resources",
     items: [{ to: "/files", label: "Files", icon: FolderOpen }],
   },
   {
     label: "Account",
     items: [
-      { to: "/profile", label: "Business Profile", icon: Building2 },
       { to: "/subscription", label: "Subscription", icon: Crown },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
       { to: "/help", label: "Help", icon: LifeBuoy },
