@@ -354,6 +354,32 @@ function StatTile({ icon: Icon, label, value }: { icon: React.ComponentType<{ cl
   );
 }
 
+function ModuleTile({ icon: Icon, label, value, hint, to, progress }: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; value: string; hint: string; to: string; progress?: number;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group block rounded-xl border border-border bg-card p-4 shadow-soft transition hover:border-primary hover:bg-primary/5"
+    >
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground">
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-xs font-medium">{label}</p>
+      </div>
+      <p className="mt-2 font-display text-xl font-semibold">{value}</p>
+      <p className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</p>
+      {typeof progress === "number" && (
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-glow" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+    </Link>
+  );
+}
+
 function EmptyRow({ icon: Icon, text }: { icon: React.ComponentType<{ className?: string }>; text: string }) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
