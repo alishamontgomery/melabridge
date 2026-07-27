@@ -45,7 +45,7 @@ function formatTime(t: string | null) {
 
 const QUICK_ACTIONS = [
   { label: "Complete with MelaAssist", to: "/vendor-profile-builder", icon: Sparkles },
-  { label: "New Event", to: "/events/new", icon: Plus },
+  { label: "Marketplace Listing", to: "/profile", icon: Store },
   { label: "AI Draft Inbox", to: "/drafts", icon: Sparkles },
   { label: "New Lead", to: "/vendor-portal", icon: UserPlus },
   { label: "Create Quote", to: "/bookings", icon: FileText },
