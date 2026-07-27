@@ -156,7 +156,7 @@ function VendorDashboardPage() {
           <Card className="border-border/60 p-5 shadow-soft">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-base font-semibold">Today's schedule</h2>
-              <Button asChild variant="ghost" size="sm"><Link to="/timeline">Open calendar</Link></Button>
+              <Button asChild variant="ghost" size="sm"><Link to="/calendar">Open calendar</Link></Button>
             </div>
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
