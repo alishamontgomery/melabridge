@@ -49,6 +49,7 @@ import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
 import { useIdleSignout } from "@/hooks/use-idle-signout";
+import { useDisplayName } from "@/lib/use-display-name";
 import { LogOut, Loader2 } from "lucide-react";
 
 
