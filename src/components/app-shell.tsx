@@ -281,14 +281,23 @@ function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: s
   );
 }
 
-// Paths that are exclusive to a single role. Any signed-in user whose role does
+// Paths that are exclusive to a set of roles. Any signed-in user whose role does
 // not match will be redirected to their own role home.
 const ROLE_EXCLUSIVE: Array<{ prefix: string; allow: AppRole[] }> = [
   { prefix: "/admin", allow: ["admin"] },
   { prefix: "/vendor-portal", allow: ["vendor"] },
   { prefix: "/vendor-settings", allow: ["vendor"] },
+  { prefix: "/vendor-profile-builder", allow: ["vendor"] },
   { prefix: "/vendor", allow: ["vendor"] }, // matches /vendor and /vendor/*
-  { prefix: "/dashboard", allow: ["personal", "organization"] },
+  { prefix: "/dashboard", allow: ["personal", "organization", "admin"] },
+  // Planner-only surfaces — vendors must not reach them via direct nav or refresh.
+  { prefix: "/guests", allow: ["personal", "organization", "admin"] },
+  { prefix: "/budget", allow: ["personal", "organization", "admin"] },
+  { prefix: "/timeline", allow: ["personal", "organization", "admin"] },
+  { prefix: "/team", allow: ["personal", "organization", "admin"] },
+  { prefix: "/vendors", allow: ["personal", "organization", "admin"] },
+  { prefix: "/events", allow: ["personal", "organization", "admin"] },
+  { prefix: "/tasks", allow: ["personal", "organization", "admin"] },
 ];
 
 function roleHome(role: AppRole): "/dashboard" {
