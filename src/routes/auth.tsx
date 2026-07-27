@@ -97,7 +97,7 @@ function isPreviewEnvironment() {
 function safeNextPath() {
   const stored = window.sessionStorage.getItem("melabridge.auth.next");
   window.sessionStorage.removeItem("melabridge.auth.next");
-  if (!stored || !stored.startsWith("/") || stored.startsWith("//")) return "/events";
+  if (!stored || !stored.startsWith("/") || stored.startsWith("//")) return "/dashboard";
   return stored;
 }
 
