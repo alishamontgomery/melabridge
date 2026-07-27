@@ -169,6 +169,18 @@ function VendorDashboardPage() {
           </div>
         </Card>
 
+        {/* Business modules — every card is a working destination */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <ModuleTile icon={UserPlus} label="Leads" value={String(newLeads.length)} hint="Inquiries to reply" to="/vendor-portal" />
+          <ModuleTile icon={Briefcase} label="Bookings" value={String(upcomingBookings.length)} hint="Confirmed & tentative" to="/bookings" />
+          <ModuleTile icon={Inbox} label="Requests" value={String(pendingRequests)} hint="Pending calendar" to="/calendar/requests" />
+          <ModuleTile icon={Calendar} label="Calendar" value={String(todaysEvents.length)} hint="Today" to="/calendar" />
+          <ModuleTile icon={Wallet} label="Revenue" value={`$${revenueThisMonth.toLocaleString()}`} hint="This month" to="/bookings" />
+          <ModuleTile icon={CheckCircle2} label="Tasks" value={String(tasks.length)} hint={overdueTasks.length ? `${overdueTasks.length} overdue` : "Up to date"} to="/vendor-portal" />
+          <ModuleTile icon={Store} label="Marketplace Listing" value={vendorProfile ? "Live" : "Set up"} hint="Public page" to="/profile" />
+          <ModuleTile icon={Building2} label="Profile Completion" value={`${profileCompletion}%`} hint={profileCompletion < 100 ? "Finish with MelaAssist" : "Complete"} to="/vendor-profile-builder" progress={profileCompletion} />
+        </div>
+
         {/* Two column: Today / side */}
         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
           {/* Today's schedule */}
