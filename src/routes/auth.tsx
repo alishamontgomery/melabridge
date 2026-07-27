@@ -203,7 +203,7 @@ function AuthPage() {
     if (!loading && user) {
       void landingRouteForUser(user.id).then((landing) => {
         const next = safeNextPath();
-        navigate({ to: (next === "/events" ? landing : next) as "/events" });
+        navigate({ to: (next === "/dashboard" ? landing : next) as "/dashboard" });
       });
     }
   }, [loading, user, navigate]);
@@ -261,7 +261,7 @@ function AuthPage() {
       toast.success("Signed in successfully");
       const landing = await landingRouteForUser(signedInUser.id);
       const next = safeNextPath();
-      navigate({ to: (next === "/events" ? landing : next) as "/events", replace: true });
+      navigate({ to: (next === "/dashboard" ? landing : next) as "/dashboard", replace: true });
     });
     // Run once on mount so OAuth callbacks cannot loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -280,7 +280,7 @@ function AuthPage() {
       toast.success("Welcome back");
       const landing = await landingRouteForUser(signedInUser.id);
       const next = safeNextPath();
-      navigate({ to: (next === "/events" ? landing : next) as "/events" });
+      navigate({ to: (next === "/dashboard" ? landing : next) as "/dashboard" });
     });
   }
 
@@ -349,7 +349,7 @@ function AuthPage() {
       toast.error(msg);
       return;
     }
-    window.sessionStorage.setItem("melabridge.auth.next", "/events");
+    window.sessionStorage.setItem("melabridge.auth.next", "/dashboard");
     await runAuthOperation("google", "Opening Google sign-in...", async () => {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + "/auth/callback",
