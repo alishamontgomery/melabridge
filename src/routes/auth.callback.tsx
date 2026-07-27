@@ -107,7 +107,7 @@ function AuthCallbackPage() {
         if (cancelled) return;
         window.clearTimeout(timeout);
         const landing = await landingRouteForUser(user.id);
-        navigate({ to: safeNextPath(landing) as "/events", replace: true });
+        navigate({ to: safeNextPath(landing) as "/dashboard", replace: true });
       } catch (err) {
         if (!cancelled) {
           window.clearTimeout(timeout);
