@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Store, Calendar, Wallet, Bell, Sparkles,
-  Plus, UserPlus, FileText, ScrollText, CreditCard, Mail, CalendarSync, CalendarX2,
-  TrendingUp, Activity, CheckCircle2, Clock, AlertCircle,
+  UserPlus, FileText, ScrollText, CreditCard, Mail, CalendarSync, CalendarX2,
+  TrendingUp, Activity, CheckCircle2, Clock, AlertCircle, Briefcase, Inbox, Building2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
