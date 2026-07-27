@@ -148,7 +148,7 @@ async function ensureProfile(user: User, displayName?: string) {
 
 type SignupAccountType = "planner" | "vendor";
 
-async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor" | "/admin"> {
+async function landingRouteForUser(userId: string): Promise<"/dashboard" | "/vendor" | "/admin"> {
   const [rolesRes, profileRes, vendorRes] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", userId),
     supabase.from("profiles").select("account_type").eq("id", userId).maybeSingle(),
@@ -159,7 +159,7 @@ async function landingRouteForUser(userId: string): Promise<"/events" | "/vendor
   if (roles.includes("vendor")) return "/vendor";
   if (profileRes.data?.account_type === "vendor") return "/vendor";
   if (vendorRes.data?.id) return "/vendor";
-  return "/events";
+  return "/dashboard";
 }
 
 function AuthPage() {
