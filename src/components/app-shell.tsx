@@ -73,7 +73,7 @@ const PLANNER_NAV: NavGroup[] = [
       { to: "/vendors", label: "Vendors", icon: Store },
       { to: "/bookings", label: "Bookings", icon: Briefcase },
       { to: "/budget", label: "Budget", icon: Wallet },
-      { to: "/timeline", label: "Timeline", icon: Calendar },
+      { to: "/timeline", label: "Timeline", icon: Flag },
       { to: "/tasks", label: "Tasks", icon: ClipboardList },
     ],
   },
@@ -81,7 +81,6 @@ const PLANNER_NAV: NavGroup[] = [
     label: "Team",
     items: [
       { to: "/team", label: "Team", icon: Users },
-      { to: "/notifications", label: "Notifications", icon: BellRing },
     ],
   },
   {

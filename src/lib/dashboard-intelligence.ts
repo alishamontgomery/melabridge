@@ -115,7 +115,7 @@ export function computeHealthScore(input: {
     : 80;
 
   const invited = guests.reduce((s, g) => s + 1 + Number(g.plus_ones ?? 0), 0);
-  const confirmed = guests.filter((g) => g.rsvp_status === "confirmed" || g.rsvp_status === "attending").length;
+  const confirmed = guests.filter((g) => g.rsvp_status === "yes").length;
   const guestTarget = Number(event.guest_count_target ?? invited ?? 0);
   const guestsScore = guestTarget > 0
     ? pct((confirmed / Math.max(1, guestTarget)) * 60 + (invited / Math.max(1, guestTarget)) * 40)
@@ -156,7 +156,7 @@ export function buildDailyBrief(input: {
   const newRsvps = guests.filter((g) => {
     if (!g.created_at) return false;
     return now - new Date(g.created_at).getTime() < 48 * 3600_000
-      && (g.rsvp_status === "confirmed" || g.rsvp_status === "attending");
+      && (g.rsvp_status === "yes");
   }).length;
   if (newRsvps > 0) items.push({ icon: "guests", text: `${newRsvps} guest${newRsvps === 1 ? "" : "s"} RSVP'd in the last 48 hours.` });
 
@@ -303,7 +303,7 @@ export function computePredictions(input: {
     if (burn > expected + 0.15) out.push("You may exceed your budget at the current spending pace.");
     else if (burn < expected - 0.15) out.push("Your spending pace is healthy — you're pacing under target.");
   }
-  const confirmed = guests.filter((g) => g.rsvp_status === "confirmed" || g.rsvp_status === "attending").length;
+  const confirmed = guests.filter((g) => g.rsvp_status === "yes").length;
   const invited = guests.length;
   if (invited >= 10) {
     const rate = confirmed / invited;
@@ -357,7 +357,7 @@ export function getMilestones(input: {
   const { event, guests, budget, tasks, countdown } = input;
   const list: Milestone[] = [];
   const invited = guests.length;
-  const confirmed = guests.filter((g) => g.rsvp_status === "confirmed" || g.rsvp_status === "attending").length;
+  const confirmed = guests.filter((g) => g.rsvp_status === "yes").length;
   if (invited > 0 && confirmed / invited >= 0.5) list.push({ key: "rsvp-50", label: `Half of your guests have RSVP'd!`, emoji: "🥂" });
   const target = Number(event.budget_target ?? 0);
   const spent = budget.reduce((s, i) => s + Number(i.paid_amount ?? i.actual_amount ?? 0), 0);

@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useEcosystem } from "@/lib/ecosystem-store";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, UserPlus, Search } from "lucide-react";
+import { toast } from "sonner";
 import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
+import type { Database } from "@/integrations/supabase/types";
 
 
 
@@ -24,30 +27,38 @@ export const Route = createFileRoute("/guests")({
   errorComponent: RouteError,
 });
 
+type Rsvp = Database["public"]["Enums"]["guest_rsvp"];
 type Guest = {
   id: string;
   full_name: string;
   email: string | null;
   phone: string | null;
   household: string | null;
-  rsvp_status: string | null;
+  rsvp_status: Rsvp | null;
   plus_ones: number | null;
   meal_choice: string | null;
   notes: string | null;
 };
 
-const RSVP_LABEL: Record<string, string> = {
+const RSVP_LABEL: Record<Rsvp, string> = {
   pending: "Pending",
-  confirmed: "Confirmed",
-  attending: "Confirmed",
-  declined: "Declined",
+  yes: "Attending",
+  no: "Declined",
   maybe: "Maybe",
+};
+
+const RSVP_TONE: Record<Rsvp, string> = {
+  yes: "bg-emerald-500/10 text-emerald-700",
+  no: "bg-rose-500/10 text-rose-700",
+  maybe: "bg-sky-500/10 text-sky-700",
+  pending: "bg-amber-500/10 text-amber-700",
 };
 
 function GuestsPage() {
   const { event, hasEvent, loading: eventLoading } = useEcosystem();
+  const qc = useQueryClient();
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "confirmed" | "pending" | "declined">("all");
+  const [filter, setFilter] = useState<"all" | Rsvp>("all");
 
   const gq = useQuery({
     queryKey: ["guests", event.id],
@@ -66,17 +77,24 @@ function GuestsPage() {
 
   const guests = gq.data ?? [];
 
+  async function updateRsvp(id: string, next: Rsvp) {
+    const prev = qc.getQueryData<Guest[]>(["guests", event.id]);
+    qc.setQueryData<Guest[]>(["guests", event.id], (list) =>
+      (list ?? []).map((g) => (g.id === id ? { ...g, rsvp_status: next } : g)),
+    );
+    const { error } = await supabase.from("guests").update({ rsvp_status: next }).eq("id", id);
+    if (error) {
+      qc.setQueryData(["guests", event.id], prev);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("RSVP updated");
+  }
+
   const filtered = useMemo(() => {
     return guests.filter((g) => {
-      const rs = (g.rsvp_status ?? "pending").toLowerCase();
-      const matchFilter =
-        filter === "all"
-          ? true
-          : filter === "confirmed"
-          ? rs === "confirmed" || rs === "attending"
-          : filter === "pending"
-          ? rs === "pending"
-          : rs === "declined";
+      const rs: Rsvp = (g.rsvp_status ?? "pending") as Rsvp;
+      const matchFilter = filter === "all" ? true : rs === filter;
       const matchQ =
         q === "" ||
         g.full_name.toLowerCase().includes(q.toLowerCase()) ||
@@ -88,12 +106,9 @@ function GuestsPage() {
   const counts = useMemo(
     () => ({
       total: guests.reduce((s, g) => s + 1 + Number(g.plus_ones ?? 0), 0),
-      confirmed: guests.filter((g) => {
-        const rs = (g.rsvp_status ?? "").toLowerCase();
-        return rs === "confirmed" || rs === "attending";
-      }).length,
-      pending: guests.filter((g) => (g.rsvp_status ?? "pending").toLowerCase() === "pending").length,
-      declined: guests.filter((g) => (g.rsvp_status ?? "").toLowerCase() === "declined").length,
+      yes: guests.filter((g) => (g.rsvp_status ?? "pending") === "yes").length,
+      pending: guests.filter((g) => (g.rsvp_status ?? "pending") === "pending").length,
+      no: guests.filter((g) => (g.rsvp_status ?? "pending") === "no").length,
     }),
     [guests],
   );
@@ -139,9 +154,9 @@ function GuestsPage() {
         <>
           <section className="mt-8 grid gap-3 md:grid-cols-4">
             <Stat label="On list" value={String(guests.length)} sub={`${counts.total} incl. +1s`} />
-            <Stat label="Confirmed" value={String(counts.confirmed)} sub="Attending" />
+            <Stat label="Attending" value={String(counts.yes)} sub="Confirmed yes" />
             <Stat label="Pending" value={String(counts.pending)} sub="Awaiting reply" />
-            <Stat label="Declined" value={String(counts.declined)} sub="Not attending" />
+            <Stat label="Declined" value={String(counts.no)} sub="Not attending" />
           </section>
 
           <div className="mt-6 mb-3 flex flex-wrap items-center gap-2">
@@ -149,17 +164,17 @@ function GuestsPage() {
               <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search guests by name or email…" className="pl-9" />
             </div>
-            {(["all", "confirmed", "pending", "declined"] as const).map((f) => (
+            {(["all", "yes", "pending", "maybe", "no"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium capitalize ${
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
                   filter === f
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {f}
+                {f === "all" ? "All" : RSVP_LABEL[f]}
               </button>
             ))}
           </div>
@@ -177,7 +192,7 @@ function GuestsPage() {
               </thead>
               <tbody>
                 {filtered.map((g) => {
-                  const rs = (g.rsvp_status ?? "pending").toLowerCase();
+                  const rs: Rsvp = (g.rsvp_status ?? "pending") as Rsvp;
                   return (
                     <tr key={g.id} className="border-t border-border">
                       <td className="px-4 py-2.5">
@@ -187,17 +202,20 @@ function GuestsPage() {
                       <td className="px-4 py-2.5 text-muted-foreground">{g.phone ?? "—"}</td>
                       <td className="px-4 py-2.5">{g.plus_ones ?? 0}</td>
                       <td className="px-4 py-2.5">
-                        <Badge
-                          className={
-                            rs === "confirmed" || rs === "attending"
-                              ? "bg-emerald-500/10 text-emerald-700"
-                              : rs === "declined"
-                              ? "bg-rose-500/10 text-rose-700"
-                              : "bg-amber-500/10 text-amber-700"
-                          }
-                        >
-                          {RSVP_LABEL[rs] ?? "Pending"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={RSVP_TONE[rs]}>{RSVP_LABEL[rs]}</Badge>
+                          <Select value={rs} onValueChange={(v) => updateRsvp(g.id, v as Rsvp)}>
+                            <SelectTrigger className="h-7 w-[120px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="yes">Attending</SelectItem>
+                              <SelectItem value="maybe">Maybe</SelectItem>
+                              <SelectItem value="no">Declined</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </td>
                       <td className="px-4 py-2.5">{g.meal_choice ?? "—"}</td>
                     </tr>
