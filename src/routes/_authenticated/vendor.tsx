@@ -62,25 +62,44 @@ function VendorDashboardPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [notifs, setNotifs] = useState<NotifRow[]>([]);
+  const [vendorProfile, setVendorProfile] = useState<Record<string, unknown> | null>(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     (async () => {
-      const [e, t, n] = await Promise.all([
+      const [e, t, n, vp, cr] = await Promise.all([
         supabase.from("events").select("id,name,event_date,start_time,status,client_name,deposit_required,deposit_paid,payment_status").eq("owner_id", user.id).is("deleted_at", null).order("event_date", { ascending: true, nullsFirst: false }).limit(50),
         supabase.from("tasks").select("id,title,due_date,status,priority").eq("assigned_to", user.id).is("deleted_at", null).neq("status", "done").order("due_date", { ascending: true, nullsFirst: false }).limit(10),
         supabase.from("notifications").select("id,title,body,category,created_at,read_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(6),
+        supabase.from("vendor_profiles").select("business_name,business_category,business_description,phone,email,website,logo_url,city,state,starting_price,portfolio_urls,business_hours,years_in_business").eq("user_id", user.id).maybeSingle(),
+        supabase.from("calendar_booking_requests").select("id", { count: "exact", head: true }).eq("vendor_id", user.id).eq("status", "pending"),
       ]);
       if (cancelled) return;
       setEvents((e.data as EventRow[]) ?? []);
       setTasks((t.data as TaskRow[]) ?? []);
       setNotifs((n.data as NotifRow[]) ?? []);
+      setVendorProfile((vp.data as Record<string, unknown> | null) ?? null);
+      setPendingRequests(cr.count ?? 0);
       setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [user]);
+
+  const profileCompletion = useMemo(() => {
+    if (!vendorProfile) return 0;
+    const fields = ["business_name","business_category","business_description","phone","email","website","logo_url","city","starting_price","portfolio_urls","business_hours","years_in_business"];
+    let filled = 0;
+    for (const f of fields) {
+      const v = vendorProfile[f];
+      if (Array.isArray(v)) { if (v.length > 0) filled++; }
+      else if (v && typeof v === "object") { if (Object.keys(v as Record<string, unknown>).length > 0) filled++; }
+      else if (v != null && String(v).trim() !== "") { filled++; }
+    }
+    return Math.round((filled / fields.length) * 100);
+  }, [vendorProfile]);
 
   const today = new Date().toISOString().slice(0, 10);
   const startOfMonth = new Date(); startOfMonth.setDate(1);
