@@ -196,6 +196,7 @@ export const NAV_GROUPS: NavGroup[] = PLANNER_NAV;
 function UserMenu() {
   const { user } = useAuth();
   const { role } = useRole();
+  const { firstName, fullName, businessName } = useDisplayName();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -207,7 +208,8 @@ function UserMenu() {
     );
   }
 
-  const initial = (user.user_metadata?.display_name || user.email || "U").toString().charAt(0).toUpperCase();
+  const displayLabel = role === "vendor" ? (businessName || fullName) : fullName;
+  const initial = (displayLabel || firstName || "U").charAt(0).toUpperCase();
 
   async function handleSignOut() {
     await queryClient.cancelQueries();
@@ -230,12 +232,12 @@ function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="truncate">
-          <div className="truncate text-sm font-medium">{user.email}</div>
+          <div className="truncate text-sm font-medium">{displayLabel}</div>
           <div className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">{role}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate({ to: home as "/dashboard" })}>Home</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>Profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>{role === "vendor" ? "Marketplace Listing" : "Profile"}</DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
