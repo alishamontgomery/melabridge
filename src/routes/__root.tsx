@@ -6,7 +6,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ClerkProvider } from "@clerk/tanstack-react-start";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 
@@ -101,6 +101,46 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+function isClerkTransportFailure(error: unknown): boolean {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : JSON.stringify(error ?? "");
+  return /clerk|handshake|invalid host|frontend.?api|authentication/i.test(message);
+}
+
+function AuthenticationUnavailable() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-xl font-semibold text-foreground">
+          Sign-in is temporarily unavailable
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          We couldn&apos;t connect to secure authentication. Please try again in a moment.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Try again
+          </button>
+          <a
+            href="/help"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            Help center
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -155,32 +195,34 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const [clerkUnavailable, setClerkUnavailable] = useState(false);
   const publishableKey =
     typeof window === "undefined"
       ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
       : publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-  const isClerkTestInstance = publishableKey.startsWith("pk_test_");
-  const isLiveMelaBridgeHost =
-    typeof window !== "undefined" && window.location.hostname === "melabridge.com";
-  // Clerk test instances should use their direct accounts.dev endpoint.
-  // The proxy is reserved for a configured live instance; forcing it for
-  // test keys on the published custom domain can create a session-refresh
-  // loop even when the browser and server test keys are valid.
-  const clerkProxyUrl =
-    import.meta.env.PROD && !isClerkTestInstance && !isLiveMelaBridgeHost
-      ? "/api/__clerk"
-      : undefined;
+  // Production auth must use one same-origin proxy on every published host.
+  // In development VITE_CLERK_PROXY_URL is intentionally empty and Clerk
+  // talks directly to the development frontend API.
+  const clerkProxyUrl = import.meta.env.PROD
+    ? (import.meta.env.VITE_CLERK_PROXY_URL || "/api/__clerk")
+    : undefined;
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
       reportClientReliabilityError(event.error ?? event.message, {
         source: "window_error",
       });
+      if (isClerkTransportFailure(event.error ?? event.message)) {
+        setClerkUnavailable(true);
+      }
     };
     const onUnhandledRejection = (event: PromiseRejectionEvent) => {
       reportClientReliabilityError(event.reason, {
         source: "unhandled_rejection",
       });
+      if (isClerkTransportFailure(event.reason)) {
+        setClerkUnavailable(true);
+      }
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onUnhandledRejection);
@@ -190,18 +232,7 @@ function RootComponent() {
     };
   }, []);
 
-  if (!publishableKey) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold text-foreground">Authentication is unavailable</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign-in is temporarily unavailable. Please refresh the page and try again later.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (!publishableKey || clerkUnavailable) return <AuthenticationUnavailable />;
 
   return (
     <QueryClientProvider client={queryClient}>
