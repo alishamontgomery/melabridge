@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-/* ================== Settings ================== */
+/* --- Settings --- */
 
 const CALENDAR_SETTINGS_FIELDS =
   "user_id,buffer_before_minutes,buffer_after_minutes,max_events_per_day,block_travel_days,vacation_start,vacation_end,timezone,created_at,updated_at";
@@ -71,7 +71,7 @@ export const updateCalendarSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ================== External calendar feed ================== */
+/* --- External calendar feed --- */
 
 export const getCalendarFeedToken = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -99,7 +99,7 @@ export const generateCalendarFeedToken = createServerFn({ method: "POST" })
     return { token };
   });
 
-/* ================== Availability ================== */
+/* --- Availability --- */
 
 export const listAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -149,7 +149,7 @@ export const deleteAvailability = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ================== Blocked dates ================== */
+/* --- Blocked dates --- */
 
 export const listBlockedDates = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -194,7 +194,7 @@ export const deleteBlockedDate = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ================== Events ================== */
+/* --- Events --- */
 
 const eventStatus = z.enum(["inquiry", "pending", "confirmed", "completed", "cancelled", "declined"]);
 
@@ -260,7 +260,7 @@ const eventInputSchema = z.object({
   planner_id: z.string().uuid().nullable().optional(),
 });
 
-/* ================== Conflict check ================== */
+/* --- Conflict check --- */
 
 type ConflictReason = "overlap" | "setup_overlap" | "breakdown_overlap" | "buffer" | "blocked" | "vacation" | "max_per_day" | "travel";
 type Conflict = { reason: ConflictReason; message: string; hard: boolean; eventId?: string };
@@ -459,7 +459,7 @@ export const duplicateEvent = createServerFn({ method: "POST" })
     return out;
   });
 
-/* ================== Booking requests ================== */
+/* --- Booking requests --- */
 
 export const listBookingRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -698,7 +698,7 @@ export const updateBookingRequestStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ================== Dashboard summary ================== */
+/* --- Dashboard summary --- */
 
 export const getDashboardSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

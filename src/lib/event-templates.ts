@@ -480,4 +480,3 @@ export function getInvitationGuidance(eventType: string | null | undefined): str
   const key = eventType.trim().toLowerCase();
   return INVITE_BY_KEY[key] ?? fallback;
 }
-

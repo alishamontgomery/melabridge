@@ -460,4 +460,3 @@ export function planIncludes(planId: PlanId | null | undefined, feature: Feature
     : planId;
   return featureGates[feature]?.requiredPlans.includes(normalizedPlanId) ?? false;
 }
-

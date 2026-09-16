@@ -114,8 +114,6 @@ const plannerBenefits = [
 ];
 
 
-
-
 const faqs = [
   {
     q: "How is MelaBridge different from the tools I already use?",

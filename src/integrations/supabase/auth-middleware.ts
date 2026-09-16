@@ -6,7 +6,6 @@ import type { Database } from './types'
 import { provisionClerkIdentity } from '@/lib/auth-register.functions'
 
 
-
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }

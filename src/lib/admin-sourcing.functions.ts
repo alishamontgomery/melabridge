@@ -82,3 +82,4 @@ export const getAdminVendorDemand = createServerFn({ method: "GET" })
       recentTrend: recentCount > previousCount ? "up" : recentCount < previousCount ? "down" : "flat",
     };
   });
+

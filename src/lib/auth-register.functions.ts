@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { externalClerkClient } from "@/lib/clerk-config.server";
 import { resolveClerkUserId } from "@/lib/clerk-server-auth";
+import { createServerFn } from "@tanstack/react-start";
 
 type Admin = any;
 
@@ -346,6 +347,10 @@ export const provisionClerkIdentity = createServerOnlyFn(async (sessionToken?: s
       throw new Error("No existing MelaBridge profile was found for this email. Recovery stopped without creating an account.");
     }
 
+    if (clerkUser.unsafeMetadata?.restore_existing === true) {
+      throw new Error("No existing MelaBridge profile was found for this email. Recovery stopped without creating an account.");
+    }
+
     // Clerk invitations carry the DB role in public metadata. Only accepted
     // existing application roles are honored; arbitrary metadata fails closed.
     const invitedRole = clerkUser.publicMetadata?.invited_role;
@@ -419,3 +424,215 @@ export const provisionClerkIdentity = createServerOnlyFn(async (sessionToken?: s
 export const provisionCurrentClerkIdentity = createServerFn({ method: "POST" })
   .validator((data: unknown) => ProvisionInput.parse(data))
   .handler(async ({ data }) => provisionClerkIdentity(data.sessionToken));
+
+const RegisterInput = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(8).max(128),
+  displayName: z.string().min(1).max(80),
+  /** Fine-grained account type stored in user metadata: "host" | "vendor" | "pro_planner" */
+  accountType: z.enum(["host", "vendor", "pro_planner"]),
+});
+
+/**
+ * Server-side user registration using the service-role admin key.
+ *
+ * Creates the user with email_confirm: false and attempts to send a branded
+ * verification email via the Resend API.
+ *
+ * If sending the verification email fails, the user account remains pending
+ * so the verification email can be resent — we NEVER silently auto-confirm.
+ * The caller receives { ok: false, emailError: string } and must surface
+ * a human-readable error rather than signing the user in.
+ *
+ * Provisioning (profile + role rows) errors are treated as fatal and will
+ * cause the handler to throw after cleaning up the auth user.
+ */
+export const registerUser = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => RegisterInput.parse(raw))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Map fine-grained type → DB-compatible values (centralized mapping)
+    const dbAccountType: "vendor" | "organization" =
+      data.accountType === "vendor" ? "vendor" : "organization";
+
+    // ── Step 1: Create user (unconfirmed; requires email verification) ───────
+    const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: false,
+      user_metadata: {
+        display_name: data.displayName,
+        // Fine-grained type preserved for subscription audience scoping:
+        // "host" | "vendor" | "pro_planner"
+        account_type: data.accountType,
+      },
+    });
+
+    if (createErr) {
+      const msg = createErr.message ?? "";
+      if (
+        msg.toLowerCase().includes("already registered") ||
+        msg.toLowerCase().includes("already exists")
+      ) {
+        throw new Error(
+          "An account already exists with this email. Sign in instead or reset your password.",
+        );
+      }
+      throw new Error(msg || "Could not create your account. Please try again.");
+    }
+
+    const userId = created.user.id;
+
+    // ── Step 2: Provision profile and role rows ──────────────────────────────
+    // We use Promise.allSettled so both can run concurrently, but we inspect
+    // every result and throw if any provisioning step failed.
+    const [profileResult, roleResult] = await Promise.allSettled([
+      supabaseAdmin.from("profiles").upsert(
+        {
+          id: userId,
+          email: data.email,
+          display_name: data.displayName,
+          account_type: dbAccountType,
+        },
+        { onConflict: "id" },
+      ),
+      supabaseAdmin
+        .from("user_roles")
+        .upsert(
+          { user_id: userId, role: dbAccountType },
+          { onConflict: "user_id,role", ignoreDuplicates: true },
+        ),
+    ]);
+
+    // Collect any provisioning errors
+    const provisionErrors: string[] = [];
+
+    if (profileResult.status === "rejected") {
+      provisionErrors.push(`profile: ${String(profileResult.reason)}`);
+    } else if (profileResult.value.error) {
+      provisionErrors.push(`profile: ${profileResult.value.error.message}`);
+    }
+
+    if (roleResult.status === "rejected") {
+      provisionErrors.push(`role: ${String(roleResult.reason)}`);
+    } else if (roleResult.value.error) {
+      provisionErrors.push(`role: ${roleResult.value.error.message}`);
+    }
+
+    if (provisionErrors.length > 0) {
+      // Clean up the orphaned auth user so the address can be retried.
+      await supabaseAdmin.auth.admin
+        .deleteUser(userId)
+        .catch((e) => console.error("[registerUser] cleanup deleteUser failed:", e));
+      throw new Error(`Account setup failed (${provisionErrors.join("; ")}). Please try again.`);
+    }
+
+    // ── Step 3: Generate verification link + send via Resend ─────────────────
+    let emailSent = false;
+    let emailError: string | null = null;
+
+    try {
+      const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+        type: "signup",
+        email: data.email,
+        password: data.password,
+      });
+
+      if (linkErr || !linkData?.properties?.action_link) {
+        throw new Error(linkErr?.message ?? "Failed to generate verification link");
+      }
+
+      const verificationUrl = linkData.properties.action_link;
+
+      const connectorsHost = process.env.REPLIT_CONNECTORS_HOSTNAME;
+      const replIdentity = process.env.REPL_IDENTITY;
+      if (!connectorsHost || !replIdentity) {
+        throw new Error("Email service not configured (connectors unavailable)");
+      }
+
+      const resendRes = await fetch(`https://${connectorsHost}/api/v1/proxy/resend/emails`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Replit-Identity": replIdentity,
+        },
+        body: JSON.stringify({
+          from: "MelaBridge <noreply@melabridge.com>",
+          to: [data.email],
+          subject: "Confirm your MelaBridge email address",
+          html: buildVerificationEmail(data.displayName, verificationUrl),
+        }),
+      });
+
+      const resendBody = (await resendRes.json()) as {
+        id?: string;
+        message?: string;
+        statusCode?: number;
+      };
+
+      if (resendRes.ok && resendBody.id) {
+        emailSent = true;
+      } else {
+        // Resend rejected the send — likely domain not yet verified.
+        // Record the error; do NOT auto-confirm. The user account exists but
+        // is unconfirmed. They can retry via the resend flow.
+        emailError =
+          resendBody.message ??
+          `Email delivery failed (HTTP ${resendRes.status}). ` +
+            "Please try again or contact support if the issue persists.";
+        console.warn("[registerUser] Resend rejected send:", emailError);
+      }
+    } catch (err) {
+      emailError = (err as Error).message;
+      console.warn("[registerUser] Email send failed:", emailError);
+    }
+
+    if (!emailSent && emailError) {
+      // Account is created but email could not be sent. Return structured error
+      // so the client can surface a helpful message and offer resend.
+      // We do NOT delete the user here — they can resend verification.
+      return {
+        ok: false as const,
+        userId,
+        emailSent: false as const,
+        emailError,
+      };
+    }
+
+    return { ok: true as const, userId, emailSent: true as const, emailError: null };
+  });
+
+function buildVerificationEmail(name: string, verificationUrl: string) {
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:40px 24px;background:#fff">
+      <h1 style="font-size:26px;font-weight:700;color:#1a1a2e;margin:0 0 24px">MelaBridge</h1>
+      <h2 style="font-size:20px;font-weight:600;color:#1a1a2e;margin:0 0 12px">Confirm your email address</h2>
+      <p style="color:#555;line-height:1.6;margin:0 0 8px">Hi ${escapeHtml(name)},</p>
+      <p style="color:#555;line-height:1.6;margin:0 0 28px">
+        Thanks for joining MelaBridge. Click the button below to confirm your email and activate your account.
+      </p>
+      <div style="text-align:center;margin:0 0 28px">
+        <a href="${verificationUrl}"
+           style="display:inline-block;background:#6d28d9;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:600;font-size:15px">
+          Confirm my email
+        </a>
+      </div>
+      <p style="color:#999;font-size:13px;line-height:1.5;margin:0 0 24px">
+        This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.
+      </p>
+      <hr style="border:none;border-top:1px solid #eee;margin:0 0 20px">
+      <p style="color:#bbb;font-size:12px;text-align:center;margin:0">
+        MelaBridge — The AI-native event platform
+      </p>
+    </div>
+  `;
+}
+
+function escapeHtml(str: string) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}

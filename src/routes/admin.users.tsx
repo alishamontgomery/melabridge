@@ -20,7 +20,7 @@ import { useRequireAuth } from "@/lib/use-require-auth";
 import { useRole } from "@/lib/use-role";
 import { useAuth } from "@/lib/auth";
 import { profileTypeLabel } from "@/lib/profile-types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -82,6 +82,7 @@ function AdminUsersPage() {
   const { user: currentAuthUser } = useAuth();
   const isAdmin = role === "admin";
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended" | "pending">("all");
 
@@ -98,14 +99,22 @@ function AdminUsersPage() {
   const resendVerify = useServerFn(resendAdminUserVerification);
   const editUserFn = useServerFn(updateAdminUser);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQ(q.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [q]);
+
   const query = useQuery({
-    queryKey: ["admin-users"],
+    queryKey: ["admin-users", debouncedQ, roleFilter, statusFilter],
     enabled: isAdmin,
     queryFn: async () => {
-      const res = await fetchUsers({ data: undefined } as never);
+      const res = await fetchUsers({
+        data: { search: debouncedQ, role: roleFilter, status: statusFilter },
+      } as never);
       if (res && "error" in res) throw new Error(res.error);
       return res;
     },
+    placeholderData: (previous) => previous,
   });
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-users"] });
@@ -155,23 +164,7 @@ function AdminUsersPage() {
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
 
-  const rows = useMemo(() => {
-    const list = query.data?.users ?? [];
-    const term = q.trim().toLowerCase();
-    return list.filter((u) => {
-      if (term && !(u.email?.toLowerCase().includes(term) || u.display_name?.toLowerCase().includes(term))) return false;
-      if (roleFilter !== "all") {
-        const primary = primaryRoleOf(u);
-        if (primary !== roleFilter && !u.roles.includes(roleFilter)) return false;
-      }
-      const suspended = isSuspended(u);
-      const verified = isVerified(u);
-      if (statusFilter === "active" && (suspended || !verified)) return false;
-      if (statusFilter === "suspended" && !suspended) return false;
-      if (statusFilter === "pending" && (verified || suspended)) return false;
-      return true;
-    });
-  }, [query.data, q, roleFilter, statusFilter]);
+  const rows = query.data?.users ?? [];
 
   if (authLoading || roleLoading) {
     return <AppShell active="/admin/users"><Card className="p-10 text-center text-sm text-muted-foreground">Checking access…</Card></AppShell>;

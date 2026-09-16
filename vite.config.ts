@@ -20,8 +20,30 @@ const SUPABASE_PUBLISHABLE_KEY =
   "";
 const SUPABASE_PROJECT_ID =
   process.env.SUPABASE_PROJECT_ID || process.env.VITE_SUPABASE_PROJECT_ID || "";
+
+const EXTERNAL_CLERK_PUBLISHABLE_KEY =
+  process.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ||
+  process.env.CLERK_PUBLISHABLE_KEY?.trim() ||
+  "";
 const CLERK_PUBLISHABLE_KEY =
   process.env.CLERK_PUBLISHABLE_KEY?.trim() || "";
+
+// Pull Supabase credentials from process.env at config-evaluation time so that
+// Replit Secrets (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) override the stale
+// values in .env that still reference the deleted Supabase project.
+const SUPABASE_URL =
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
+const SUPABASE_PUBLISHABLE_KEY =
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  "";
+const SUPABASE_PROJECT_ID =
+  process.env.SUPABASE_PROJECT_ID || process.env.VITE_SUPABASE_PROJECT_ID || "";
+
+const EXTERNAL_CLERK_PUBLISHABLE_KEY =
+  process.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ||
+  process.env.CLERK_PUBLISHABLE_KEY?.trim() ||
+  "";
 
 export default defineConfig({
   plugins: [
@@ -87,5 +109,46 @@ export default defineConfig({
       "protobufjs",
       "ws",
     ],
+  },
+  vite: {
+    server: {
+      host: "0.0.0.0",
+      port: 5000,
+      allowedHosts: true,
+      strictPort: true,
+    },
+    // Override import.meta.env.VITE_* at build time with values from Replit Secrets.
+    // Without this, Vite bakes the stale .env values into the browser bundle.
+    define: {
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(SUPABASE_URL),
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(SUPABASE_PUBLISHABLE_KEY),
+      "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(SUPABASE_PROJECT_ID),
+      "import.meta.env.VITE_CLERK_PUBLISHABLE_KEY": JSON.stringify(EXTERNAL_CLERK_PUBLISHABLE_KEY),
+    },
+    optimizeDeps: {
+      // Pre-bundle TanStack Router packages (including subpath exports) at
+      // startup so Vite never lazily re-discovers them mid-session.
+      // Without this, a mid-session re-bundle causes a full client reload that
+      // splits RouterContext across module instances → useRouter() fails with
+      // "Invalid hook call" inside OutletImpl.
+      include: [
+        "@tanstack/react-router",
+        "@tanstack/router-core",
+        "@tanstack/router-core/isServer",
+        "@tanstack/router-core/ssr/client",
+        "@tanstack/router-core/ssr/server",
+        "@tanstack/history",
+        "seroval",
+        "h3-v2",
+      ],
+      // @google/genai and its deps are server-only — exclude them so the
+      // client optimizer never tries to process Node.js-only code.
+      exclude: [
+        "@google/genai",
+        "google-auth-library",
+        "protobufjs",
+        "ws",
+      ],
+    },
   },
 });

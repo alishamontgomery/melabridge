@@ -82,5 +82,29 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
       marketplaceUrl: 'https://melabridge.com/marketplace',
     },
   },
+  'team-invite': {
+    component: TeamInviteEmail,
+    displayName: 'Team member added',
+    subject: (d) => `You've been added to ${d.eventName ?? 'an event'} on MelaBridge`,
+    previewData: { eventName: 'Amara & Julien — Wedding', inviterName: 'Amara', eventUrl: 'https://melabridge.com/events' },
+  },
+  'guest-message': {
+    component: GuestMessageEmail,
+    displayName: 'Message to guests',
+    subject: (d) => d.subject ?? 'A message from your event organiser',
+    previewData: { eventName: 'Summer Gala 2026', organizerName: 'Amara', subject: 'Important parking info', body: 'Hi! Just a quick reminder about parking…' },
+  },
+  'guest-message-rsvp': {
+    component: GuestMessageRsvpEmail,
+    displayName: 'Message to guests with RSVP buttons',
+    subject: (d) => d.subject ?? 'A message from your event organiser',
+    previewData: {
+      eventName: 'Summer Gala 2026',
+      organizerName: 'Amara',
+      subject: 'Are you joining us?',
+      body: 'Hi! We wanted to reach out about the Summer Gala. Please let us know if you can make it.',
+      rsvpYesUrl: '#yes',
+      rsvpNoUrl: '#no',
+    },
+  },
 }
-

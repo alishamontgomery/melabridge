@@ -148,7 +148,7 @@ export function EventOverview({
 
   return (
     <div className="space-y-6">
-      {/* ============ HERO COMMAND HEADER ============ */}
+      {/* --- HERO COMMAND HEADER --- */}
       <Card className="relative overflow-hidden border-border/60 bg-hero-radial p-5 shadow-elegant sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <div className="min-w-0 space-y-4">
@@ -198,7 +198,7 @@ export function EventOverview({
         </div>
       </Card>
 
-      {/* ============ NEEDS ATTENTION ============ */}
+      {/* --- NEEDS ATTENTION --- */}
       <NeedsAttention
         event={event}
         tasks={tasks}
@@ -207,7 +207,7 @@ export function EventOverview({
         onOpenTab={onOpenTab}
       />
 
-      {/* ============ EDITABLE QUICK CARDS ============ */}
+      {/* --- EDITABLE QUICK CARDS --- */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <QuickCard icon={Calendar} label="Date" tone="primary" onEdit={() => onOpenTab("details")}
           value={event.event_date ? new Date(event.event_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "Set date"}
@@ -225,7 +225,7 @@ export function EventOverview({
           value={`${planningPct}%`} sub={`${doneTasks}/${tasks.length || 0} tasks`} />
       </div>
 
-      {/* ============ READINESS + AI PANEL ROW ============ */}
+      {/* --- READINESS + AI PANEL ROW --- */}
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
         {/* Planning Readiness */}
         <Card className="border-border/60 p-5 shadow-soft">
@@ -271,7 +271,7 @@ export function EventOverview({
         </Card>
       </div>
 
-      {/* ============ QUICK ACTIONS ============ */}
+      {/* --- QUICK ACTIONS --- */}
       <div>
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Quick actions</h3>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
@@ -349,7 +349,7 @@ export function EventOverview({
         onConfirm={async () => { onDelete?.(); }}
       />
 
-      {/* ============ TASK PROGRESS + TIMELINE + ACTIVITY ============ */}
+      {/* --- TASK PROGRESS + TIMELINE + ACTIVITY --- */}
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Task tracker */}
         <Card className="border-border/60 p-5 shadow-soft">

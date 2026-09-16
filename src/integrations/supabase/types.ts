@@ -2718,6 +2718,63 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_designs: {
+        Row: {
+          id: string
+          user_id: string
+          event_id: string | null
+          title: string
+          template_id: string | null
+          canvas_json: Json | null
+          thumbnail_url: string | null
+          width: number
+          height: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          event_id?: string | null
+          title?: string
+          template_id?: string | null
+          canvas_json?: Json | null
+          thumbnail_url?: string | null
+          width?: number
+          height?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          event_id?: string | null
+          title?: string
+          template_id?: string | null
+          canvas_json?: Json | null
+          thumbnail_url?: string | null
+          width?: number
+          height?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_designs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_designs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_complimentary_ticket: {

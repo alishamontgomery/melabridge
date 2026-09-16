@@ -1,23 +1,23 @@
--- =========================================================
+-- ---------------------------------------------------------
 -- MelaBridge — all migrations consolidated
 -- Generated 2026-08-02T21:13:19Z from 87 migration files
--- =========================================================
+-- ---------------------------------------------------------
 
 
 -- === Migration: 20260711172951_34f9f424-d288-480f-8618-79f3dd0c03ff.sql ===
 
--- =========================================================
+-- ---------------------------------------------------------
 -- ENUMS
--- =========================================================
+-- ---------------------------------------------------------
 CREATE TYPE public.event_role AS ENUM ('owner','admin','editor','commenter','viewer');
 CREATE TYPE public.event_status AS ENUM ('draft','planning','confirmed','completed','archived');
 CREATE TYPE public.task_status AS ENUM ('todo','in_progress','done');
 CREATE TYPE public.task_priority AS ENUM ('low','medium','high','urgent');
 CREATE TYPE public.guest_rsvp AS ENUM ('pending','yes','no','maybe');
 
--- =========================================================
+-- ---------------------------------------------------------
 -- UPDATED_AT HELPER
--- =========================================================
+-- ---------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -29,9 +29,9 @@ BEGIN
 END;
 $$;
 
--- =========================================================
+-- ---------------------------------------------------------
 -- PROFILES
--- =========================================================
+-- ---------------------------------------------------------
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT,
@@ -81,9 +81,9 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- =========================================================
+-- ---------------------------------------------------------
 -- EVENTS
--- =========================================================
+-- ---------------------------------------------------------
 CREATE TABLE public.events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -110,9 +110,9 @@ CREATE TRIGGER trg_events_updated_at
   BEFORE UPDATE ON public.events
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- =========================================================
+-- ---------------------------------------------------------
 -- EVENT_MEMBERS
--- =========================================================
+-- ---------------------------------------------------------
 CREATE TABLE public.event_members (
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -126,9 +126,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.event_members TO authenticated;
 GRANT ALL ON public.event_members TO service_role;
 ALTER TABLE public.event_members ENABLE ROW LEVEL SECURITY;
 
--- =========================================================
+-- ---------------------------------------------------------
 -- ACCESS HELPERS (SECURITY DEFINER — avoid recursive RLS)
--- =========================================================
+-- ---------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.is_event_member(_event_id UUID, _user_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
@@ -192,9 +192,9 @@ CREATE POLICY "Members: admins can update" ON public.event_members
 CREATE POLICY "Members: admins can remove" ON public.event_members
   FOR DELETE TO authenticated USING (public.has_event_access(event_id, auth.uid(), 'admin'));
 
--- =========================================================
+-- ---------------------------------------------------------
 -- TASKS
--- =========================================================
+-- ---------------------------------------------------------
 CREATE TABLE public.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
@@ -576,9 +576,9 @@ CREATE POLICY "Admins can delete user roles" ON public.user_roles FOR DELETE TO 
 
 -- === Migration: 20260713005326_024ee5e2-1c94-4d6a-991b-9f1bced96c4a.sql ===
 
--- =========================
+-- -------------------------
 -- Conversations
--- =========================
+-- -------------------------
 CREATE TABLE IF NOT EXISTS public.conversations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -645,9 +645,9 @@ CREATE POLICY "cp: owner manages"
   USING (EXISTS (SELECT 1 FROM public.conversations c WHERE c.id = conversation_id AND c.owner_id = auth.uid()))
   WITH CHECK (EXISTS (SELECT 1 FROM public.conversations c WHERE c.id = conversation_id AND c.owner_id = auth.uid()));
 
--- =========================
+-- -------------------------
 -- Messages
--- =========================
+-- -------------------------
 CREATE TABLE IF NOT EXISTS public.messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   conversation_id uuid NOT NULL REFERENCES public.conversations(id) ON DELETE CASCADE,
@@ -678,9 +678,9 @@ CREATE POLICY "msg: sender can delete"
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON public.messages(conversation_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_conv_owner ON public.conversations(owner_id, last_message_at DESC);
 
--- =========================
+-- -------------------------
 -- Templates
--- =========================
+-- -------------------------
 CREATE TABLE IF NOT EXISTS public.message_templates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid REFERENCES auth.users(id) ON DELETE CASCADE, -- NULL = global/seeded
@@ -731,9 +731,9 @@ CREATE POLICY "tplv: insert own"
   ON public.message_template_versions FOR INSERT TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM public.message_templates t WHERE t.id = template_id AND t.owner_id = auth.uid()));
 
--- =========================
+-- -------------------------
 -- Extend notification_preferences
--- =========================
+-- -------------------------
 ALTER TABLE public.notification_preferences
   ADD COLUMN IF NOT EXISTS category text NOT NULL DEFAULT 'messages',
   ADD COLUMN IF NOT EXISTS frequency text NOT NULL DEFAULT 'instant' CHECK (frequency IN ('instant','hourly','daily','weekly','off')),
@@ -744,17 +744,17 @@ ALTER TABLE public.notification_preferences
   ADD COLUMN IF NOT EXISTS quiet_hours_end time,
   ADD COLUMN IF NOT EXISTS event_id uuid;
 
--- =========================
+-- -------------------------
 -- Triggers
--- =========================
+-- -------------------------
 CREATE TRIGGER trg_conversations_updated BEFORE UPDATE ON public.conversations
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER trg_templates_updated BEFORE UPDATE ON public.message_templates
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- =========================
+-- -------------------------
 -- Seed 80+ global templates
--- =========================
+-- -------------------------
 INSERT INTO public.message_templates (owner_id, category, title, body, variables, tone) VALUES
 -- Guest (14)
 (NULL,'guest','RSVP reminder — 30 days','Hi {name}, just a friendly reminder our RSVP window closes in 30 days. Tap your invite link to confirm — can''t wait to celebrate with you!',ARRAY['name'],'friendly'),
@@ -866,9 +866,9 @@ INSERT INTO public.message_templates (owner_id, category, title, body, variables
 
 -- === Migration: 20260713010901_cbe90f6f-b8ba-4311-87fe-1c9853bd7a2f.sql ===
 
--- =========================================================================
+-- -------------------------------------------------------------------------
 -- 1) Move SECURITY DEFINER RLS helpers out of the exposed public schema
--- =========================================================================
+-- -------------------------------------------------------------------------
 CREATE SCHEMA IF NOT EXISTS app_private;
 GRANT USAGE ON SCHEMA app_private TO authenticated, service_role;
 
@@ -1041,18 +1041,18 @@ DROP FUNCTION IF EXISTS public.has_event_access(uuid, uuid, public.event_role);
 DROP FUNCTION IF EXISTS public.is_event_member(uuid, uuid);
 DROP FUNCTION IF EXISTS public.is_conversation_participant(uuid, uuid);
 
--- =========================================================================
+-- -------------------------------------------------------------------------
 -- 2) message_template_versions: allow owner update/delete
--- =========================================================================
+-- -------------------------------------------------------------------------
 CREATE POLICY "tplv: update own" ON public.message_template_versions FOR UPDATE TO authenticated
   USING (EXISTS (SELECT 1 FROM public.message_templates t WHERE t.id = message_template_versions.template_id AND t.owner_id = auth.uid()))
   WITH CHECK (EXISTS (SELECT 1 FROM public.message_templates t WHERE t.id = message_template_versions.template_id AND t.owner_id = auth.uid()));
 CREATE POLICY "tplv: delete own" ON public.message_template_versions FOR DELETE TO authenticated
   USING (EXISTS (SELECT 1 FROM public.message_templates t WHERE t.id = message_template_versions.template_id AND t.owner_id = auth.uid()));
 
--- =========================================================================
+-- -------------------------------------------------------------------------
 -- 3) vendor_profiles: allow authenticated users to discover onboarded vendors
--- =========================================================================
+-- -------------------------------------------------------------------------
 CREATE POLICY "Vendor profiles: discoverable when onboarded" ON public.vendor_profiles FOR SELECT TO authenticated
   USING (onboarding_completed = true);
 
@@ -2140,7 +2140,7 @@ CREATE INDEX IF NOT EXISTS profiles_ics_token_idx ON public.profiles(ics_token) 
 
 -- === Migration: 20260713162014_07962077-fb64-4ea9-875b-9c5d486d31a0.sql ===
 
--- ============ ENUMS ============
+-- --- ENUMS ---
 DO $$ BEGIN
   CREATE TYPE public.calendar_block_reason AS ENUM ('day_off','vacation','travel');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
@@ -2157,7 +2157,7 @@ DO $$ BEGIN
   CREATE TYPE public.calendar_request_status AS ENUM ('pending','approved','declined','alternate_proposed','cancelled');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- ============ calendar_availability ============
+-- --- calendar_availability ---
 CREATE TABLE public.calendar_availability (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -2174,7 +2174,7 @@ ALTER TABLE public.calendar_availability ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "avail_owner_all" ON public.calendar_availability FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE INDEX ON public.calendar_availability (user_id, weekday);
 
--- ============ calendar_blocked_dates ============
+-- --- calendar_blocked_dates ---
 CREATE TABLE public.calendar_blocked_dates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -2192,7 +2192,7 @@ ALTER TABLE public.calendar_blocked_dates ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "blocked_owner_all" ON public.calendar_blocked_dates FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE INDEX ON public.calendar_blocked_dates (user_id, start_date, end_date);
 
--- ============ calendar_settings ============
+-- --- calendar_settings ---
 CREATE TABLE public.calendar_settings (
   user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   buffer_before_minutes integer NOT NULL DEFAULT 30,
@@ -2211,7 +2211,7 @@ GRANT ALL ON public.calendar_settings TO service_role;
 ALTER TABLE public.calendar_settings ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "settings_owner_all" ON public.calendar_settings FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
--- ============ calendar_events ============
+-- --- calendar_events ---
 CREATE TABLE public.calendar_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -2251,7 +2251,7 @@ CREATE INDEX ON public.calendar_events (vendor_id, starts_at);
 CREATE INDEX ON public.calendar_events (planner_id);
 CREATE INDEX ON public.calendar_events (status);
 
--- ============ calendar_booking_requests ============
+-- --- calendar_booking_requests ---
 CREATE TABLE public.calendar_booking_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   booking_id uuid REFERENCES public.calendar_events(id) ON DELETE SET NULL,
@@ -2283,7 +2283,7 @@ CREATE POLICY "req_planner_update_own" ON public.calendar_booking_requests FOR U
 CREATE INDEX ON public.calendar_booking_requests (vendor_id, status);
 CREATE INDEX ON public.calendar_booking_requests (planner_id, status);
 
--- ============ updated_at triggers ============
+-- --- updated_at triggers ---
 CREATE TRIGGER trg_cal_avail_updated BEFORE UPDATE ON public.calendar_availability FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER trg_cal_blocked_updated BEFORE UPDATE ON public.calendar_blocked_dates FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER trg_cal_settings_updated BEFORE UPDATE ON public.calendar_settings FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
@@ -2344,7 +2344,7 @@ GRANT SELECT ON public.vendor_profiles_public TO anon, authenticated;
 
 -- === Migration: 20260713184233_536e4f64-8cd5-44d5-8f8b-66bb822f3ea3.sql ===
 
--- ============ ENUMS ============
+-- --- ENUMS ---
 CREATE TYPE public.booking_stage AS ENUM (
   'saved','contacted','consultation_scheduled','quote_sent',
   'quote_under_review','contract_sent','contract_signed',
@@ -2355,7 +2355,7 @@ CREATE TYPE public.booking_confirmation_rule AS ENUM (
   'contract_only','deposit_only','contract_and_deposit','manual'
 );
 
--- ============ vendor_booking_settings ============
+-- --- vendor_booking_settings ---
 CREATE TABLE public.vendor_booking_settings (
   vendor_id uuid PRIMARY KEY REFERENCES public.vendor_profiles(id) ON DELETE CASCADE,
   confirmation_rule public.booking_confirmation_rule NOT NULL DEFAULT 'contract_and_deposit',
@@ -2381,7 +2381,7 @@ CREATE TRIGGER trg_vbs_updated
   BEFORE UPDATE ON public.vendor_booking_settings
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ============ vendor_bookings ============
+-- --- vendor_bookings ---
 CREATE TABLE public.vendor_bookings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   planner_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -2451,7 +2451,7 @@ CREATE TRIGGER trg_vb_updated
   BEFORE UPDATE ON public.vendor_bookings
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- ============ vendor_booking_events ============
+-- --- vendor_booking_events ---
 CREATE TABLE public.vendor_booking_events (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   booking_id uuid NOT NULL REFERENCES public.vendor_bookings(id) ON DELETE CASCADE,
@@ -2475,7 +2475,7 @@ CREATE POLICY "parties insert events"
   ON public.vendor_booking_events FOR INSERT TO authenticated
   WITH CHECK (public.is_booking_party(booking_id, auth.uid()));
 
--- ============ Confirmation trigger ============
+-- --- Confirmation trigger ---
 CREATE OR REPLACE FUNCTION public.fn_apply_confirmation_rule()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE

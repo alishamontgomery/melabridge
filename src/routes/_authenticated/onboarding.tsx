@@ -218,7 +218,7 @@ function OptionalLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ============== PLANNER FLOW (Host + Planner) ============== */
+/* --- PLANNER FLOW (Host + Planner) --- */
 function PlannerFlow({ accountType, onBack }: { accountType: "host" | "planner"; onBack: () => void }) {
   if (accountType === "host") {
     return <WelcomeDashboard onBack={onBack} />;
@@ -499,7 +499,7 @@ function OrganizationFlow({ onBack }: { onBack: () => void }) {
 }
 
 
-/* ============== VENDOR FLOW ============== */
+/* --- VENDOR FLOW --- */
 function VendorFlow({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();

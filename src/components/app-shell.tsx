@@ -9,7 +9,7 @@ import {
   Wallet,
   ClipboardList,
   Calendar,
-  
+
   FolderOpen,
   Settings as SettingsIcon,
   Menu,
@@ -45,7 +45,6 @@ import { useIdleSignout } from "@/hooks/use-idle-signout";
 import { useDisplayName } from "@/lib/use-display-name";
 import { useSubscription } from "@/hooks/use-subscription";
 import { LogOut, Loader2 } from "lucide-react";
-
 
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };

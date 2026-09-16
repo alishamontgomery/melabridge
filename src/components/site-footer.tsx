@@ -197,7 +197,6 @@ export function SiteFooter() {
       </div>
 
 
-
       {/* Bottom bar */}
       <div className="border-t border-border/60">
         <div className="mx-auto grid max-w-7xl gap-3 px-6 py-6 text-xs text-muted-foreground sm:grid-cols-3 sm:items-center">

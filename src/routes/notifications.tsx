@@ -179,6 +179,8 @@ function NotificationsPage() {
 
   if (authLoading || !user) return null; // AppShell redirect handles unauthenticated
 
+  if (authLoading || !user) return null; // AppShell redirect handles unauthenticated
+
   return (
     <AppShell active="/notifications">
       <div className="space-y-6">

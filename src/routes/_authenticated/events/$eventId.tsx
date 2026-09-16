@@ -307,7 +307,7 @@ function StatCard({ icon: Icon, label, children }: { icon: React.ComponentType<{
 }
 
 
-// ============= TASKS =============
+// --- TASKS ---
 function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; reload: () => Promise<void> }) {
   const { user } = useAuth();
   const [title, setTitle] = useState("");
@@ -436,7 +436,7 @@ function TasksTab({ eventId, tasks, reload }: { eventId: string; tasks: Task[]; 
   );
 }
 
-// ============= BUDGET =============
+// --- BUDGET ---
 function BudgetTab({ eventId, items, totals, target, reload }: {
   eventId: string; items: BudgetItem[]; totals: { est: number; act: number; paid: number }; target: number | null; reload: () => Promise<void>;
 }) {
@@ -782,7 +782,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
   );
 }
 
-// ============= GUESTS =============
+// --- GUESTS ---
 function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; eventName: string; guests: Guest[]; reload: () => Promise<void> }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -792,6 +792,8 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
   const [editGuest, setEditGuest] = useState<Guest | null>(null);
   const [editBusy, setEditBusy] = useState(false);
   const [invitationsOpen, setInvitationsOpen] = useState(false);
+
+  const fireRsvpFn = useServerFn(fireRsvpBatch);
 
   const fireRsvpFn = useServerFn(fireRsvpBatch);
 
@@ -1057,7 +1059,7 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
   );
 }
 
-// ============= DETAILS (edit) =============
+// --- DETAILS (edit) ---
 function DetailsTab({ event, onSaved }: { event: Event; onSaved: () => Promise<void> }) {
   const [f, setF] = useState({
     name: event.name,
@@ -1129,7 +1131,7 @@ function DetailsTab({ event, onSaved }: { event: Event; onSaved: () => Promise<v
   );
 }
 
-// ============= PUBLIC PAGE SECTION =============
+// --- PUBLIC PAGE SECTION ---
 function PublicPageSection({ event, onSaved }: { event: Event; onSaved: () => Promise<void> }) {
   // New columns don't exist on the generated Event type yet — read via unknown cast
   const ev = event as unknown as Record<string, unknown>;
@@ -1281,7 +1283,7 @@ function PublicPageSection({ event, onSaved }: { event: Event; onSaved: () => Pr
   );
 }
 
-// ============= COMMUNICATE =============
+// --- COMMUNICATE ---
 function CommunicateTabContent({
   eventId,
   eventName,
@@ -1343,7 +1345,7 @@ function CommunicateTabContent({
   );
 }
 
-// ============= INVITATIONS =============
+// --- INVITATIONS ---
 function InvitationsTab({ event, guests, onSaved }: { event: Event; guests: Guest[]; onSaved: () => Promise<void> }) {
   const [guidance, setGuidance] = useState<string>(event.invitation_guidance ?? "");
   const [busy, setBusy] = useState(false);
@@ -1425,7 +1427,3 @@ function InvitationsTab({ event, guests, onSaved }: { event: Event; guests: Gues
     </div>
   );
 }
-
-
-
-

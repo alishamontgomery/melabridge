@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { legacyUserIdForClerkUser } from "@/lib/clerk-identity.server";
 import { externalClerkClient } from "@/lib/clerk-config.server";
+import { collectAdminUserPages } from "@/lib/admin-users-pagination";
 
 export type AdminUserRow = {
   id: string; email: string | null; display_name: string | null; first_name: string | null;
@@ -11,6 +12,8 @@ export type AdminUserRow = {
 };
 
 type Role = "personal" | "organization" | "vendor" | "admin";
+
+type AdminUserStatus = "all" | "active" | "suspended" | "pending";
 type Admin = any;
 const roles = new Set<Role>(["personal", "organization", "vendor", "admin"]);
 const iso = (value: number | null | undefined) => value ? new Date(value).toISOString() : null;
@@ -43,24 +46,55 @@ async function rolesForUser(admin: Admin, userId: string): Promise<string[]> {
   return (data ?? []).map((row: any) => row.role);
 }
 
-export const listAdminUsers = createServerFn({ method: "POST" }).handler(async () => {
+export const listAdminUsers = createServerFn({ method: "POST" })
+  .validator((data: ListAdminUsersInput | undefined) => data ?? {})
+  .handler(async ({ data }) => {
   let ctx: Awaited<ReturnType<typeof adminContext>>;
   try { ctx = await adminContext(); } catch { return { error: "Forbidden" } as const; }
-  const profiles: any[] = [];
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await ctx.admin.from("profiles")
-      .select("id,email,display_name,account_type,onboarding_completed,created_at")
-      .order("created_at", { ascending: false }).range(from, from + 999);
-    if (error) return { error: "Could not load users." } as const;
-    profiles.push(...(data ?? []));
-    if ((data ?? []).length < 1000) break;
+  const search = data.search?.trim().slice(0, 200) ?? "";
+  const roleFilter = data.role && data.role !== "all" && roles.has(data.role) ? data.role : null;
+  const statusFilter: AdminUserStatus = data.status ?? "all";
+  if (!["all", "active", "suspended", "pending"].includes(statusFilter)) {
+    return { error: "Invalid status filter." } as const;
   }
-  const [{ data: roleRows }, { data: links }] = await Promise.all([
-    ctx.admin.from("user_roles").select("user_id,role"),
-    ctx.admin.from("clerk_identity_links").select("legacy_user_id,clerk_user_id,status"),
+
+  const [{ count: total, error: countError }, roleResult, linkResult] = await Promise.all([
+    ctx.admin.from("profiles").select("id", { count: "exact", head: true }),
+    collectAdminUserPages<any>((from, to) =>
+      ctx.admin.from("user_roles").select("user_id,role")
+        .order("user_id", { ascending: true }).order("role", { ascending: true }).range(from, to)
+    ),
+    collectAdminUserPages<any>((from, to) =>
+      ctx.admin.from("clerk_identity_links").select("legacy_user_id,clerk_user_id,status")
+        .order("legacy_user_id", { ascending: true }).order("clerk_user_id", { ascending: true }).range(from, to)
+    ),
   ]);
+  if (countError || roleResult.error || linkResult.error) return { error: "Could not load users." } as const;
+  const roleRows = roleResult.data;
+  const links = linkResult.data;
+
   const rolesByUser = new Map<string, string[]>();
   for (const row of roleRows ?? []) rolesByUser.set(row.user_id, [...(rolesByUser.get(row.user_id) ?? []), row.role]);
+  const matchingRoleIds = roleFilter
+    ? new Set((roleRows ?? []).filter((row: any) => row.role === roleFilter).map((row: any) => row.user_id))
+    : null;
+
+  const profileResult = await collectAdminUserPages<any>(async (from, to) => {
+    let profilesQuery = ctx.admin.from("profiles")
+      .select("id,email,display_name,account_type,onboarding_completed,created_at")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: true });
+    if (search) {
+      const quotedSearch = search.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+      profilesQuery = profilesQuery.or(`email.ilike."%${quotedSearch}%",display_name.ilike."%${quotedSearch}%"`);
+    }
+    return profilesQuery.range(from, to);
+  });
+  if (profileResult.error) return { error: "Could not load users." } as const;
+  const profiles = profileResult.data.filter((profile: any) => {
+    if (!matchingRoleIds) return true;
+    return matchingRoleIds.has(profile.id) || (profile.account_type === roleFilter && !(rolesByUser.get(profile.id)?.length));
+  });
   const clerkIdByLegacy = new Map<string, string>();
   const linkStatusByLegacy = new Map<string, string>();
   for (const link of links ?? []) {
@@ -101,8 +135,15 @@ export const listAdminUsers = createServerFn({ method: "POST" }).handler(async (
       email_confirmed_at: primaryAddress?.verification?.status === "verified" ? iso(user.updatedAt) : null,
       invited_at: profile.email ? iso(invitationsByEmail.get(profile.email.toLowerCase())?.createdAt) : null,
     };
+  }).filter((user) => {
+    if (statusFilter === "all") return true;
+    const suspended = !!user.banned_until && new Date(user.banned_until) > new Date();
+    const verified = !!user.email_confirmed_at;
+    if (statusFilter === "active") return !suspended && verified;
+    if (statusFilter === "suspended") return suspended;
+    return !verified && !suspended;
   });
-  return { users, total: users.length };
+  return { users, total: total ?? 0, filteredTotal: users.length };
 });
 
 export const setUserRole = createServerFn({ method: "POST" }).validator((d: { userId: string; role: Role }) => d)
@@ -200,3 +241,9 @@ export const updateAdminUser = createServerFn({ method: "POST" }).validator((d: 
     return { ok: true };
   } catch (error) { return { ok: false, error: error instanceof Error && error.message === "Forbidden" ? "Forbidden" : "Could not update the account. Please try again." }; }
 });
+
+type ListAdminUsersInput = {
+  search?: string;
+  role?: "all" | Role;
+  status?: AdminUserStatus;
+};

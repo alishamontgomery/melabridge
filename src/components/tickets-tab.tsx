@@ -324,7 +324,7 @@ function MetricCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ 
   );
 }
 
-// ============== TICKET TYPES PANEL ==============
+// --- TICKET TYPES PANEL ---
 function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: string; types: TicketType[]; reload: () => Promise<void>; createRequest: number }) {
   const [showBuilder, setShowBuilder] = useState(types.length === 0);
   const [rows, setRows] = useState<BuilderRow[]>([blankRow()]);
@@ -836,7 +836,7 @@ function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: 
   );
 }
 
-// ============== ORDERS PANEL ==============
+// --- ORDERS PANEL ---
 function OrdersPanel({ eventId, orders, reload }: { eventId: string; orders: Order[]; reload: () => Promise<void> }) {
   const [refundTarget, setRefundTarget] = useState<Order | null>(null);
   const [refunding, setRefunding] = useState(false);
@@ -959,7 +959,7 @@ function OrdersPanel({ eventId, orders, reload }: { eventId: string; orders: Ord
   );
 }
 
-// ============== ATTENDEES PANEL ==============
+// --- ATTENDEES PANEL ---
 function AttendeesPanel({ eventId, attendees, types, orders, reload }: { eventId: string; attendees: Attendee[]; types: TicketType[]; orders: Order[]; reload: () => Promise<void> }) {
   const [search, setSearch] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -1142,7 +1142,7 @@ function AttendeesPanel({ eventId, attendees, types, orders, reload }: { eventId
   );
 }
 
-// ============== PUBLIC PAGE PANEL ==============
+// --- PUBLIC PAGE PANEL ---
 function PublicPagePanel({ eventId, onEventUpdated }: { eventId: string; onEventUpdated: () => Promise<void> }) {
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/t/${eventId}`;
   const [copied, setCopied] = useState(false);
@@ -1410,7 +1410,7 @@ function PublicPagePanel({ eventId, onEventUpdated }: { eventId: string; onEvent
   );
 }
 
-// ============== SCANNER ACCESS PANEL ==============
+// --- SCANNER ACCESS PANEL ---
 type TokenRow = { id: string; label: string | null; expires_at: string; revoked_at: string | null; created_at: string };
 
 function ScannerAccessPanel({ eventId }: { eventId: string }) {
