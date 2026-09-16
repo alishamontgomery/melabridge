@@ -21,6 +21,7 @@
 - [Clerk and Supabase](managed-clerk-supabase.md) — Supabase must trust the active Clerk issuer; UUID bridge resolution remains fail-closed.
 - [Clerk custom-flow session handoff](clerk-session-handoff.md) — after setActive, wait for a fresh token and hard-navigate before authenticated server provisioning.
 - [Clerk development key pairing](clerk-dev-key-pairing.md) — browser and server Clerk keys must belong to the same instance or sessions can loop on refresh.
+- [Clerk canonical host transport](clerk-canonical-host-transport.md) — melabridge.com must use Clerk’s direct frontend API; forcing the same-origin proxy causes host_invalid before signup.
 - [Clerk deleted identity recovery](clerk-deleted-identity-recovery.md) — reclaim preserved profile links only after the old Clerk user is confirmed deleted; fail closed on live or unknown identities.
 - [Clerk domain key discovery](clerk-domain-key-discovery.md) — `/v1/domains` reveals the frontend API host; fresh browser context is authoritative after repairing stale Clerk sessions.
 - [Pre-supply marketplace strategy](pre-supply-marketplace.md) — Never fabricate vendor supply; turn empty results into event-linked sourcing requests and private vendor contacts.

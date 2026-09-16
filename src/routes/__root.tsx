@@ -203,12 +203,16 @@ function RootComponent() {
     typeof window === "undefined"
       ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
       : publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-  // Production auth must use one same-origin proxy on every published host.
-  // In development VITE_CLERK_PROXY_URL is intentionally empty and Clerk
-  // talks directly to the development frontend API.
-  const clerkProxyUrl = import.meta.env.PROD
-    ? (import.meta.env.VITE_CLERK_PROXY_URL || "/api/__clerk")
-    : undefined;
+  const isClerkTestInstance = publishableKey.startsWith("pk_test_");
+  const isLiveMelaBridgeHost =
+    typeof window !== "undefined" && window.location.hostname === "melabridge.com";
+  // Keep the canonical production host on Clerk's direct frontend API path.
+  // The same-origin proxy is only used for other live custom hosts; routing
+  // melabridge.com through it causes Clerk to reject the host before signup.
+  const clerkProxyUrl =
+    import.meta.env.PROD && !isClerkTestInstance && !isLiveMelaBridgeHost
+      ? (import.meta.env.VITE_CLERK_PROXY_URL || "/api/__clerk")
+      : undefined;
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {

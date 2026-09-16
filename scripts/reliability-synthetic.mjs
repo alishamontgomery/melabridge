@@ -140,15 +140,30 @@ async function productionHealthCheck() {
 
 async function productionClerkHandshakeCheck() {
   const started = Date.now();
+  let browser;
   try {
-    const response = await fetch(
-      new URL("/api/__clerk/v1/client/handshake?_clerk_js_version=5.125.0", productionUrl),
-      {
-        headers: { accept: "application/json" },
-        redirect: "manual",
-        signal: AbortSignal.timeout(15_000),
-      },
-    );
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+    const handshakeResponse = new Promise((resolve) => {
+      page.on("response", (response) => {
+        if (/\/v1\/client\/handshake(?:\?|$)/i.test(response.url())) resolve(response);
+      });
+      setTimeout(() => resolve(null), 15_000);
+    });
+    await page.goto(new URL("/auth", productionUrl).toString(), {
+      waitUntil: "domcontentloaded",
+      timeout: 20_000,
+    });
+    const response = await handshakeResponse;
+    if (!response) {
+      add(
+        "production_clerk_handshake",
+        "degraded",
+        "The published auth surface did not complete a Clerk handshake",
+        Date.now() - started,
+      );
+      return;
+    }
     const body = await response.text();
     let payload = null;
     try {
@@ -176,6 +191,8 @@ async function productionClerkHandshakeCheck() {
       error instanceof Error ? error.message : "production Clerk handshake failed",
       Date.now() - started,
     );
+  } finally {
+    await browser?.close();
   }
 }
 
