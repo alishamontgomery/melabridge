@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { User, Mail, Globe2, Camera, Sparkles } from "lucide-react";
+import { User, Mail, Globe2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { profileTypeLabel } from "@/lib/profile-types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -51,17 +52,24 @@ function ProfilePage() {
   async function save() {
     if (!user) return;
     setSaving(true);
+    // Use upsert so a missing profile row is created rather than silently no-oping.
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: name.trim() || null })
-      .eq("id", user.id);
+      .upsert(
+        { id: user.id, email: user.email ?? "", display_name: name.trim() || null },
+        { onConflict: "id" },
+      );
     setSaving(false);
     if (error) {
-      toast.error(error.message);
+      toast.error("Could not save profile. Please try again.");
       return;
     }
     toast.success("Profile saved");
-    setProfile((p) => (p ? { ...p, display_name: name.trim() || null } : p));
+    setProfile((p) =>
+      p
+        ? { ...p, display_name: name.trim() || null }
+        : { id: user.id, email: user.email ?? "", display_name: name.trim() || null } as any,
+    );
   }
 
   if (authLoading || loading) {
@@ -101,7 +109,7 @@ function ProfilePage() {
             </p>
             <div className="mt-3 flex flex-wrap justify-center gap-1">
               {profile?.account_type && (
-                <Badge variant="secondary" className="capitalize">{profile.account_type}</Badge>
+                <Badge variant="secondary">{profileTypeLabel(profile.account_type)}</Badge>
               )}
               {eventsCount !== null && eventsCount > 0 && (
                 <Badge variant="secondary">Events hosted · {eventsCount}</Badge>
@@ -110,9 +118,7 @@ function ProfilePage() {
                 <Badge variant="secondary" className="gap-1"><Sparkles className="h-3 w-3" />AI profile complete</Badge>
               )}
             </div>
-            <Button variant="outline" size="sm" className="mt-4 gap-2" disabled>
-              <Camera className="h-4 w-4" /> Change photo
-            </Button>
+            {/* Photo upload coming in a future release */}
           </Card>
           <Card className="border-border/60 p-6 shadow-soft">
             <p className="mb-4 text-sm font-semibold">Account details</p>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Sparkles, Trash2, Plus, Store, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export function VendorNeedsTab({ eventId }: { eventId: string }) {
   const [draft, setDraft] = useState({ category: "", status: "recommended" as const });
   const bootstrap = useServerFn(bootstrapEventPlan);
 
-  async function load() {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("event_vendor_needs")
       .select("*")
@@ -36,8 +36,10 @@ export function VendorNeedsTab({ eventId }: { eventId: string }) {
       .order("sort_order", { ascending: true });
     if (error) toast.error(error.message);
     setItems(data ?? []);
-  }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [eventId]);
+  }, [eventId]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function generate() {
     setBusy(true);
@@ -99,7 +101,7 @@ export function VendorNeedsTab({ eventId }: { eventId: string }) {
               <Sparkles className="mr-2 h-4 w-4" />{busy ? "Drafting…" : "Draft with MelaAssist"}
             </Button>
           )}
-          <Button variant="outline" asChild><Link to="/vendors"><Store className="mr-2 h-4 w-4" />Marketplace</Link></Button>
+          <Button variant="outline" asChild><Link to="/marketplace"><Store className="mr-2 h-4 w-4" />Marketplace</Link></Button>
         </div>
       </div>
 

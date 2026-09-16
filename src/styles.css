@@ -1,6 +1,15 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+/* MelaBridge typography: Manrope for UI hierarchy, Inter for readable body copy. */
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/500.css";
+@import "@fontsource/manrope/600.css";
+@import "@fontsource/manrope/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -35,7 +44,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --shadow-elegant: 0 30px 80px -30px color-mix(in oklab, var(--primary) 35%, transparent);
@@ -92,17 +101,17 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "cv11";
     overflow-wrap: break-word;
     word-break: break-word;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     overflow-wrap: break-word;
   }
   /* Global overflow safety: any long token (email, URL, hash) breaks safely */
-  p, span, li, dd, dt, label, a, button {
+  p, li, dd, dt, a {
     overflow-wrap: anywhere;
   }
   /* Preserve nowrap where explicitly requested */
@@ -129,4 +138,25 @@
 }
 @utility shadow-soft {
   box-shadow: var(--shadow-soft);
+}
+
+/* ─── Autofill detection (iOS Safari + desktop Chrome) ─────────────────────
+   When a browser autofills an input it applies :-webkit-autofill before any
+   React event fires.  Attaching a zero-duration animation to that selector
+   lets React's onAnimationStart handler detect the fill and sync state.   */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+@keyframes melaAutofillStart { from {} to {} }
+@keyframes melaAutofillCancel { from {} to {} }
+input:-webkit-autofill {
+  animation-name: melaAutofillStart;
+  animation-duration: 0.001ms;
+  animation-fill-mode: both;
+}
+input:not(:-webkit-autofill) {
+  animation-name: melaAutofillCancel;
+  animation-duration: 0.001ms;
 }

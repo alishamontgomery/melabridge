@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
+const GOOGLE_PLACES_API = "https://places.googleapis.com/v1";
 
 const AutocompleteInput = z.object({ input: z.string().trim().min(2).max(200) });
 const DetailsInput = z.object({ placeId: z.string().trim().min(1).max(200) });
@@ -18,29 +18,32 @@ export type PlaceDetails = {
   formatted: string;
 };
 
-function authHeaders() {
-  const lov = process.env.LOVABLE_API_KEY;
-  const key = process.env.GOOGLE_MAPS_API_KEY;
-  if (!lov || !key) throw new Error("Google Maps connector not configured");
+function googlePlacesHeaders(fieldMask?: string) {
+  const key = process.env.GOOGLE_PLACES_API_KEY;
+  if (!key) throw new Error("Google Places is not configured");
   return {
-    Authorization: `Bearer ${lov}`,
-    "X-Connection-Api-Key": key,
+    "X-Goog-Api-Key": key,
+    ...(fieldMask ? { "X-Goog-FieldMask": fieldMask } : {}),
     "Content-Type": "application/json",
   };
 }
 
 export const autocompletePlaces = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => AutocompleteInput.parse(d))
+  .validator((d: unknown) => AutocompleteInput.parse(d))
   .handler(async ({ data }) => {
-    const res = await fetch(`${GATEWAY}/places/v1/places:autocomplete`, {
+    const res = await fetch(`${GOOGLE_PLACES_API}/places:autocomplete`, {
       method: "POST",
-      headers: authHeaders(),
+      headers: googlePlacesHeaders(
+        "suggestions.placePrediction.placeId," +
+        "suggestions.placePrediction.structuredFormat.mainText.text," +
+        "suggestions.placePrediction.structuredFormat.secondaryText.text," +
+        "suggestions.placePrediction.text.text",
+      ),
       body: JSON.stringify({ input: data.input }),
     });
     if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Places autocomplete failed [${res.status}]: ${body}`);
+      throw new Error(`Places autocomplete failed [${res.status}]`);
     }
     const json = (await res.json()) as {
       suggestions?: Array<{
@@ -64,18 +67,14 @@ export const autocompletePlaces = createServerFn({ method: "POST" })
 
 export const getPlaceDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => DetailsInput.parse(d))
+  .validator((d: unknown) => DetailsInput.parse(d))
   .handler(async ({ data }) => {
-    const res = await fetch(`${GATEWAY}/places/v1/places/${encodeURIComponent(data.placeId)}`, {
+    const res = await fetch(`${GOOGLE_PLACES_API}/places/${encodeURIComponent(data.placeId)}`, {
       method: "GET",
-      headers: {
-        ...authHeaders(),
-        "X-Goog-FieldMask": "id,formattedAddress,location,addressComponents",
-      },
+      headers: googlePlacesHeaders("id,formattedAddress,location,addressComponents"),
     });
     if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Place details failed [${res.status}]: ${body}`);
+      throw new Error(`Place details failed [${res.status}]`);
     }
     const json = (await res.json()) as {
       formattedAddress?: string;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   CommandDialog,
@@ -18,8 +18,11 @@ import {
   type Recent, type Favorite,
 } from "@/lib/search-personal";
 import { useAuth } from "@/lib/auth";
+import { useRole } from "@/lib/use-role";
+import { useMelaAssistOptional } from "@/components/melaassist";
 import {
-  Sparkles, Plus, Upload, UserPlus, Wand2, Calendar, Star, StarOff, X, Loader2,
+  Sparkles, Plus, Upload, UserPlus, Wand2, Calendar, Settings, Star, StarOff, X, Loader2,
+  Boxes, Store,
 } from "lucide-react";
 
 type ActionItem = {
@@ -40,6 +43,8 @@ export function CommandPalette() {
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { role } = useRole();
+  const melaAssist = useMelaAssistOptional();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -77,8 +82,8 @@ export function CommandPalette() {
     return () => { cancel = true; };
   }, [debounced, user]);
 
-  const close = () => { setOpen(false); setQuery(""); };
-  const go = (to: string) => { close(); navigate({ to: to as "/dashboard" }); };
+  const close = useCallback(() => { setOpen(false); setQuery(""); }, []);
+  const go = useCallback((to: string) => { close(); navigate({ to: to as "/dashboard" }); }, [close, navigate]);
 
   const onSelectResult = async (item: {
     entity_type: string; entity_id: string; title: string; subtitle?: string; to: string;
@@ -105,18 +110,28 @@ export function CommandPalette() {
   const isFav = (entity_type: string, entity_id: string) =>
     favorites.some((f) => f.entity_type === entity_type && f.entity_id === entity_id);
 
-  const actions: ActionItem[] = useMemo(() => [
-    { id: "a-new-event", title: "Create a new event", hint: "Start the wizard", icon: Plus, run: () => go("/events/new") },
-    { id: "a-ask", title: "Ask MelaAssist™ anything", hint: "Open AI chat", icon: Sparkles, run: () => go("/concierge") },
-    { id: "a-upload", title: "Upload files to BridgeVault™", icon: Upload, run: () => go("/bridgevault") },
-    { id: "a-invite", title: "Invite collaborators", icon: UserPlus, run: () => go("/collaboration") },
-    { id: "a-guest", title: "Add a guest", icon: UserPlus, run: () => go("/guests") },
-    { id: "a-task", title: "Add a task", hint: "Plan next steps", icon: Wand2, run: () => go("/tasks") },
-    { id: "a-schedule", title: "Schedule an event date", icon: Calendar, run: () => go("/timeline") },
-  ], []);
+  const actions: ActionItem[] = useMemo(() => {
+    if (role === "vendor") {
+      return [
+        { id: "a-packages", title: "Manage packages", hint: "Service packages & pricing", icon: Boxes, run: () => go("/vendor-packages") },
+        { id: "a-profile", title: "Edit my listing", hint: "Public profile & portfolio", icon: Store, run: () => go("/vendor-profile-builder") },
+        { id: "a-ask", title: "Ask MelaAssist™ anything", hint: "Open AI chat", icon: Sparkles, run: () => { close(); melaAssist?.openAssistant(); } },
+        { id: "a-settings", title: "Contact & services", hint: "Public profile settings", icon: Settings, run: () => go("/vendor-settings") },
+      ];
+    }
+    return [
+      { id: "a-new-event", title: "Create a new event", hint: "Start the wizard", icon: Plus, run: () => go("/events/new") },
+      { id: "a-ask", title: "Ask MelaAssist™ anything", hint: "Open AI chat", icon: Sparkles, run: () => { close(); melaAssist?.openAssistant(); } },
+      { id: "a-upload", title: "Upload files", icon: Upload, run: () => go("/files") },
+      { id: "a-invite", title: "Invite collaborators", icon: UserPlus, run: () => go("/collaboration") },
+      { id: "a-guest", title: "Add a guest", icon: UserPlus, run: () => go("/guests") },
+      { id: "a-task", title: "Add a task", hint: "Plan next steps", icon: Wand2, run: () => go("/tasks") },
+      { id: "a-schedule", title: "Schedule an event date", icon: Calendar, run: () => go("/timeline") },
+    ];
+  }, [role, go, close, melaAssist]);
 
   // Static module + curated index (used when no query, plus as extra hits).
-  const staticResults = useMemo(() => searchIndex(query, 40), [query]);
+  const staticResults = useMemo(() => searchIndex(query, 40, role), [query, role]);
   const staticGrouped = useMemo(() => {
     const map = new Map<string, SearchItem[]>();
     for (const item of staticResults) {
@@ -150,7 +165,10 @@ export function CommandPalette() {
       <CommandInput
         value={query}
         onValueChange={setQuery}
-        placeholder="Search events, guests, vendors, files, tasks… or ask MelaAssist™"
+        placeholder={role === "vendor"
+          ? "Search leads, packages, profile, settings… or ask MelaAssist™"
+          : "Search events, guests, vendors, files, tasks… or ask MelaAssist™"
+        }
         onKeyDown={(e) => { if (e.key === "Enter") onSubmitQuery(); }}
       />
       <CommandList className="max-h-[70vh]">

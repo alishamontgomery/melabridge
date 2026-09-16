@@ -4,6 +4,9 @@ import { z } from "zod";
 
 /* ================== Settings ================== */
 
+const CALENDAR_SETTINGS_FIELDS =
+  "user_id,buffer_before_minutes,buffer_after_minutes,max_events_per_day,block_travel_days,vacation_start,vacation_end,timezone,created_at,updated_at";
+
 const settingsSchema = z.object({
   buffer_before_minutes: z.number().int().min(0).max(720),
   buffer_after_minutes: z.number().int().min(0).max(720),
@@ -19,7 +22,7 @@ export const getCalendarSettings = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("calendar_settings")
-      .select("*")
+      .select(CALENDAR_SETTINGS_FIELDS)
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -37,15 +40,63 @@ export const getCalendarSettings = createServerFn({ method: "GET" })
     );
   });
 
+/**
+ * Lightweight upsert for just the timezone field in calendar_settings.
+ * Used by the timezone selector in Settings without requiring all other fields.
+ */
+export const saveTimezone = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z.object({ timezone: z.string().min(1).max(100) }).parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("calendar_settings")
+      .upsert(
+        { user_id: context.userId, timezone: data.timezone },
+        { onConflict: "user_id" }
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const updateCalendarSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => settingsSchema.parse(input))
+  .validator((input: unknown) => settingsSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("calendar_settings")
       .upsert({ user_id: context.userId, ...data }, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/* ================== External calendar feed ================== */
+
+export const getCalendarFeedToken = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("calendar_settings")
+      .select("calendar_feed_token")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { token: data?.calendar_feed_token ?? null };
+  });
+
+export const generateCalendarFeedToken = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const token = crypto.randomUUID();
+    const { error } = await context.supabase
+      .from("calendar_settings")
+      .upsert(
+        { user_id: context.userId, calendar_feed_token: token },
+        { onConflict: "user_id" },
+      );
+    if (error) throw new Error(error.message);
+    return { token };
   });
 
 /* ================== Availability ================== */
@@ -73,7 +124,7 @@ const availabilitySchema = z.object({
 
 export const upsertAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => availabilitySchema.parse(input))
+  .validator((input: unknown) => availabilitySchema.parse(input))
   .handler(async ({ data, context }) => {
     const row = { ...data, user_id: context.userId };
     const { data: out, error } = await context.supabase
@@ -87,7 +138,7 @@ export const upsertAvailability = createServerFn({ method: "POST" })
 
 export const deleteAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("calendar_availability")
@@ -121,7 +172,7 @@ const blockedSchema = z.object({
 
 export const addBlockedDate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => blockedSchema.parse(input))
+  .validator((input: unknown) => blockedSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("calendar_blocked_dates")
@@ -132,7 +183,7 @@ export const addBlockedDate = createServerFn({ method: "POST" })
 
 export const deleteBlockedDate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("calendar_blocked_dates")
@@ -149,7 +200,7 @@ const eventStatus = z.enum(["inquiry", "pending", "confirmed", "completed", "can
 
 export const listEvents = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         from: z.string().optional(),
@@ -178,7 +229,7 @@ export const listEvents = createServerFn({ method: "GET" })
 
 export const getEvent = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: out, error } = await context.supabase
       .from("calendar_events")
@@ -229,7 +280,11 @@ async function computeConflicts(
 
   // Settings & blocked dates
   const [{ data: settings }, { data: blocks }] = await Promise.all([
-    supabase.from("calendar_settings").select("*").eq("user_id", vendorId).maybeSingle(),
+    supabase
+      .from("calendar_settings")
+      .select(CALENDAR_SETTINGS_FIELDS)
+      .eq("user_id", vendorId)
+      .maybeSingle(),
     supabase.from("calendar_blocked_dates").select("*").eq("user_id", vendorId),
   ]);
 
@@ -302,7 +357,7 @@ async function computeConflicts(
 
 export const checkConflicts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         starts_at: z.string(),
@@ -327,7 +382,7 @@ export const checkConflicts = createServerFn({ method: "POST" })
 
 export const createEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => eventInputSchema.parse(input))
+  .validator((input: unknown) => eventInputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { id: _drop, ...rest } = data;
     const { data: out, error } = await context.supabase
@@ -341,7 +396,7 @@ export const createEvent = createServerFn({ method: "POST" })
 
 export const updateEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => eventInputSchema.extend({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => eventInputSchema.extend({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { id, ...rest } = data;
     const { data: out, error } = await context.supabase
@@ -357,7 +412,7 @@ export const updateEvent = createServerFn({ method: "POST" })
 
 export const cancelEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("calendar_events")
@@ -370,7 +425,7 @@ export const cancelEvent = createServerFn({ method: "POST" })
 
 export const completeEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("calendar_events")
@@ -383,7 +438,7 @@ export const completeEvent = createServerFn({ method: "POST" })
 
 export const duplicateEvent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z.object({ id: z.string().uuid(), newStartsAt: z.string(), newEndsAt: z.string() }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -432,7 +487,7 @@ const requestSchema = z.object({
 
 export const requestBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => requestSchema.parse(input))
+  .validator((input: unknown) => requestSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { data: out, error } = await context.supabase
       .from("calendar_booking_requests")
@@ -445,7 +500,7 @@ export const requestBooking = createServerFn({ method: "POST" })
 
 export const respondToBookingRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
+  .validator((input: unknown) =>
     z
       .object({
         id: z.string().uuid(),
@@ -495,10 +550,12 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
         .single();
       if (bErr) throw new Error(bErr.message);
 
-      await context.supabase
+      const { error: updateErr } = await context.supabase
         .from("calendar_booking_requests")
         .update({ status: "approved", booking_id: booking.id })
-        .eq("id", data.id);
+        .eq("id", data.id)
+        .eq("vendor_id", context.userId);
+      if (updateErr) throw new Error(updateErr.message);
 
       await context.supabase.from("notifications").insert({
         user_id: req.planner_id,
@@ -511,15 +568,34 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
     }
 
     if (data.action === "decline") {
-      await context.supabase
+      // If the request was previously approved there is a linked calendar_events row.
+      // Cancel that event first so the calendar stays consistent; do not leave a
+      // "confirmed" event dangling after the request is declined.
+      if (req.status === "approved" && req.booking_id) {
+        const { error: evtErr } = await context.supabase
+          .from("calendar_events")
+          .update({ status: "cancelled" })
+          .eq("id", req.booking_id)
+          .eq("vendor_id", context.userId); // RLS double-check at the data layer
+        if (evtErr) throw new Error(`Failed to cancel calendar event: ${evtErr.message}`);
+      }
+
+      // Update the request, clearing the booking_id linkage since the event is now cancelled.
+      const { error: updateErr } = await context.supabase
         .from("calendar_booking_requests")
-        .update({ status: "declined" })
-        .eq("id", data.id);
+        .update({ status: "declined", booking_id: null })
+        .eq("id", data.id)
+        .eq("vendor_id", context.userId);
+      if (updateErr) throw new Error(updateErr.message);
+
+      const wasConfirmed = req.status === "approved";
       await context.supabase.from("notifications").insert({
         user_id: req.planner_id,
         category: "calendar",
-        title: "Booking declined",
-        body: `${req.event_name} was declined.`,
+        title: wasConfirmed ? "Confirmed booking cancelled" : "Booking declined",
+        body: wasConfirmed
+          ? `${req.event_name} was cancelled by the vendor. Your calendar has been updated.`
+          : `${req.event_name} was declined.`,
         href: "/calendar",
       });
       return { ok: true };
@@ -527,7 +603,7 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
 
     // propose_alternate
     if (!data.alternate_start || !data.alternate_end) throw new Error("Alternate date required");
-    await context.supabase
+    const { error: updateErr } = await context.supabase
       .from("calendar_booking_requests")
       .update({
         status: "alternate_proposed",
@@ -535,7 +611,9 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
         alternate_end: data.alternate_end,
         alternate_message: data.alternate_message ?? null,
       })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("vendor_id", context.userId);
+    if (updateErr) throw new Error(updateErr.message);
     await context.supabase.from("notifications").insert({
       user_id: req.planner_id,
       category: "calendar",
@@ -543,6 +621,80 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
       body: `${req.event_name}: vendor suggested a different time.`,
       href: "/calendar",
     });
+    return { ok: true };
+  });
+
+/**
+ * Simple status transitions for the vendor portal that don't require the full
+ * respondToBookingRequest approval flow (conflict check + booking creation).
+ *
+ * Allowed transitions:
+ *   - pending          → reset to "New" (vendor undo / reopen)
+ *   - alternate_proposed → mark as "Responded" without proposing alternate dates
+ *   - cancelled        → vendor cancels (only if not yet approved)
+ *
+ * Approved / declined transitions must go through respondToBookingRequest so that
+ * conflict checks, calendar_events creation, and planner notifications are executed.
+ */
+export const updateBookingRequestStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        status: z.enum(["pending", "alternate_proposed", "cancelled"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    // Verify this request belongs to the calling vendor.
+    const { data: req, error: rErr } = await context.supabase
+      .from("calendar_booking_requests")
+      .select("id, event_name, planner_id, status")
+      .eq("id", data.id)
+      .eq("vendor_id", context.userId)
+      .single();
+    if (rErr || !req) throw new Error(rErr?.message ?? "Request not found or access denied");
+
+    // Block ALL transitions out of an approved booking through this lightweight path.
+    // Approved bookings have a linked calendar_events row; changing their status without
+    // reconciling that row would leave the calendar data inconsistent.
+    // Use respondToBookingRequest (action: "decline") to handle approved→declined with
+    // the proper booking-lifecycle cleanup instead.
+    if (req.status === "approved") {
+      throw new Error(
+        "A confirmed booking cannot be changed through the simple status update path. " +
+        "Use the decline action to cancel a confirmed booking with proper cleanup.",
+      );
+    }
+
+    await context.supabase
+      .from("calendar_booking_requests")
+      .update({ status: data.status })
+      .eq("id", data.id)
+      .eq("vendor_id", context.userId);
+
+    // Notify the planner when the vendor marks the request as "Responded".
+    if (data.status === "alternate_proposed") {
+      await context.supabase.from("notifications").insert({
+        user_id: req.planner_id,
+        category: "calendar",
+        title: "Vendor responded",
+        body: `A vendor replied to your inquiry for ${req.event_name}.`,
+        href: "/calendar",
+      });
+    }
+
+    if (data.status === "cancelled") {
+      await context.supabase.from("notifications").insert({
+        user_id: req.planner_id,
+        category: "calendar",
+        title: "Booking request cancelled",
+        body: `The vendor cancelled the request for ${req.event_name}.`,
+        href: "/calendar",
+      });
+    }
+
     return { ok: true };
   });
 
@@ -585,7 +737,11 @@ export const getDashboardSummary = createServerFn({ method: "GET" })
         .eq("vendor_id", context.userId)
         .gte("starts_at", monthStart.toISOString())
         .lte("starts_at", monthEnd.toISOString()),
-      context.supabase.from("calendar_settings").select("*").eq("user_id", context.userId).maybeSingle(),
+      context.supabase
+        .from("calendar_settings")
+        .select(CALENDAR_SETTINGS_FIELDS)
+        .eq("user_id", context.userId)
+        .maybeSingle(),
     ]);
 
     const monthEvents = monthRes.data ?? [];

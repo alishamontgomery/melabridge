@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { parseCurrency } from "@/lib/parse-currency";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { useServerFn } from "@tanstack/react-start";
 import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
@@ -23,7 +24,10 @@ export const Route = createFileRoute("/_authenticated/events/new")({
 const EVENT_TYPES = [
   "Wedding", "Birthday", "Baby Shower", "Graduation", "Corporate Event",
   "Gala", "Festival", "Reunion", "Community Event", "School Event",
-  "Fundraiser", "Private Celebration", "Other",
+  "Fundraiser", "Private Celebration", "Bridal Shower", "Engagement Party",
+  "Anniversary Celebration", "Retirement Party", "Holiday Party",
+  "Fundraiser or Gala", "Conference or Networking Event", "School Event or Prom",
+  "Quinceañera", "Dinner Party", "Other",
 ];
 
 type Form = {
@@ -32,24 +36,141 @@ type Form = {
   customType: string;
   date: string;
   startTime: string;
+  endTime: string;
   addressText: string; street: string; city: string; state: string; zip: string;
   lat: number | null; lng: number | null; placeId: string;
   guests: string;
   budget: string;
 };
 
-type Stage = "form" | "bootstrapping" | "done";
+type Stage = "template" | "form" | "bootstrapping" | "done";
+type TemplateGroup = "All" | "Celebrations" | "Milestones" | "Community & work";
+
+const TEMPLATES: {
+  key: string;
+  eventType: string;
+  label: string;
+  tagline: string;
+  tasks: string;
+  budget: string;
+  vendors: string;
+  group: Exclude<TemplateGroup, "All">;
+}[] = [
+  {
+    key: "wedding", eventType: "Wedding", label: "Wedding",
+    tagline: "Full ceremony & reception plan",
+    tasks: "40+ tasks", budget: "12 categories", vendors: "Venue, Catering, Photographer…",
+    group: "Celebrations",
+  },
+  {
+    key: "birthday", eventType: "Birthday", label: "Birthday Party",
+    tagline: "Intimate or big-bash celebration",
+    tasks: "20 tasks", budget: "8 categories", vendors: "Venue, Catering, Entertainment…",
+    group: "Celebrations",
+  },
+  {
+    key: "baby_shower", eventType: "Baby Shower", label: "Baby Shower",
+    tagline: "Welcome-baby gathering",
+    tasks: "16 tasks", budget: "6 categories", vendors: "Venue, Catering, Florist…",
+    group: "Celebrations",
+  },
+  {
+    key: "graduation", eventType: "Graduation", label: "Graduation Party",
+    tagline: "Celebrate the milestone",
+    tasks: "18 tasks", budget: "7 categories", vendors: "Venue, Catering, DJ…",
+    group: "Milestones",
+  },
+  {
+    key: "reunion", eventType: "Reunion", label: "Family Reunion",
+    tagline: "Multi-family gathering plan",
+    tasks: "18 tasks", budget: "7 categories", vendors: "Venue, Catering, Activities…",
+    group: "Community & work",
+  },
+  {
+    key: "corporate", eventType: "Corporate Event", label: "Corporate / Social",
+    tagline: "Professional event template",
+    tasks: "20 tasks", budget: "8 categories", vendors: "Venue, AV, Catering, Branding…",
+    group: "Community & work",
+  },
+  {
+    key: "bridal_shower", eventType: "Bridal Shower", label: "Bridal Shower",
+    tagline: "Registry, brunch, games, and gifts",
+    tasks: "16 tasks", budget: "9 categories", vendors: "Catering, Bakery, Decor…",
+    group: "Celebrations",
+  },
+  {
+    key: "engagement_party", eventType: "Engagement Party", label: "Engagement Party",
+    tagline: "Toasts, portraits, and a joyful welcome",
+    tasks: "14 tasks", budget: "9 categories", vendors: "Catering, Bartending, Photography…",
+    group: "Celebrations",
+  },
+  {
+    key: "anniversary", eventType: "Anniversary Celebration", label: "Anniversary Celebration",
+    tagline: "Milestone memories, dinner, and tributes",
+    tasks: "14 tasks", budget: "9 categories", vendors: "Venue, Catering, Photography…",
+    group: "Milestones",
+  },
+  {
+    key: "retirement_party", eventType: "Retirement Party", label: "Retirement Party",
+    tagline: "Honor a career with stories and toasts",
+    tasks: "14 tasks", budget: "9 categories", vendors: "Catering, AV, Photography…",
+    group: "Milestones",
+  },
+  {
+    key: "holiday_party", eventType: "Holiday Party", label: "Holiday Party",
+    tagline: "Seasonal gathering with food, music, and gifts",
+    tasks: "14 tasks", budget: "10 categories", vendors: "Catering, Decor, DJ…",
+    group: "Celebrations",
+  },
+  {
+    key: "fundraiser_gala", eventType: "Fundraiser or Gala", label: "Fundraiser or Gala",
+    tagline: "Mission, sponsors, registration, and giving",
+    tasks: "16 tasks", budget: "10 categories", vendors: "Venue, AV, Catering, Planner…",
+    group: "Community & work",
+  },
+  {
+    key: "conference", eventType: "Conference or Networking Event", label: "Conference or Networking Event",
+    tagline: "Agenda, speakers, registration, and production",
+    tasks: "15 tasks", budget: "10 categories", vendors: "Venue, AV, Catering, Planner…",
+    group: "Community & work",
+  },
+  {
+    key: "school_prom", eventType: "School Event or Prom", label: "School Event or Prom",
+    tagline: "Tickets, chaperones, safety, and celebration",
+    tasks: "14 tasks", budget: "10 categories", vendors: "DJ, Security, Photo Booth…",
+    group: "Community & work",
+  },
+  {
+    key: "quinceanera", eventType: "Quinceañera", label: "Quinceañera",
+    tagline: "Ceremony, court, dance, and family traditions",
+    tasks: "17 tasks", budget: "11 categories", vendors: "Venue, DJ, Choreographer, Decor…",
+    group: "Milestones",
+  },
+  {
+    key: "dinner_party", eventType: "Dinner Party", label: "Dinner Party",
+    tagline: "Menu, table setting, and a relaxed evening",
+    tasks: "13 tasks", budget: "9 categories", vendors: "Catering, Rentals, Florist…",
+    group: "Celebrations",
+  },
+  {
+    key: "scratch", eventType: "", label: "Start from scratch",
+    tagline: "Blank canvas — MelaAssist still fills in basics",
+    tasks: "~10 tasks", budget: "4 categories", vendors: "Customized to your type",
+    group: "Community & work",
+  },
+];
 
 function NewEventPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const bootstrap = useServerFn(bootstrapEventPlan);
-  const [stage, setStage] = useState<Stage>("form");
+  const [stage, setStage] = useState<Stage>("template");
+  const [templateGroup, setTemplateGroup] = useState<TemplateGroup>("All");
   const [progress, setProgress] = useState<{ tasks: number; budget: number; runsheet: number; vendors: number }>({
     tasks: 0, budget: 0, runsheet: 0, vendors: 0,
   });
   const [f, setF] = useState<Form>({
-    name: "", type: "Wedding", customType: "", date: "", startTime: "",
+    name: "", type: "Wedding", customType: "", date: "", startTime: "", endTime: "",
     addressText: "", street: "", city: "", state: "", zip: "", lat: null, lng: null, placeId: "",
     guests: "", budget: "",
   });
@@ -61,7 +182,13 @@ function NewEventPage() {
     let eventId: string | null = null;
     try {
       const name = z.string().trim().min(1, "Event name is required").max(120).parse(f.name);
+      if (!f.date) throw new Error("Choose an event date");
+      if (!f.startTime) throw new Error("Choose an event start time");
+      if (!f.addressText.trim()) throw new Error("Add an event location");
       const eventType = f.type === "Other" ? (f.customType.trim() || "Other") : f.type;
+      if (f.startTime && f.endTime && f.endTime <= f.startTime) {
+        throw new Error("Event end time must be after the start time");
+      }
 
       const { data, error } = await supabase.from("events").insert({
         owner_id: user.id,
@@ -70,6 +197,7 @@ function NewEventPage() {
         custom_event_type: f.type === "Other" ? f.customType.trim() || null : null,
         event_date: f.date || null,
         event_time: f.startTime || null,
+        end_time: f.endTime || null,
         ceremony_start_time: f.startTime || null,
         location: f.addressText || [f.street, f.city, f.state].filter(Boolean).join(", ") || null,
         venue_street: f.street || null,
@@ -80,7 +208,7 @@ function NewEventPage() {
         venue_lng: f.lng,
         venue_place_id: f.placeId || null,
         guest_target: f.guests ? parseInt(f.guests, 10) : null,
-        budget_target: f.budget ? Number(f.budget) : null,
+        budget_target: parseCurrency(f.budget) ?? null,
         status: "confirmed",
       }).select("id").single();
       if (error) throw error;
@@ -111,6 +239,79 @@ function NewEventPage() {
         setStage("form");
       }
     }
+  }
+
+  if (stage === "template") {
+    const visibleTemplates = templateGroup === "All"
+      ? TEMPLATES
+      : TEMPLATES.filter((template) => template.group === templateGroup);
+    return (
+      <AppShell active="/events">
+        <div className="mx-auto max-w-3xl space-y-6 py-2">
+          <Link to="/events" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="h-4 w-4" /> Back to events
+          </Link>
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3.5 w-3.5" /> New event
+            </div>
+            <h1 className="font-display text-2xl font-semibold sm:text-3xl">Choose a starting template</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Templates seed your tasks, budget, vendors, and timeline — MelaAssist customizes everything to your event.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2" aria-label="Filter event templates">
+            {(["All", "Celebrations", "Milestones", "Community & work"] as const).map((group) => (
+              <Button
+                key={group}
+                type="button"
+                size="sm"
+                variant={templateGroup === group ? "default" : "outline"}
+                onClick={() => setTemplateGroup(group)}
+                aria-pressed={templateGroup === group}
+              >
+                {group}
+              </Button>
+            ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleTemplates.map((tpl) => (
+              <button
+                key={tpl.key}
+                type="button"
+                onClick={() => {
+                  set("type", tpl.eventType || "Other");
+                  if (!tpl.eventType) set("customType", "");
+                  setStage("form");
+                }}
+                className="group rounded-2xl border border-border/60 bg-card p-5 text-left shadow-soft outline-none transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-elegant focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                <div className="mb-3 flex items-center gap-3">
+                   <span className="grid h-10 w-10 place-items-center rounded-full bg-primary/10 font-display text-lg text-primary">{String(tpl.label.charAt(0))}</span>
+                  <div>
+                    <p className="font-display font-semibold">{tpl.label}</p>
+                    <p className="text-xs text-muted-foreground">{tpl.tagline}</p>
+                  </div>
+                </div>
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{tpl.tasks}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />{tpl.budget}
+                  </div>
+                  <div className="flex items-center gap-1.5 truncate">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-primary" />{tpl.vendors}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </AppShell>
+    );
   }
 
   if (stage !== "form") {
@@ -168,7 +369,12 @@ function NewEventPage() {
         </Link>
 
         <form onSubmit={submit} className="space-y-4">
-          <Card className="border-border/60 p-6 shadow-soft space-y-4">
+          <Card className="border-primary/25 bg-card p-6 shadow-elegant space-y-4">
+            <div className="border-b border-primary/15 pb-3">
+              <p className="text-xs font-bold uppercase tracking-[.22em] text-primary">The essentials</p>
+              <h2 className="mt-1 font-display text-2xl">When and where is it happening?</h2>
+              <p className="mt-1 text-sm text-muted-foreground">These details shape your guest invitation, ticket page, and event-day plan.</p>
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="name">Event name *</Label>
               <Input id="name" value={f.name} onChange={(e) => set("name", e.target.value)} required placeholder="e.g. Priya & Arjun Wedding" autoFocus />
@@ -191,20 +397,20 @@ function NewEventPage() {
                 </div>
               ) : (
                 <div className="space-y-1.5">
-                  <Label htmlFor="date">Event date</Label>
-                  <Input id="date" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} />
+                   <Label htmlFor="date">Event date <span className="text-destructive">*</span></Label>
+                   <Input id="date" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} required />
                 </div>
               )}
               {f.type === "Other" && (
                 <div className="space-y-1.5 sm:col-span-2">
-                  <Label htmlFor="date2">Event date</Label>
-                  <Input id="date2" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} />
+                   <Label htmlFor="date2">Event date <span className="text-destructive">*</span></Label>
+                   <Input id="date2" type="date" value={f.date} onChange={(e) => set("date", e.target.value)} required />
                 </div>
               )}
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="address">Location</Label>
+               <Label htmlFor="address">Event location <span className="text-destructive">*</span></Label>
               <AddressAutocomplete
                 id="address"
                 value={f.addressText}
@@ -217,21 +423,33 @@ function NewEventPage() {
                     lat: d.lat, lng: d.lng, placeId: d.placeId,
                   }));
                 }}
-                placeholder="City, venue, or address…"
+                 placeholder="Venue, street, city, or address…"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="startTime">Ceremony / main event start time</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={f.startTime}
-                onChange={(e) => set("startTime", e.target.value)}
-                placeholder="18:00"
-              />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                 <Label htmlFor="startTime">Event start time <span className="text-destructive">*</span></Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={f.startTime}
+                  onChange={(e) => set("startTime", e.target.value)}
+                   required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="endTime">Event end time</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  value={f.endTime}
+                  onChange={(e) => set("endTime", e.target.value)}
+                  min={f.startTime || undefined}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
-                MelaAssist schedules vendor arrival, setup, hair &amp; makeup, and guest arrival <em>before</em> this time.
+                MelaAssist uses these times to build your setup, vendor arrival, guest arrival, and event-day schedule.
               </p>
             </div>
 
@@ -242,7 +460,7 @@ function NewEventPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="budget">Estimated budget <span className="text-xs text-muted-foreground">(optional)</span></Label>
-                <Input id="budget" type="number" min="0" step="100" value={f.budget} onChange={(e) => set("budget", e.target.value)} placeholder="e.g. 25000" />
+                <Input id="budget" type="text" inputMode="decimal" value={f.budget} onChange={(e) => set("budget", e.target.value)} placeholder="e.g. 25000" />
               </div>
             </div>
           </Card>

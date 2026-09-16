@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.15"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -42,6 +67,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "activity_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_tokens: {
+        Row: {
+          id: string
+          event_id: string
+          token_hash: string
+          label: string | null
+          expires_at: string
+          revoked_at: string | null
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          token_hash: string
+          label?: string | null
+          expires_at?: string
+          revoked_at?: string | null
+          created_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          token_hash?: string
+          label?: string | null
+          expires_at?: string
+          revoked_at?: string | null
+          created_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_tokens_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
@@ -508,6 +574,7 @@ export type Database = {
           block_travel_days: boolean
           buffer_after_minutes: number
           buffer_before_minutes: number
+          calendar_feed_token: string | null
           created_at: string
           max_events_per_day: number
           timezone: string
@@ -520,6 +587,7 @@ export type Database = {
           block_travel_days?: boolean
           buffer_after_minutes?: number
           buffer_before_minutes?: number
+          calendar_feed_token?: string | null
           created_at?: string
           max_events_per_day?: number
           timezone?: string
@@ -532,6 +600,7 @@ export type Database = {
           block_travel_days?: boolean
           buffer_after_minutes?: number
           buffer_before_minutes?: number
+          calendar_feed_token?: string | null
           created_at?: string
           max_events_per_day?: number
           timezone?: string
@@ -680,6 +749,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      event_communications: {
+        Row: {
+          body: string
+          created_at: string
+          event_id: string
+          id: string
+          organizer_id: string
+          recipient_count: number
+          recipient_group: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          event_id: string
+          id?: string
+          organizer_id: string
+          recipient_count?: number
+          recipient_group: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          organizer_id?: string
+          recipient_count?: number
+          recipient_group?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_communications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event_drafts: {
         Row: {
@@ -1035,9 +1154,13 @@ export type Database = {
           event_notes: string | null
           event_time: string | null
           event_type: string | null
+          event_visibility: string
+          gift_registry_url: string | null
           guest_target: number | null
           id: string
           invitation_guidance: string | null
+          invitation_last_sent_at: string | null
+          is_published: boolean
           is_sample: boolean
           is_test_seed: boolean
           lead_source: string | null
@@ -1046,10 +1169,21 @@ export type Database = {
           owner_id: string
           payment_status: string | null
           preferred_contact: string | null
+          public_description: string | null
+          public_faqs: Json
           sample_metadata: Json | null
+          show_rsvp_public: boolean
+          show_schedule_public: boolean
           source_draft_id: string | null
           start_time: string | null
           status: Database["public"]["Enums"]["event_status"]
+          ticket_accent_color: string
+          ticket_cancellation_policy: string
+          ticket_cancellation_terms: string | null
+          ticket_cancellation_window_hours: number | null
+          ticket_contact_email: string | null
+          ticket_contact_name: string | null
+          ticket_primary_color: string
           tickets_enabled: boolean
           updated_at: string
           venue_city: string | null
@@ -1080,9 +1214,13 @@ export type Database = {
           event_notes?: string | null
           event_time?: string | null
           event_type?: string | null
+          event_visibility?: string
+          gift_registry_url?: string | null
           guest_target?: number | null
           id?: string
           invitation_guidance?: string | null
+          invitation_last_sent_at?: string | null
+          is_published?: boolean
           is_sample?: boolean
           is_test_seed?: boolean
           lead_source?: string | null
@@ -1091,10 +1229,21 @@ export type Database = {
           owner_id: string
           payment_status?: string | null
           preferred_contact?: string | null
+          public_description?: string | null
+          public_faqs?: Json
           sample_metadata?: Json | null
+          show_rsvp_public?: boolean
+          show_schedule_public?: boolean
           source_draft_id?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
+          ticket_accent_color?: string
+          ticket_cancellation_policy?: string
+          ticket_cancellation_terms?: string | null
+          ticket_cancellation_window_hours?: number | null
+          ticket_contact_email?: string | null
+          ticket_contact_name?: string | null
+          ticket_primary_color?: string
           tickets_enabled?: boolean
           updated_at?: string
           venue_city?: string | null
@@ -1125,9 +1274,13 @@ export type Database = {
           event_notes?: string | null
           event_time?: string | null
           event_type?: string | null
+          event_visibility?: string
+          gift_registry_url?: string | null
           guest_target?: number | null
           id?: string
           invitation_guidance?: string | null
+          invitation_last_sent_at?: string | null
+          is_published?: boolean
           is_sample?: boolean
           is_test_seed?: boolean
           lead_source?: string | null
@@ -1136,10 +1289,21 @@ export type Database = {
           owner_id?: string
           payment_status?: string | null
           preferred_contact?: string | null
+          public_description?: string | null
+          public_faqs?: Json
           sample_metadata?: Json | null
+          show_rsvp_public?: boolean
+          show_schedule_public?: boolean
           source_draft_id?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["event_status"]
+          ticket_accent_color?: string
+          ticket_cancellation_policy?: string
+          ticket_cancellation_terms?: string | null
+          ticket_cancellation_window_hours?: number | null
+          ticket_contact_email?: string | null
+          ticket_contact_name?: string | null
+          ticket_primary_color?: string
           tickets_enabled?: boolean
           updated_at?: string
           venue_city?: string | null
@@ -1169,6 +1333,7 @@ export type Database = {
           full_name: string
           household: string | null
           id: string
+          invited_at: string | null
           is_sample: boolean
           is_test_seed: boolean
           meal_choice: string | null
@@ -1186,6 +1351,7 @@ export type Database = {
           full_name: string
           household?: string | null
           id?: string
+          invited_at?: string | null
           is_sample?: boolean
           is_test_seed?: boolean
           meal_choice?: string | null
@@ -1203,6 +1369,7 @@ export type Database = {
           full_name?: string
           household?: string | null
           id?: string
+          invited_at?: string | null
           is_sample?: boolean
           is_test_seed?: boolean
           meal_choice?: string | null
@@ -1625,6 +1792,56 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_designs: {
+        Row: {
+          canvas_json: Json | null
+          created_at: string
+          event_id: string | null
+          height: number
+          id: string
+          template_id: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          width: number
+        }
+        Insert: {
+          canvas_json?: Json | null
+          created_at?: string
+          event_id?: string | null
+          height?: number
+          id?: string
+          template_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          width?: number
+        }
+        Update: {
+          canvas_json?: Json | null
+          created_at?: string
+          event_id?: string | null
+          height?: number
+          id?: string
+          template_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_designs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -1788,6 +2005,7 @@ export type Database = {
       }
       ticket_orders: {
         Row: {
+          access_token: string
           amount_cents: number
           buyer_email: string
           buyer_name: string | null
@@ -1809,6 +2027,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          access_token?: string
           amount_cents?: number
           buyer_email: string
           buyer_name?: string | null
@@ -1830,6 +2049,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          access_token?: string
           amount_cents?: number
           buyer_email?: string
           buyer_name?: string | null
@@ -1873,6 +2093,8 @@ export type Database = {
           created_by: string | null
           currency: string
           description: string | null
+          early_bird_ends_at: string | null
+          early_bird_price_cents: number | null
           event_id: string
           id: string
           is_active: boolean
@@ -1880,6 +2102,7 @@ export type Database = {
           name: string
           price_cents: number
           promo_code: string | null
+          promo_discount_percent: number | null
           quantity: number | null
           sales_end: string | null
           sales_start: string | null
@@ -1893,6 +2116,8 @@ export type Database = {
           created_by?: string | null
           currency?: string
           description?: string | null
+          early_bird_ends_at?: string | null
+          early_bird_price_cents?: number | null
           event_id: string
           id?: string
           is_active?: boolean
@@ -1900,6 +2125,7 @@ export type Database = {
           name: string
           price_cents?: number
           promo_code?: string | null
+          promo_discount_percent?: number | null
           quantity?: number | null
           sales_end?: string | null
           sales_start?: string | null
@@ -1913,6 +2139,8 @@ export type Database = {
           created_by?: string | null
           currency?: string
           description?: string | null
+          early_bird_ends_at?: string | null
+          early_bird_price_cents?: number | null
           event_id?: string
           id?: string
           is_active?: boolean
@@ -1920,6 +2148,7 @@ export type Database = {
           name?: string
           price_cents?: number
           promo_code?: string | null
+          promo_discount_percent?: number | null
           quantity?: number | null
           sales_end?: string | null
           sales_start?: string | null
@@ -2214,10 +2443,93 @@ export type Database = {
           },
         ]
       }
+      vendor_packages: {
+        Row: {
+          add_ons: string[]
+          category_fields: Json
+          created_at: string
+          description: string
+          duration: string
+          id: string
+          inclusions: string[]
+          is_featured: boolean
+          name: string
+          photos: string[]
+          price_basis: string | null
+          price_unit: string | null
+          price_cents: number | null
+          price_type: string
+          sort_order: number
+          service_category: string | null
+          is_visible: boolean
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          add_ons?: string[]
+          category_fields?: Json
+          created_at?: string
+          description?: string
+          duration?: string
+          id?: string
+          inclusions?: string[]
+          is_featured?: boolean
+          name?: string
+          photos?: string[]
+          price_basis?: string | null
+          price_unit?: string | null
+          price_cents?: number | null
+          price_type?: string
+          sort_order?: number
+          service_category?: string | null
+          is_visible?: boolean
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          add_ons?: string[]
+          category_fields?: Json
+          created_at?: string
+          description?: string
+          duration?: string
+          id?: string
+          inclusions?: string[]
+          is_featured?: boolean
+          name?: string
+          photos?: string[]
+          price_basis?: string | null
+          price_unit?: string | null
+          price_cents?: number | null
+          price_type?: string
+          sort_order?: number
+          service_category?: string | null
+          is_visible?: boolean
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_packages_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_packages_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_profiles: {
         Row: {
           accepted_terms: boolean
           business_address: string | null
+          business_categories: string[] | null
+          custom_service_types: string[]
           business_category: string
           business_description: string | null
           business_hours: Json | null
@@ -2228,6 +2540,7 @@ export type Database = {
           id: string
           is_sample: boolean
           is_test_seed: boolean
+          is_verified: boolean
           logo_url: string | null
           mobile_service: boolean | null
           onboarding_completed: boolean
@@ -2239,13 +2552,18 @@ export type Database = {
           travel_radius: number | null
           updated_at: string
           user_id: string
+          verified_at: string | null
+          verified_by: string | null
           virtual_services: string | null
           website: string | null
           years_in_business: number | null
+          zip_code: string | null
         }
         Insert: {
           accepted_terms?: boolean
           business_address?: string | null
+          business_categories?: string[] | null
+          custom_service_types?: string[]
           business_category: string
           business_description?: string | null
           business_hours?: Json | null
@@ -2256,6 +2574,7 @@ export type Database = {
           id?: string
           is_sample?: boolean
           is_test_seed?: boolean
+          is_verified?: boolean
           logo_url?: string | null
           mobile_service?: boolean | null
           onboarding_completed?: boolean
@@ -2267,13 +2586,18 @@ export type Database = {
           travel_radius?: number | null
           updated_at?: string
           user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
           virtual_services?: string | null
           website?: string | null
           years_in_business?: number | null
+          zip_code?: string | null
         }
         Update: {
           accepted_terms?: boolean
           business_address?: string | null
+          business_categories?: string[] | null
+          custom_service_types?: string[]
           business_category?: string
           business_description?: string | null
           business_hours?: Json | null
@@ -2284,6 +2608,7 @@ export type Database = {
           id?: string
           is_sample?: boolean
           is_test_seed?: boolean
+          is_verified?: boolean
           logo_url?: string | null
           mobile_service?: boolean | null
           onboarding_completed?: boolean
@@ -2295,9 +2620,12 @@ export type Database = {
           travel_radius?: number | null
           updated_at?: string
           user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
           virtual_services?: string | null
           website?: string | null
           years_in_business?: number | null
+          zip_code?: string | null
         }
         Relationships: []
       }
@@ -2305,13 +2633,17 @@ export type Database = {
     Views: {
       vendor_profiles_public: {
         Row: {
+          business_categories: string[] | null
+          custom_service_types: string[]
           business_category: string | null
           business_description: string | null
           business_hours: Json | null
           business_name: string | null
           city: string | null
           created_at: string | null
+          faqs: Json | null
           id: string | null
+          is_verified: boolean | null
           logo_url: string | null
           mobile_service: boolean | null
           onboarding_completed: boolean | null
@@ -2322,18 +2654,24 @@ export type Database = {
           travel_radius: number | null
           updated_at: string | null
           user_id: string | null
+          vendor_photos: Json | null
           virtual_services: string | null
           website: string | null
           years_in_business: number | null
+          zip_code: string | null
         }
         Insert: {
+          business_categories?: string[] | null
+          custom_service_types?: string[]
           business_category?: string | null
           business_description?: string | null
           business_hours?: Json | null
           business_name?: string | null
           city?: string | null
           created_at?: string | null
+          faqs?: Json | null
           id?: string | null
+          is_verified?: boolean | null
           logo_url?: string | null
           mobile_service?: boolean | null
           onboarding_completed?: boolean | null
@@ -2344,18 +2682,24 @@ export type Database = {
           travel_radius?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vendor_photos?: Json | null
           virtual_services?: string | null
           website?: string | null
           years_in_business?: number | null
+          zip_code?: string | null
         }
         Update: {
+          business_categories?: string[] | null
+          custom_service_types?: string[]
           business_category?: string | null
           business_description?: string | null
           business_hours?: Json | null
           business_name?: string | null
           city?: string | null
           created_at?: string | null
+          faqs?: Json | null
           id?: string | null
+          is_verified?: boolean | null
           logo_url?: string | null
           mobile_service?: boolean | null
           onboarding_completed?: boolean | null
@@ -2366,14 +2710,36 @@ export type Database = {
           travel_radius?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vendor_photos?: Json | null
           virtual_services?: string | null
           website?: string | null
           years_in_business?: number | null
+          zip_code?: string | null
         }
         Relationships: []
       }
     }
     Functions: {
+      create_complimentary_ticket: {
+        Args: {
+          _event_id: string
+          _guest_email: string
+          _guest_name: string
+          _ticket_type_id: string
+        }
+        Returns: string
+      }
+      assert_admin_deletable: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      replace_user_primary_role: {
+        Args: {
+          _new_role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
       apply_ticket_refund: {
         Args: {
           _order_id: string
@@ -2409,6 +2775,37 @@ export type Database = {
         Returns: undefined
       }
       fn_recompute_time_based_stages: { Args: never; Returns: number }
+      get_public_event_page: {
+        Args: { p_event_id: string }
+        Returns: {
+          cover_image_url: string
+          description: string
+          event_date: string
+          event_time: string
+          event_type: string
+          gift_registry_url: string
+          id: string
+          location: string
+          name: string
+          public_description: string
+          public_faqs: Json
+          show_rsvp_public: boolean
+          show_schedule_public: boolean
+          tickets_enabled: boolean
+        }[]
+      }
+      get_public_runsheet: {
+        Args: { p_event_id: string }
+        Returns: {
+          duration_min: number
+          id: string
+          owner: string
+          sort_order: number
+          start_time: string
+          status: string
+          title: string
+        }[]
+      }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
@@ -2631,6 +3028,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["personal", "organization", "vendor", "admin"],

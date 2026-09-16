@@ -13,6 +13,9 @@ export type EventState = {
   guests: number;
   rsvps: number;
   budget: number;
+  /** Sum of estimated_amount — what has been planned/committed */
+  committed: number;
+  /** Sum of paid_amount — cash actually out the door */
   spent: number;
   vendorsConfirmed: number;
   vendorsTotal: number;
@@ -57,6 +60,7 @@ const EMPTY_EVENT: EventState = {
   guests: 0,
   rsvps: 0,
   budget: 0,
+  committed: 0,
   spent: 0,
   vendorsConfirmed: 0,
   vendorsTotal: 0,
@@ -72,7 +76,8 @@ function computeHealth(e: EventState) {
   const tasks = (e.tasksDone / Math.max(1, e.tasksTotal)) * 30;
   const vendors = (e.vendorsConfirmed / Math.max(1, e.vendorsTotal)) * 25;
   const rsvp = Math.min(1, e.rsvps / Math.max(1, e.guests)) * 20;
-  const budgetHealth = e.spent <= e.budget ? 20 : Math.max(0, 20 - ((e.spent - e.budget) / Math.max(1, e.budget)) * 40);
+  // Use committed (planned spend) vs budget for health — not paid
+  const budgetHealth = e.committed <= e.budget ? 20 : Math.max(0, 20 - ((e.committed - e.budget) / Math.max(1, e.budget)) * 40);
   const weather = e.weatherRisk === "low" ? 5 : e.weatherRisk === "medium" ? 3 : 0;
   return Math.round(Math.max(0, Math.min(100, tasks + vendors + rsvp + budgetHealth + weather)));
 }
@@ -121,7 +126,10 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
       const guestCount = guestList.reduce((s, g: any) => s + 1 + Number(g.plus_ones ?? 0), 0);
       const rsvpCount = guestList.filter((g: any) => g.rsvp_status === "yes").length;
       const tasksDone = taskList.filter((t: any) => t.status === "done" || t.status === "completed").length;
-      const spent = items.reduce((s, i: any) => s + Number(i.paid_amount ?? i.actual_amount ?? 0), 0);
+      // committed = planned/estimated spend (what items are allocated to)
+      const committed = items.reduce((s, i: any) => s + Number(i.estimated_amount ?? 0), 0);
+      // spent = cash actually paid out
+      const spent = items.reduce((s, i: any) => s + Number(i.paid_amount ?? 0), 0);
       setEvent({
         id: ev.id,
         name: ev.name ?? "Untitled event",
@@ -131,6 +139,7 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
         guests: guestCount || Number(ev.guest_target ?? 0),
         rsvps: rsvpCount,
         budget: Number(ev.budget_target ?? 0),
+        committed,
         spent,
         vendorsConfirmed: 0,
         vendorsTotal: 0,
@@ -149,8 +158,9 @@ export function EcosystemProvider({ children }: { children: ReactNode }) {
 
   const value: EcosystemValue = useMemo(() => {
     const health = computeHealth(event);
-    const budgetPct = event.budget > 0 ? Math.round((event.spent / event.budget) * 100) : 0;
-    const perGuest = event.guests > 0 ? Math.round(event.spent / event.guests) : 0;
+    // budgetPct uses committed (planned) not paid so dashboard reflects allocation accurately
+    const budgetPct = event.budget > 0 ? Math.round((event.committed / event.budget) * 100) : 0;
+    const perGuest = event.guests > 0 ? Math.round(event.committed / event.guests) : 0;
     const cateringRecommendation = Math.ceil(event.guests * 1.05);
     const seatingTables = Math.ceil(event.guests / 10);
     const noop = () => {};

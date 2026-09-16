@@ -17,7 +17,7 @@ export const Route = createFileRoute("/vision")({
       description="From a first birthday to a golden anniversary, MelaBridge is designed to grow with you across every meaningful moment."
     >
       <h2>Beyond a planner</h2>
-      <p>MelaBridge is evolving into a personal life-events operating system. Your BridgeWorld™ timeline, BridgeVault™ memories, and BridgeDNA™ preferences follow you across every event you host and every event you attend.</p>
+      <p>MelaBridge is evolving into a personal life-events operating system. Your BridgeWorld™ timeline and BridgeVault™ memories follow you across every event you host and every event you attend — with MelaAssist learning your preferences along the way.</p>
       <h2>Rooted in privacy</h2>
       <p>Guest data is encrypted, never sold, and never used to train external models. What you gather is yours.</p>
       <h2>Powered by community</h2>

@@ -187,7 +187,7 @@ export function buildDailyBrief(input: {
 
   // Never empty: pad with planning tips.
   const tips: string[] = [
-    "Send a friendly RSVP nudge to guests who haven't replied yet.",
+    "Review pending RSVPs and update your guest list.",
     "Review your seating layout — small tweaks now save big headaches later.",
     "Confirm arrival times with vendors 2 weeks before the event.",
     "Back up your contracts and receipts into a single folder today.",

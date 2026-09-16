@@ -2,18 +2,24 @@ import { RouteError } from "@/components/module-states";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell, PageHeader } from "@/components/app-shell";
-import { Users, UserPlus, ShieldCheck } from "lucide-react";
+import { Users, UserPlus, ShieldCheck, Trash2, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Section } from "@/components/module-page";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useActiveEvent } from "@/lib/use-active-event";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyTeamMemberAdded } from "@/lib/team.functions";
 
 type Member = Database["public"]["Tables"]["event_members"]["Row"] & {
   profile?: { display_name: string | null; email: string | null } | null;
@@ -37,6 +43,9 @@ function TeamPage() {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState<Member | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const sendTeamInviteEmail = useServerFn(notifyTeamMemberAdded);
 
   useEffect(() => {
     if (!event) {
@@ -60,9 +69,7 @@ function TeamPage() {
       }));
       if (!cancelled) setMembers(merged);
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [event, eventLoading]);
 
   async function invite() {
@@ -79,16 +86,28 @@ function TeamPage() {
       toast.error("No MelaBridge account found for that email. Ask them to sign up first.");
       return;
     }
+    const alreadyMember = members?.some((m) => m.user_id === profile.id);
+    if (alreadyMember) {
+      setInviting(false);
+      toast.error("This person is already a member of this event.");
+      return;
+    }
     const { error } = await supabase
       .from("event_members")
       .insert({ event_id: event.id, user_id: profile.id, role: "editor", invited_email: email });
     setInviting(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    if (error) { toast.error(error.message); return; }
     setInviteEmail("");
-    toast.success(`Invited ${profile.display_name || email}`);
+    toast.success(`Added ${profile.display_name || email} to the team`);
+    // Fire-and-forget — email failure must never block team management.
+    void sendTeamInviteEmail({
+      data: {
+        to: email,
+        eventId: event.id,
+        eventName: event.name || "your event",
+        invitedUserId: profile.id,
+      },
+    }).catch(() => {});
     setMembers((prev) => [
       ...(prev ?? []),
       {
@@ -101,6 +120,22 @@ function TeamPage() {
         profile,
       },
     ]);
+  }
+
+  async function removeMember() {
+    if (!pendingRemove || !event) return;
+    setRemoving(true);
+    const { error } = await supabase
+      .from("event_members")
+      .delete()
+      .eq("event_id", event.id)
+      .eq("user_id", pendingRemove.user_id);
+    setRemoving(false);
+    if (error) { toast.error(error.message); setPendingRemove(null); return; }
+    const name = pendingRemove.profile?.display_name || pendingRemove.profile?.email || pendingRemove.invited_email || "Member";
+    toast.success(`${name} removed from the team`);
+    setMembers((prev) => (prev ?? []).filter((m) => m.user_id !== pendingRemove.user_id));
+    setPendingRemove(null);
   }
 
   return (
@@ -136,8 +171,8 @@ function TeamPage() {
                 onKeyDown={(e) => e.key === "Enter" && invite()}
                 className="flex-1"
               />
-              <Button className="gap-2" onClick={invite} disabled={!inviteEmail.trim() || inviting}>
-                <UserPlus className="h-4 w-4" /> {inviting ? "Sending…" : "Send invite"}
+              <Button className="gap-2 min-h-[44px]" onClick={invite} disabled={!inviteEmail.trim() || inviting}>
+                <UserPlus className="h-4 w-4" /> {inviting ? "Adding…" : "Add to team"}
               </Button>
             </Card>
 
@@ -156,19 +191,33 @@ function TeamPage() {
                     const label = m.profile?.display_name || m.profile?.email || m.invited_email || m.user_id;
                     const isYou = m.user_id === user?.id;
                     return (
-                      <div key={m.user_id} className="flex items-center justify-between gap-3 p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                            {(label[0] || "?").toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              {label} {isYou && <span className="text-xs text-muted-foreground">(you)</span>}
-                            </p>
-                            <p className="text-xs text-muted-foreground">{m.profile?.email || m.invited_email}</p>
-                          </div>
+                      <div key={m.user_id} className="flex items-center gap-3 p-4 min-h-[60px]">
+                        {/* Avatar */}
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                          {(label?.[0] || "?").toUpperCase()}
                         </div>
-                        <Badge variant="secondary" className="capitalize">{m.role}</Badge>
+                        {/* Name / email — min-w-0 ensures truncate works */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {label}{isYou && <span className="ml-1 text-xs text-muted-foreground">(you)</span>}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">{m.profile?.email || m.invited_email}</p>
+                        </div>
+                        {/* Role badge + remove button */}
+                        <div className="flex shrink-0 items-center gap-2">
+                          <Badge variant="secondary" className="capitalize">{m.role}</Badge>
+                          {!isYou && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                              aria-label={`Remove ${label} from team`}
+                              onClick={() => setPendingRemove(m)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -188,6 +237,35 @@ function TeamPage() {
           </>
         )}
       </div>
+
+      {/* Remove member confirmation */}
+      <AlertDialog open={!!pendingRemove} onOpenChange={(o) => !o && setPendingRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove team member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingRemove && (
+                <>
+                  <strong>
+                    {pendingRemove.profile?.display_name || pendingRemove.profile?.email || pendingRemove.invited_email}
+                  </strong>{" "}
+                  will lose access to this event. You can re-invite them any time.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={removeMember}
+              disabled={removing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Removing…</> : "Remove member"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }

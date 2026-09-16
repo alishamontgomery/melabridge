@@ -1,0 +1,81 @@
+modules = ["web", "bash", "python-base-3.13", "nodejs-22", "postgresql-16"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["supabase-cli", "glib", "nss", "nspr", "atk", "at-spi2-atk", "cups", "dbus", "expat", "libdrm", "mesa", "pango", "cairo", "xorg.libX11", "xorg.libxcb", "libxkbcommon", "alsa-lib", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxshmfence", "xorg.libXtst", "libgbm", "fontconfig", "freetype"]
+
+[agent]
+expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Message Scheduler"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow]]
+name = "Message Scheduler"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/cron-scheduler.sh"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[ports]]
+localPort = 4174
+externalPort = 3002
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 23636
+externalPort = 3000
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 120000
+
+[userenv]
+
+[userenv.shared]
+CRON_SECRET = "675d72ffc31f1226ec153de06b090232a77205cfc2c5f5345826b1df531c3ee3"
+SUPABASE_PROJECT_ID = "fawkzsyuiduzjnlaxssd"
+SUPABASE_URL = "https://fawkzsyuiduzjnlaxssd.supabase.co"
+VITE_SUPABASE_PROJECT_ID = "fawkzsyuiduzjnlaxssd"
+VITE_SUPABASE_URL = "https://fawkzsyuiduzjnlaxssd.supabase.co"
+
+[deployment]
+deploymentTarget = "cloudrun"
+build = ["npm", "run", "build"]
+run = ["node", ".output/server/index.mjs"]

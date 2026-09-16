@@ -11,7 +11,7 @@ export function parseNLCommand(input: string): NLCommand[] {
     out.push({ label: "Create a new event", to: "/events/new", hint: "Wizard" });
   }
   if (has("upload") && has("contract", "file", "doc", "pdf")) {
-    out.push({ label: "Upload to BridgeVault™", to: "/bridgevault" });
+    out.push({ label: "Upload a file", to: "/files" });
   }
   if (has("add", "invite") && has("guest")) {
     out.push({ label: "Add a guest", to: "/guests" });
@@ -22,7 +22,7 @@ export function parseNLCommand(input: string): NLCommand[] {
   if (has("show", "open", "view", "see")) {
     if (has("budget")) out.push({ label: "Open Budget", to: "/budget" });
     if (has("analytic")) out.push({ label: "Open Analytics", to: "/analytics" });
-    if (has("invoice", "unpaid", "payment")) out.push({ label: "Open Payments", to: "/bridgepay" });
+    if (has("invoice", "unpaid", "payment")) out.push({ label: "Open Subscription", to: "/subscription" });
     if (has("upcoming", "event")) out.push({ label: "Open Events", to: "/events" });
     if (has("vendor application", "applications")) out.push({ label: "Open Admin", to: "/admin" });
     if (has("report")) out.push({ label: "Open Reports", to: "/reports" });
@@ -45,10 +45,6 @@ export function parseNLCommand(input: string): NLCommand[] {
   if (has("ask", "help", "assist") || q.startsWith("how ") || q.startsWith("why ") || q.startsWith("what ")) {
     out.push({ label: "Ask MelaAssist™", to: "/concierge" });
   }
-  if (has("create") && has("proposal", "quote")) {
-    out.push({ label: "Open Vendor Portal", to: "/vendor-portal" });
-  }
-
   // De-dupe by `to`
   const seen = new Set<string>();
   return out.filter((c) => (seen.has(c.to) ? false : seen.add(c.to)));

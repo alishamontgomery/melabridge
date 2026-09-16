@@ -1,0 +1,42 @@
+- [Supabase project migration](service-role-key-issue.md) — active project is fawkzsyuiduzjnlaxssd; Replit env vars (SUPABASE_URL etc.) are correct; .env file was stale (ignored at runtime). Admin roles inserted for captureaperfectmemory@gmail.com and admin@test.melabridge.com.
+- [Resend SMTP for auth emails](resend-smtp-config.md) — Custom SMTP configured on Supabase via Resend; removes all Supabase branding from auth emails. melabridge.com domain needs DNS verification in Resend before emails send.
+- [MelaBridge role routing](melabridge-role-routing.md) — Role separation enforced via NAV_BY_ROLE + ROLE_EXCLUSIVE in AppShell; landingRouteForUser in auth.tsx determines post-login destination.
+- [MelaBridge repair pass 2](melabridge-repair-pass-2.md) — Full list of fixes applied in second repair pass; interaction bugs fixed across 8 areas.
+- [MelaBridge production hardening pass 3](melabridge-repair-pass-3.md) — Comprehensive launch-gate audit; 16 defects fixed, all confirmed working, TypeScript clean, prod build passing.
+- [Vite dep optimization crash](vite-dep-optimization-crash.md) — Installing Node.js-only packages triggers lazy TanStack Router re-bundle mid-session, splitting RouterContext → "Invalid hook call". Fix: pre-bundle router subpaths in optimizeDeps.
+- [MelaBridge production audit pass 4](melabridge-prod-audit-pass4.md) — 8 bugs fixed: vendor nav dropdown, auth.callback user_roles, admin stats semantic, admin vendor error state, pricing default audience, landing disclaimer, vendor-settings link.
+- [MelaBridge production audit pass 5](melabridge-prod-audit-pass5.md) — Logo upload fixed (vendor-assets bucket + 4 RLS policies created live). Calendar pending approvals now clickable Links. Dashboard empty state got primary CTA. Stripe code is fully built; needs STRIPE_SECRET_KEY + VITE_PAYMENTS_CLIENT_TOKEN secrets.
+- [Stripe subscription page Realtime crash](stripe-subscription-page-crash.md) — Supabase .on() throws synchronously in StrictMode double-invoke; always wrap in try/catch. subscriptions table added to supabase_realtime publication live.
+- [Vendor photo labeling system](vendor-photo-system.md) — vendor_photos JSONB replaces portfolio_urls for differentiated cover/backdrop/portfolio labeling; fallback to portfolio_urls if empty.
+- [Stripe payments setup](stripe-payments-setup.md) — test mode active; all 3 prices exist; trial days now passed at checkout; webhook at dev domain; production webhook needed post-deploy.
+- [Platform launch polish pass 6](melabridge-launch-polish-pass6.md) — vendor storefront inquiry form, vendor_photos on public view, marketplace improvements, coming-soon pages, vendor-settings contact info.
+- [QA stabilization pass 7 + consistency pass](melabridge-launch-polish-pass7.md) — Audience scoping post-login, plan renames (Business/Pro Planner), 3-option signup, admin feature gate bypass + ticketing sandbox, lead pipeline simplified to 5 stages, landing page 3-audience sections.
+- [Lead-gen terminology pass](lead-gen-terminology.md) — Removed all booking/contract/deposit/delivery language; vendor portal is now lead-gen CRM; stage labels updated; nav renamed Leads/My Vendors/Availability.
+- [AdminOS overhaul](adminOS-overhaul.md) — No vendor approval gate; auto-publish via onboarding_completed; admin nav deduped; analytics/reports rewritten as platform-level; platform stats server fn added.
+- [Vendor experience audit pass 8](vendor-audit-pass8.md) — Nav deduped, command palette role-aware, MelaAssist validator migrated, copy purged of booking/client/purchase/stats language.
+- [Vendor profile deep audit pass 9](vendor-profile-audit-pass9.md) — Public profile: try/catch on fetch, lightbox, breadcrumb, gallery dedup, BridgeCheck badge, package inquiry CTAs, dynamic title, is_verified added to DB view. Settings: mounted guard + error state. Builder: photosRef race fix.
+- [Vendor signup overhaul pass 10](vendor-signup-overhaul.md) — Auth race condition fixed (useEffect now gated on !busy). JWT clock-skew retry in ensureProfile. business_categories[] + zip_code added to DB/types/save layer. Onboarding VendorFlow and profile builder updated with multi-select category chips + location fields. Package builder: pricing label dynamic + duration optional.
+- [Supabase migration rollout](supabase-migration-rollout.md) — source migrations are not auto-applied; verify live RPC exposure before testing hardened server paths.
+- [Supabase migration network path](supabase-migration-network.md) — direct project Postgres may be IPv6-only; use the matching Supavisor pooler region when applying verified migrations.
+- [Clerk and Supabase](managed-clerk-supabase.md) — Supabase must trust the active Clerk issuer; UUID bridge resolution remains fail-closed.
+- [Clerk custom-flow session handoff](clerk-session-handoff.md) — after setActive, wait for a fresh token and hard-navigate before authenticated server provisioning.
+- [Clerk development key pairing](clerk-dev-key-pairing.md) — browser and server Clerk keys must belong to the same instance or sessions can loop on refresh.
+- [Clerk deleted identity recovery](clerk-deleted-identity-recovery.md) — reclaim preserved profile links only after the old Clerk user is confirmed deleted; fail closed on live or unknown identities.
+- [Clerk domain key discovery](clerk-domain-key-discovery.md) — `/v1/domains` reveals the frontend API host; fresh browser context is authoritative after repairing stale Clerk sessions.
+- [Pre-supply marketplace strategy](pre-supply-marketplace.md) — Never fabricate vendor supply; turn empty results into event-linked sourcing requests and private vendor contacts.
+- [AdminOS information hierarchy](adminos-information-hierarchy.md) — Keep the admin home signal-first: overview, attention queues, management links, then collapsed operator tools.
+- [Ticket buyer support policy](ticket-buyer-support-policy.md) — Organizers own buyer support; disclose their contact and cancellation policy before payment and in confirmation emails.
+- [Launch product principles](launch-product-principles.md) — Keep MelaBridge AI-first, friendly, and low-click; never make pending work look complete.
+- [Gemini model availability](gemini-model-availability.md) — Use an explicit currently available model; retired models can surface as misleading “busy” errors.
+- [Shared MelaAssist reliability](ai-reliability.md) — All AI entry points share retries, model fallback, timeouts, and schema validation; never persist malformed output.
+- [Vendor multi-service compatibility](vendor-multi-service-compatibility.md) — Keep the primary category for legacy data while all matching and display use the full service list.
+- [Vendor publication state](vendor-publication-state.md) — Vendor signup creates a private draft; only the self-service publish gate marks a listing live.
+- [Vendor guided profile](vendor-guided-profile.md) — Five-step vendor setup preserves drafts; phone/email are opt-in in the public view.
+- [Public feature claims](public-feature-claims.md) — Marketing must distinguish organizer guest lists and RSVP links from a guest portal and roadmap decision tools.
+- [Public view anonymous access](public-view-anon-access.md) — Explicit redacted views need security_invoker=false when logged-out pages sit over owner-scoped RLS.
+- [Reliability monitoring](reliability-monitoring.md) — Run browser/SSR synthetics outside the app process; classify unauthenticated and transactional checks as blocked or not-run.
+- [Marketplace search focus](marketplace-search-focus.md) — Keep the shell wrapper top-level; inline component types remount the input on every query update.
+- [Marketplace anonymous reads](marketplace-anonymous-reads.md) — Public Marketplace reads must not depend on Clerk client-token loading; keep mutations and private routes authenticated.
+- [Marketplace postal search](marketplace-postal-search.md) — Completed ZIPs are location intent; wait for five digits and avoid raw numeric Google business queries.
+- [Google service-area search](google-service-area-search.md) — Preserve Google Business results without public addresses; location bias can be sufficient for home-based vendors.
+- [Replit TanStack deployment target](replit-tanstack-deployment-target.md) — Cloud Run publishing needs Nitro's Node server output, not the Lovable wrapper's default Cloudflare module.

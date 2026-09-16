@@ -45,7 +45,8 @@ export const styles = {
   },
   brandName: {
     color: '#ffffff',
-    fontFamily: "'Fraunces', Georgia, 'Times New Roman', serif",
+    fontFamily:
+      "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
     fontSize: '22px',
     fontWeight: 600 as const,
     letterSpacing: '-0.01em',
@@ -62,7 +63,8 @@ export const styles = {
     padding: '32px',
   },
   h1: {
-    fontFamily: "'Fraunces', Georgia, 'Times New Roman', serif",
+    fontFamily:
+      "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
     fontSize: '24px',
     fontWeight: 600 as const,
     color: BRAND.ink,

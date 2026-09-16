@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { callAi } from "@/lib/ai-client.server";
 
 /* ---------------- Types ---------------- */
 
@@ -45,7 +46,7 @@ export const listDrafts = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
-/* ---------------- Extract via Lovable AI ---------------- */
+/* ---------------- Extract via shared Gemini AI ---------------- */
 
 const ExtractInput = z.object({
   raw_input: z.string().trim().min(4).max(8000),
@@ -57,45 +58,38 @@ const ExtractInput = z.object({
 
 export const extractDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ExtractInput.parse(input))
+  .validator((input: unknown) => ExtractInput.parse(input))
   .handler(async ({ data, context }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
     const system = `You extract event booking details from vendor communications for an Indian/South Asian event platform (MelaBridge).
 Return ONLY strict JSON with keys: name, event_type, event_date (YYYY-MM-DD), start_time (HH:MM 24h), end_time, location, venue_street, venue_city, venue_state, venue_zip, client_name, client_email, client_phone, guest_target (integer), deposit_required (number), event_notes, status, summary, confidence (0..1), field_confidences (object mapping each field to 0..1), suggested_next_actions (array of short strings).
 Use null for anything not present. Do not invent details. Event types include Wedding, Sangeet, Mehndi, Reception, Engagement, Anniversary, Birthday, Corporate, Other.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Lovable-API-Key": key,
+    const result = await callAi(
+      [
+        { role: "system", content: system },
+        { role: "user", content: data.raw_input },
+      ],
+      {
+        jsonMode: true,
+        isAcceptable: (text) => {
+          try {
+            const parsed = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim());
+            return Boolean(parsed && typeof parsed === "object");
+          } catch {
+            return false;
+          }
+        },
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: data.raw_input },
-        ],
-      }),
-    });
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      throw new Error(`AI extraction failed [${resp.status}]: ${body}`);
+    );
+    if (!result.ok) {
+      throw new Error("MelaAssist could not extract the event details. Please try again.");
     }
-    const json = (await resp.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const content = json.choices?.[0]?.message?.content ?? "{}";
 
     let parsed: Record<string, unknown> = {};
     try {
-      parsed = JSON.parse(content);
+      parsed = JSON.parse(result.text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim());
     } catch {
-      parsed = {};
+      throw new Error("MelaAssist returned an invalid event draft. Please try again.");
     }
 
     const extracted = ExtractedSchema.parse(
@@ -123,6 +117,15 @@ Use null for anything not present. Do not invent details. Event types include We
         ),
       ),
     );
+    const hasMeaningfulField = Object.values(extracted).some((value) => {
+      if (value == null) return false;
+      if (typeof value === "string") return value.trim().length > 0;
+      if (Array.isArray(value)) return value.length > 0;
+      return true;
+    });
+    if (!hasMeaningfulField) {
+      throw new Error("MelaAssist could not find enough event details to create a draft. Please add more context and try again.");
+    }
 
     const confidence = Math.max(
       0,
@@ -171,7 +174,7 @@ const UpdateInput = z.object({
 
 export const updateDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => UpdateInput.parse(input))
+  .validator((input: unknown) => UpdateInput.parse(input))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("event_drafts")
@@ -191,7 +194,7 @@ export const updateDraft = createServerFn({ method: "POST" })
 
 export const discardDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("event_drafts")
@@ -205,7 +208,7 @@ export const discardDraft = createServerFn({ method: "POST" })
 
 export const approveDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: draft, error: dErr } = await context.supabase
       .from("event_drafts")

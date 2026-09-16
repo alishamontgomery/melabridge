@@ -107,8 +107,8 @@ function AdminInvitePage() {
               <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as Role)}>
                 <SelectTrigger id="invite-role"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="personal">Personal</SelectItem>
-                  <SelectItem value="organization">Organization</SelectItem>
+                   <SelectItem value="personal">Host</SelectItem>
+                   <SelectItem value="organization">Planner</SelectItem>
                   <SelectItem value="vendor">Vendor</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>

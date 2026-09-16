@@ -1,0 +1,42 @@
+Exactly. That makes sense because Replit imported the same MelaBridge codebase from GitHub. It did not automatically repair the existing bugs; it gave us another environment where we can work on the code.
+
+The important difference is that we do not need to keep spending Lovable credits trying prompts that may or may not fix things.
+
+What we should do in Replit now
+
+Do not have Replit redesign MelaBridge or rebuild features. We want it to systematically repair the existing code.
+
+Paste this into the “Make, test, iterate…” box:
+
+Review the existing MelaBridge codebase before making changes. This project was imported from GitHub and already has a substantial working application. Do not redesign the UI, replace existing architecture, remove working features, or rebuild the application.
+
+I have an existing bug and functionality list that needs to be fixed. First, inspect the codebase and determine the root causes of the existing issues. Do not make changes yet.
+
+Specifically inspect:
+
+1. Role-based access and navigation for Personal, Vendor, and Admin accounts.
+2. Personal accounts must not display vendor/business functionality such as Business Hours, Availability, Requests, Revenue, Publish, Send Quote, or business booking controls.
+3. Vendor accounts must have their vendor-specific dashboard, marketplace listing/profile management, leads and appropriate vendor tools without planner-only navigation.
+4. Login redirects must be Personal → /dashboard, Vendor → /vendor, Admin → /admin.
+5. Tasks: clicking a task must open its details/edit view. “Complete now” must not simply complete a task when the intended action is to work on/open it.
+6. Run Sheet: rows must open the underlying item/details rather than behaving only as completion buttons.
+7. Today’s Brief/insight cards should navigate to the relevant filtered information when actionable.
+8. Guests: guest names must be clickable so their details can be viewed and edited.
+9. Guest RSVP categories such as Yes, No/Declined, Maybe and Pending must be clickable and open the corresponding filtered guest lists.
+10. RSVP status editing must correctly use the database values yes, no, maybe, and pending.
+11. Vendor names throughout planner-facing areas must open the vendor’s marketplace/profile information rather than being dead clicks.
+12. Budget amounts and appropriate budget entries must be editable.
+13. Fix mobile responsiveness issues including cropped section headers, clipped text, overflowing cards and inaccessible controls.
+14. Investigate the email verification flow where clicking the verification email can display or associate the wrong email/account.
+15. Ticketing should remain hidden from the launch UI for now.
+16. Remove or hide production-facing test/lab/placeholder routes and components that should not be visible at launch.
+
+For this first step only: audit the repository. Trace the relevant routes, components, state management, Supabase/database calls and role checks. Tell me which files control each problem, what is causing it, and group the repairs into the smallest safe implementation batches.
+
+Run type checking/build diagnostics as part of the audit.
+
+Do not modify files yet. Do not install unnecessary packages. Do not change the visual design. Do not change the database schema unless you identify a genuine schema problem and explain it first.
+
+Then send me Replit’s response before approving any fixes.
+
+This is where we change strategy: diagnose from the actual code first, then fix specific files, instead of giving another AI a giant “fix everything” prompt and hoping it catches the problems.

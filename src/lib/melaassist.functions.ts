@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callAi, aiErrorMessage, hasAiProvider } from "@/lib/ai-client.server";
+import {
+  isClearlyOutsideMelaAssistScope,
+  OUT_OF_SCOPE_MELAASSIST_ANSWER,
+} from "@/lib/melaassist-scope";
 
 const Input = z.object({
   question: z.string().trim().min(2).max(1000),
@@ -9,11 +14,27 @@ const Input = z.object({
 
 type SupabaseCtx = { supabase: any; userId: string };
 
-async function loadEventContext(ctx: SupabaseCtx, eventId?: string) {
+type QuestionFocus = {
+  guests: boolean;
+  tasks: boolean;
+  budget: boolean;
+};
+
+function getQuestionFocus(question: string): QuestionFocus {
+  const q = question.toLowerCase();
+  return {
+    guests: /\b(guest|rsvp|invite|invitation|diet|meal|allerg|plus.?one|seating)\b/.test(q),
+    tasks: /\b(task|timeline|schedule|checklist|deadline|due|focus|priority|week|today|run.?sheet)\b/.test(q),
+    budget: /\b(budget|spend|cost|price|pay|payment|flower|floral|expense|afford|amount|dollar|\$)\b/.test(q),
+  };
+}
+
+async function loadEventContext(ctx: SupabaseCtx, eventId: string | undefined, question: string) {
+  const focus = getQuestionFocus(question);
   if (!eventId) {
     const { data } = await ctx.supabase
       .from("events")
-      .select("id, name, event_type, event_date, budget_target, guest_target")
+      .select("id")
       .eq("owner_id", ctx.userId)
       .is("deleted_at", null)
       .order("event_date", { ascending: true })
@@ -24,37 +45,77 @@ async function loadEventContext(ctx: SupabaseCtx, eventId?: string) {
   }
   const [e, g, t, b] = await Promise.all([
     ctx.supabase.from("events").select("id, name, event_type, event_date, event_time, location, budget_target, guest_target").eq("id", eventId).maybeSingle(),
-    ctx.supabase.from("guests").select("id, rsvp_status, plus_ones").eq("event_id", eventId).is("deleted_at", null),
-    ctx.supabase.from("tasks").select("id, title, status, priority, due_date").eq("event_id", eventId).is("deleted_at", null),
-    ctx.supabase.from("budget_items").select("category, estimated_amount, actual_amount, paid_amount, vendor_name").eq("event_id", eventId).is("deleted_at", null),
+    focus.guests
+      ? ctx.supabase.from("guests").select("rsvp_status, plus_ones, meal_choice").eq("event_id", eventId).is("deleted_at", null).limit(500)
+      : Promise.resolve({ data: [] }),
+    focus.tasks
+      ? ctx.supabase.from("tasks").select("title, status, priority, due_date").eq("event_id", eventId).is("deleted_at", null).order("due_date", { ascending: true, nullsFirst: false }).limit(30)
+      : Promise.resolve({ data: [] }),
+    focus.budget
+      ? ctx.supabase.from("budget_items").select("category, estimated_amount, actual_amount, paid_amount, vendor_name").eq("event_id", eventId).is("deleted_at", null).limit(60)
+      : Promise.resolve({ data: [] }),
   ]);
   if (!e.data) return null;
   const guests = (g.data ?? []) as any[];
   const tasks = (t.data ?? []) as any[];
   const budget = (b.data ?? []) as any[];
+
+  const budgetTerms = question.toLowerCase().match(/[a-z]{4,}/g) ?? [];
+  const relevantBudget = budget.filter((row) => {
+    const haystack = `${row.category ?? ""} ${row.vendor_name ?? ""}`.toLowerCase();
+    return budgetTerms.some((term) => haystack.includes(term));
+  });
+
   return {
     event: e.data,
-    counts: {
-      guests_total: guests.length,
-      guests_confirmed: guests.filter((r) => r.rsvp_status === "yes").length,
-      tasks_total: tasks.length,
-      tasks_open: tasks.filter((r) => r.status !== "done").length,
-      tasks_overdue: tasks.filter((r) => r.status !== "done" && r.due_date && new Date(r.due_date) < new Date()).length,
-      budget_estimated: budget.reduce((s, r) => s + Number(r.estimated_amount ?? 0), 0),
-      budget_paid: budget.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0),
-      budget_categories: budget.map((r) => r.category).filter(Boolean),
-    },
+    ...(focus.guests ? {
+      guests: {
+        total: guests.length,
+        confirmed: guests.filter((r) => r.rsvp_status === "yes").length,
+        pending: guests.filter((r) => r.rsvp_status === "pending").length,
+        declined: guests.filter((r) => r.rsvp_status === "no").length,
+        plusOnes: guests.reduce((sum, row) => sum + Number(row.plus_ones ?? 0), 0),
+        dietaryResponses: guests.filter((r) => r.meal_choice).length,
+      },
+    } : {}),
+    ...(focus.tasks ? {
+      tasks: {
+        total: tasks.length,
+        open: tasks.filter((r) => !["done", "completed"].includes(r.status)).length,
+        overdue: tasks.filter((r) => !["done", "completed"].includes(r.status) && r.due_date && new Date(r.due_date) < new Date()).length,
+        upcoming: tasks.filter((r) => !["done", "completed"].includes(r.status)).slice(0, 12),
+      },
+    } : {}),
+    ...(focus.budget ? {
+      budget: {
+        estimated: budget.reduce((s, r) => s + Number(r.estimated_amount ?? 0), 0),
+        paid: budget.reduce((s, r) => s + Number(r.paid_amount ?? 0), 0),
+        categories: [...new Set(budget.map((r) => r.category).filter(Boolean))],
+        relevantItems: relevantBudget.slice(0, 12),
+      },
+    } : {}),
   };
 }
 
 export const askMelaAssist = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => Input.parse(input))
+  .validator((input: unknown) => Input.parse(input))
   .handler(async ({ data, context }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) return { answer: "MelaAssist is temporarily unavailable. Please try again shortly.", degraded: true };
+    if (isClearlyOutsideMelaAssistScope(data.question)) {
+      return { answer: OUT_OF_SCOPE_MELAASSIST_ANSWER, degraded: false };
+    }
 
-    const ctxData = await loadEventContext(context as SupabaseCtx, data.eventId);
+    if (!hasAiProvider()) {
+      console.error(
+        "[MelaAssist] askMelaAssist: No AI provider configured. Add GEMINI_API_KEY to Replit Secrets.",
+      );
+      return {
+        answer: "MelaAssist is temporarily unavailable. Please try again shortly.",
+        degraded: true,
+      };
+    }
+
+    const ctxData = await loadEventContext(context as SupabaseCtx, data.eventId, data.question);
 
     const system = `You are MelaAssist, MelaBridge's warm, expert AI event-planning concierge.
 Answer the user's question in 1-4 short paragraphs of plain prose. Concrete, actionable, specific to the event context when provided.
@@ -67,25 +128,17 @@ Answer the user's question in 1-4 short paragraphs of plain prose. Concrete, act
       ? `Event context (JSON):\n${JSON.stringify(ctxData)}\n\nQuestion: ${data.question}`
       : `The planner has not created an event yet.\n\nQuestion: ${data.question}`;
 
-    try {
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: userMessage },
-          ],
-        }),
-      });
-      if (resp.status === 429) return { answer: "MelaAssist is busy right now — please try again in a moment.", degraded: true };
-      if (resp.status === 402) return { answer: "MelaAssist is temporarily paused on this workspace. Please contact your admin.", degraded: true };
-      if (!resp.ok) return { answer: "MelaAssist couldn't reach the planning engine. Please try again.", degraded: true };
-      const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-      const answer = (json.choices?.[0]?.message?.content ?? "").trim();
-      return { answer: answer || "I don't have a good answer for that yet — try rephrasing.", degraded: false };
-    } catch {
-      return { answer: "MelaAssist couldn't reach the planning engine. Please try again.", degraded: true };
+    const result = await callAi([
+      { role: "system", content: system },
+      { role: "user", content: userMessage },
+    ]);
+
+    if (!result.ok) {
+      return { answer: aiErrorMessage(result.error), degraded: true };
     }
+
+    return {
+      answer: result.text || "I don't have a good answer for that yet — try rephrasing.",
+      degraded: false,
+    };
   });

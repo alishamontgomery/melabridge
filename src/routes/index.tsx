@@ -9,39 +9,42 @@ import {
 import {
   Sparkles,
   Store,
-  Users,
   Wallet,
-  ScaleIcon,
   UsersRound,
   Check,
   Play,
   ArrowRight,
   Briefcase,
-  Building2,
   ShieldCheck,
   TrendingUp,
   CalendarCheck,
   MessageSquare,
   Zap,
 } from "lucide-react";
+import { useState } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { EventDashboardPreview } from "@/components/event-dashboard-preview";
-import { getPlansFor, formatPrice } from "@/lib/billing-config";
+import {
+  getPlan,
+  formatPrice,
+  getPlannerPlan,
+  type PlannerBillingCadence,
+} from "@/lib/billing-config";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "MelaBridge — AI Event Planning Platform" },
+      { title: "MelaBridge — Plan Every Moment, Together" },
       {
         name: "description",
         content:
-          "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform.",
+          "MelaBridge brings event details, guest lists, vendor discovery, budgets, tasks, and AI-assisted planning into one organized workspace.",
       },
-      { property: "og:title", content: "MelaBridge — AI Event Planning Platform" },
+      { property: "og:title", content: "MelaBridge — Plan Every Moment, Together" },
       {
         property: "og:description",
         content:
-          "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform.",
+          "MelaBridge brings event details, guest lists, vendor discovery, budgets, tasks, and AI-assisted planning into one organized workspace.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -58,66 +61,56 @@ const platformFeatures = [
   {
     icon: Sparkles,
     title: "AI Planner",
-    desc: "Your planning partner from first idea to final thank-you note.",
+    desc: "Editable starting drafts for tasks, budgets, runsheets, vendor needs, and event details.",
   },
   {
     icon: Store,
     title: "Marketplace",
-    desc: "Discover trusted vendors and venues, curated to your event.",
-  },
-  {
-    icon: Users,
-    title: "Guest Portal",
-    desc: "Invitations, RSVPs, updates and communication in one place.",
+    desc: "Discover vendors and venues by category, location, and profile, then save favorites or contact them directly.",
   },
   {
     icon: Wallet,
-    title: "BridgePay™",
-    desc: "Collect payments, manage budgets and track every dollar.",
-  },
-  {
-    icon: ScaleIcon,
-    title: "Decision Center™",
-    desc: "Compare options side-by-side and choose with confidence.",
+    title: "Budget & Tracking",
+    desc: "Set a target, track planned and paid amounts, and see what remains as plans change.",
   },
   {
     icon: UsersRound,
-    title: "Collaboration",
-    desc: "Family, team and vendors — working together in one workspace.",
+    title: "Team access",
+    desc: "Invite collaborators and share event files with the people helping you plan.",
   },
 ];
 
+// ── Audience-specific benefit lists ──────────────────────────────────────────
+
+const hostBenefits = [
+  "Plan events for yourself & family",
+  "Guest lists, RSVP status & meal notes",
+  "Budget tracking with line items",
+  "Checklist & day-of event timeline",
+  "MelaAssist AI planning assistant",
+  "Vendor discovery & marketplace access",
+  "Event pages & ticket sales",
+  "Shared planning with family & team",
+];
+
 const vendorBenefits = [
-  "Qualified leads matched by AI",
-  "Calendar & availability management",
-  "In-app messaging with clients",
-  "Online contracts & e-signatures",
-  "Portfolio, reviews & analytics",
-  "Faster payouts via BridgePay™",
-  "Premium business profile",
-  "Subscription revenue tools",
+  "Business profile visible in marketplace",
+  "Service categories and portfolio showcase",
+  "Portfolio photos showcasing your work",
+  "Service categories and package management",
+  "Direct contact from planners and hosts",
+  "Public profile and portfolio updates",
+  "MelaAssist AI for your business profile",
 ];
 
 const plannerBenefits = [
-  "Unlimited events & clients",
-  "Branded client dashboards",
-  "AI-drafted plans & timelines",
-  "Team collaboration & roles",
-  "Vendor coordination inbox",
-  "Live budget tracking",
-  "Full guest management",
-  "Milestones on one timeline",
-];
-
-const venueBenefits = [
-  "Showcase real-time availability",
-  "Receive qualified booking requests",
-  "Coordinate on-site vendors",
-  "Share tiered pricing & packages",
-  "Capacity & room management",
-  "Event timelines & run-of-show",
-  "Interactive floor plans",
-  "Analytics on inquiries & revenue",
+  "Manage multiple clients & events",
+  "Team collaboration tools",
+  "Guest lists and RSVP status per event",
+  "MelaAssist AI for every client event",
+  "Sell tickets & manage attendees",
+  "Vendor coordination per client event",
+  "Budget tracking per client",
 ];
 
 
@@ -126,19 +119,19 @@ const venueBenefits = [
 const faqs = [
   {
     q: "How is MelaBridge different from the tools I already use?",
-    a: "Instead of stitching together a planner, a spreadsheet, a group chat, a vendor directory and a payment app, MelaBridge is a single AI-native workspace where every decision, message and dollar lives in one place.",
+    a: "MelaBridge connects event details, guests, budgets, vendors, tickets, files, and day-of operations in one workspace, with AI-assisted starting drafts you can edit.",
   },
   {
     q: "Do I need to be technical to use the AI planner?",
-    a: "No. You describe your event in plain language. The AI drafts the timeline, budget, vendor shortlist and guest communications — you review and adjust.",
+    a: "No. You describe your event in plain language. The AI drafts the timeline, budget categories, vendor needs and event details — you review and adjust.",
   },
   {
-    q: "Can vendors, planners and venues really share the same platform?",
-    a: "Yes. Each side gets a dedicated experience — hosts plan, vendors sell, planners manage clients, venues receive bookings — all connected through one ecosystem.",
+    q: "Who is MelaBridge for?",
+    a: "Anyone who plans events. People organizing their own celebrations, professional event planners managing multiple clients, event-service providers building their business, and community groups coordinating gatherings — each with a tailored experience.",
   },
   {
     q: "Is my guest and payment data safe?",
-    a: "Always. Data is encrypted at rest and in transit, never sold, and never used to train external models. BridgePay™ is PCI-compliant.",
+    a: "Always. Data is encrypted at rest and in transit, never sold, and never used to train external models.",
   },
   {
     q: "Can I cancel anytime?",
@@ -150,11 +143,7 @@ const faqs = [
    Small building blocks
    ———————————————————————————————————————— */
 
-import { BrandLogo } from "@/components/brand-logo";
-function Logo() {
-  return <BrandLogo size="md" />;
-}
-
+import { SiteHeader } from "@/components/site-header";
 function SectionEyebrow({ children }: { children: React.ReactNode }) {
   return <p className="text-xs uppercase tracking-widest text-primary">{children}</p>;
 }
@@ -168,6 +157,7 @@ function AudienceSection({
   icon: Icon,
   reverse = false,
   accent = "primary",
+  ctaType,
 }: {
   eyebrow: string;
   title: string;
@@ -177,6 +167,8 @@ function AudienceSection({
   icon: React.ComponentType<{ className?: string }>;
   reverse?: boolean;
   accent?: "primary" | "gold";
+  /** When set, the CTA link passes ?type=<ctaType> to pre-select the account type on the auth page. */
+  ctaType?: "vendor" | "planner";
 }) {
   return (
     <section className="mx-auto max-w-7xl px-6 py-24 md:py-28">
@@ -187,7 +179,7 @@ function AudienceSection({
       >
         <div>
           <SectionEyebrow>{eyebrow}</SectionEyebrow>
-          <h2 className="mt-3 font-display text-4xl leading-tight md:text-5xl">{title}</h2>
+          <h2 className="mt-3 font-display text-3xl leading-tight sm:text-4xl md:text-5xl">{title}</h2>
           <p className="mt-4 max-w-xl text-muted-foreground">{description}</p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {benefits.map((b) => (
@@ -201,7 +193,7 @@ function AudienceSection({
           </ul>
           <div className="mt-10">
             <Button variant={accent === "gold" ? "gold" : "hero"} size="lg" asChild>
-              <Link to="/auth">
+              <Link to="/auth" search={ctaType ? { type: ctaType } : {}}>
                 {cta} <ArrowRight className="ml-1 h-4 w-4" />
               </Link>
             </Button>
@@ -252,34 +244,7 @@ function AudienceSection({
 function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* NAV */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <Logo />
-          <nav className="hidden items-center gap-8 md:flex">
-            <a href="#platform" className="text-sm text-muted-foreground hover:text-foreground">
-              Platform
-            </a>
-            <a href="#vendors" className="text-sm text-muted-foreground hover:text-foreground">
-              Vendors
-            </a>
-            <a href="#planners" className="text-sm text-muted-foreground hover:text-foreground">
-              Planners
-            </a>
-            <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground">
-              Pricing
-            </a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="rounded-full" asChild>
-              <Link to="/auth">Log in</Link>
-            </Button>
-            <Button variant="hero" size="sm" className="rounded-full" asChild>
-              <Link to="/auth">Sign up</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       {/* HERO */}
       <section className="bg-hero-radial relative">
@@ -287,16 +252,16 @@ function Landing() {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-gold" />
-              The AI-native event platform · now in early access
+              Friendly AI planning for real-life events
             </div>
             <h1 className="font-display text-4xl leading-[1.05] tracking-tight sm:text-5xl md:text-7xl">
-              Plan Every Moment.
+              Plan your event faster.
               <br />
-              <span className="text-gradient">Together.</span>
+              <span className="text-gradient">Enjoy it sooner.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-              MelaBridge replaces the ten apps, spreadsheets and group chats you use to plan an
-              event — with one AI-powered workspace for hosts, planners, vendors and venues.
+              Tell MelaAssist what you’re planning. Get an editable starting plan, then keep
+              guests, budget, vendors, tasks, and event-day details together.
             </p>
             <div className="mx-auto mt-8 flex w-full max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center">
               <Button variant="hero" size="xl" className="w-full sm:w-auto" asChild>
@@ -321,8 +286,16 @@ function Landing() {
                   }, 1800);
                 }}
               >
-                <Play className="h-4 w-4 fill-current" /> Watch demo
+                <Play className="h-4 w-4 fill-current" /> See the workspace
               </Button>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              {["Guest & RSVP tracking", "Vendor marketplace", "Budgets & runsheets", "Ticketing & check-in"].map((item) => (
+                <span key={item} className="inline-flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5 text-primary" />
+                  {item}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -336,10 +309,9 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <SectionEyebrow>The MelaBridge dashboard</SectionEyebrow>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">Your complete event workspace.</h2>
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">Your complete event workspace.</h2>
             <p className="mt-4 text-muted-foreground">
-              A calm, intelligent workspace where budget, guests, vendors, tasks and your AI
-              planner work together in real time.
+              A calm, organized workspace for budgets, guest lists, vendors, tasks, timelines, and AI-assisted starting drafts.
             </p>
           </div>
           <div className="mt-14 w-full">
@@ -352,13 +324,13 @@ function Landing() {
       <section id="platform" className="mx-auto max-w-7xl px-6 py-28">
         <div className="mx-auto max-w-3xl text-center">
           <SectionEyebrow>The platform</SectionEyebrow>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl">
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">
             Where every detail comes together.
           </h2>
           <p className="mt-5 text-muted-foreground">
-            One intelligent platform connecting your AI planner, vendors, venues, guests, budgets,
-            payments, tickets, fundraising, travel, messaging and timelines — so every decision,
-            conversation and milestone stays beautifully organized from beginning to end.
+            One organized workspace for AI-assisted planning, vendor discovery, budgets, tasks,
+              guest lists, and timelines — for hosts, families, professional planners, vendors,
+              venues, and organizations.
           </p>
         </div>
         <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -377,15 +349,30 @@ function Landing() {
         </div>
       </section>
 
-      {/* VENDOR MARKETPLACE */}
+      {/* HOSTS & FAMILIES */}
+      <div id="hosts">
+        <AudienceSection
+          eyebrow="For hosts & families"
+          title="Plan every celebration beautifully."
+          description="Weddings, birthdays, graduations, and family reunions — organize guests, budgets, timelines, vendors, files, and AI-assisted starting drafts in one workspace."
+          benefits={hostBenefits}
+          cta="Start planning free"
+          icon={UsersRound}
+          reverse
+        />
+      </div>
+
+      {/* VENDORS & BUSINESSES */}
       <div id="vendors" className="bg-secondary/40">
         <AudienceSection
-          eyebrow="For vendors"
-          title="Grow your business with MelaBridge."
-          description="Join the marketplace where couples, families and companies discover the vendors they trust. AI matches your services with the right customers — you focus on the work you love."
+          eyebrow="For vendors & businesses"
+          title="Get discovered. Win more business."
+           description="Join the marketplace where hosts and professional planners search for vendors like you. Showcase your services and packages, keep your profile current, and let planners contact you directly."
           benefits={vendorBenefits}
           cta="Join as a vendor"
           icon={Briefcase}
+          accent="gold"
+          ctaType="vendor"
         />
       </div>
 
@@ -393,25 +380,13 @@ function Landing() {
       <div id="planners">
         <AudienceSection
           eyebrow="For professional planners"
-          title="Built for professional planners."
-          description="Run your entire practice from one workspace. Every client, every event, every vendor — coordinated with AI-powered leverage instead of endless spreadsheets."
+          title="Every client. Every event. One workspace."
+          description="Stop juggling spreadsheets, emails, and separate tools for each client. MelaBridge is built for professional planners and coordinators managing multiple events — so every detail stays connected."
           benefits={plannerBenefits}
-          cta="Built for professional planners"
+          cta="Start your 5-day free trial"
           icon={ShieldCheck}
           reverse
-        />
-      </div>
-
-      {/* VENUES */}
-      <div id="venues" className="bg-secondary/40">
-        <AudienceSection
-          eyebrow="For venues"
-          title="Fill your calendar. Effortlessly."
-          description="Showcase your space to planners and hosts actively booking events. Coordinate vendors, share pricing and manage every booking in one calm place."
-          benefits={venueBenefits}
-          cta="List your venue"
-          icon={Building2}
-          accent="gold"
+          ctaType="planner"
         />
       </div>
 
@@ -420,20 +395,20 @@ function Landing() {
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           <div>
             <SectionEyebrow>AI planning</SectionEyebrow>
-            <h2 className="mt-3 font-display text-4xl md:text-5xl">
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">
               An AI that plans <span className="text-gradient">with you</span>, not for you.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              MelaAssist™ is your always-on planning partner. It drafts your timeline,
-              suggests vendors that match your style and budget, writes guest communications and
-              flags risks before they become problems.
+              MelaAssist™ helps turn your event details into an editable starting plan.
+              It can draft tasks, budget categories, a day-of runsheet, vendor needs,
+              and event details for you to review.
             </p>
             <ul className="mt-8 space-y-3 text-sm">
               {[
-                "Natural-language planning — describe your vision, get a full plan back",
-                "MelaAssist™ continuously optimizes budget, tasks and logistics",
-                "AI Event Simulator™ stress-tests your plan against real-world scenarios",
-                "Event Health Score™ reflects your event's readiness in a single number",
+                "Natural-language planning — describe your vision, get a structured plan back",
+                "AI-drafted tasks, budget categories, runsheets, and vendor needs",
+                "Guest-message drafts that wait for your approval",
+                "Every suggestion remains editable and under your control",
               ].map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
                   <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -456,10 +431,10 @@ function Landing() {
               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
               <div className="relative space-y-4">
                 {[
-                  { icon: Zap, title: "Drafted a full 12-month wedding plan", meta: "in 38 seconds" },
-                  { icon: CalendarCheck, title: "Rescheduled 6 vendor calls to avoid a conflict", meta: "auto-resolved" },
-                  { icon: TrendingUp, title: "Suggested a $2,400 budget reallocation", meta: "+8% guest impact" },
-                  { icon: MessageSquare, title: "Drafted 142 personalized RSVP reminders", meta: "ready to send" },
+                  { icon: Zap, title: "Drafted a starter checklist and timeline", meta: "ready to edit" },
+                  { icon: CalendarCheck, title: "Built a runsheet around the event start time", meta: "ready to review" },
+                  { icon: TrendingUp, title: "Created starter budget categories", meta: "ready to customize" },
+                  { icon: MessageSquare, title: "Drafted a guest update", meta: "approval required" },
                 ].map((row) => (
                   <div
                     key={row.title}
@@ -469,20 +444,23 @@ function Landing() {
                       <row.icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium">{row.title}</div>
+                      <div className="line-clamp-2 text-sm font-medium leading-snug">{row.title}</div>
                       <div className="text-xs text-muted-foreground">{row.meta}</div>
                     </div>
                     <Check className="h-4 w-4 text-primary" />
                   </div>
                 ))}
+                <p className="pt-1 text-center text-[11px] text-muted-foreground/60">
+                  Illustrative examples — actual results vary by event and usage.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BRIDGEPAY */}
-      <section className="bg-gradient-to-b from-background to-secondary/40 py-28">
+      {/* BUDGET TRACKING */}
+      <section className="hidden bg-gradient-to-b from-background to-secondary/40 py-28">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             <div className="relative order-2 lg:order-1">
@@ -506,9 +484,9 @@ function Landing() {
                   </div>
                   <div className="mt-8 grid grid-cols-3 gap-3">
                     {[
-                      { label: "Vendors paid", value: "18" },
-                      { label: "Tickets sold", value: "246" },
-                      { label: "Raised", value: "$12.4k" },
+                      { label: "Line items", value: "24" },
+                      { label: "Categories", value: "8" },
+                      { label: "Remaining", value: "$5.8k" },
                     ].map((s) => (
                       <div key={s.label} className="rounded-xl border border-border bg-background/60 p-4">
                         <div className="font-display text-2xl">{s.value}</div>
@@ -522,22 +500,22 @@ function Landing() {
               </div>
             </div>
             <div className="order-1 lg:order-2">
-              <SectionEyebrow>BridgePay™</SectionEyebrow>
-              <h2 className="mt-3 font-display text-4xl md:text-5xl">
-                One wallet for every event dollar.
+              <SectionEyebrow>Budgets & spending</SectionEyebrow>
+              <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">
+                Every dollar, exactly where you left it.
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Sell tickets, collect contributions, pay vendors and track every line item —
-                without leaving MelaBridge. Faster payouts, fewer fees, zero spreadsheet math.
+                 Add line items, assign categories, track estimated vs. paid amounts, and see
+                 exactly where your budget stands as your plans change.
               </p>
               <ul className="mt-8 grid gap-3 sm:grid-cols-2">
                 {[
-                  "Tickets & tiered pricing",
-                  "Fundraising & donations",
-                  "Vendor invoicing & payouts",
-                  "Group contributions",
-                  "Live budget tracking",
-                  "PCI-compliant checkout",
+                   "Track estimated & paid amounts",
+                  "Category-based breakdown",
+                  "Line-by-line cost visibility",
+                  "Warning when planned expenses exceed your budget",
+                  "Linked to your event workspace",
+                  "Exportable budget records",
                 ].map((b) => (
                   <li key={b} className="flex items-start gap-2.5 text-sm">
                     <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-gold/20 text-gold-foreground">
@@ -549,8 +527,8 @@ function Landing() {
               </ul>
               <div className="mt-10">
                 <Button variant="gold" size="lg" asChild>
-                  <Link to="/bridgepay">
-                    Learn about BridgePay™ <ArrowRight className="ml-1 h-4 w-4" />
+                  <Link to="/auth">
+                    Start tracking your budget <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -560,51 +538,72 @@ function Landing() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="mx-auto max-w-7xl px-6 py-28">
+      <section id="pricing" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-28">
         <div className="mx-auto max-w-2xl text-center">
           <SectionEyebrow>Pricing</SectionEyebrow>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl">
-            Transparent pricing. No surprise fees.
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">
+            Clear plans for every kind of event team.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Simple host plans. No fees on RSVPs, invitations, or donations. Start free — upgrade
-            when the moment grows.
+            Plans for hosts, vendors, and professional planners. Start with the free host
+            plan, then upgrade when you need paid business tools. Payment processing fees
+            may apply to ticket sales.
           </p>
         </div>
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {getPlansFor("host").map((p) => {
+
+        {/* One representative card per audience */}
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {(
+            [
+              { planId: "host_free", audienceLabel: "Hosts & Families" },
+              { planId: "vendor_starter", audienceLabel: "Vendors & Businesses" },
+              { planId: "planner_professional", audienceLabel: "Professional Planners" },
+            ] as const
+          ).map(({ planId, audienceLabel }) => {
+            const p = getPlan(planId);
+            if (p.audience === "planner") {
+              return <HomepagePlannerPlanCard key={p.id} plan={p} audienceLabel={audienceLabel} />;
+            }
             const { amount, period } = formatPrice(p);
             return (
               <div
                 key={p.id}
-                className={`relative flex flex-col rounded-3xl border p-8 ${
+                className={`relative flex flex-col rounded-3xl border p-6 sm:p-8 ${
                   p.featured
                     ? "border-primary/40 bg-gradient-to-b from-primary/5 to-transparent shadow-elegant"
                     : "border-border bg-card"
                 }`}
               >
-                {p.featured && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-gold px-3 py-1 text-xs font-semibold text-primary-foreground">
+                {planId === "planner_professional" && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-primary to-gold px-3 py-1 text-xs font-semibold text-primary-foreground">
                     Most Popular
                   </div>
                 )}
-                <div className="text-sm font-semibold text-primary">{p.name}</div>
+                <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                  {audienceLabel}
+                </p>
+                <div className="mt-1 text-sm font-semibold text-primary">{p.name}</div>
                 <p className="mt-1 text-sm text-muted-foreground">{p.tagline}</p>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="font-display text-5xl">{amount}</span>
+                <div className="mt-5 flex items-baseline gap-1">
+                  <span className="font-display text-4xl sm:text-5xl">{amount}</span>
                   {period && p.price !== null && (
                     <span className="text-muted-foreground">{period}</span>
                   )}
                 </div>
-                <ul className="mt-6 space-y-3 text-sm">
-                  {p.features.slice(0, 6).map((f) => (
+                {p.trialDays > 0 && p.price !== null && p.price > 0 && (
+                  <p className="mt-1 text-xs text-primary">
+                    {p.trialDays}-day free trial · payment method required
+                  </p>
+                )}
+                <ul className="mt-6 space-y-2.5 text-sm">
+                  {p.features.slice(0, 5).map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 text-primary" />
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-8">
+                <div className="mt-8 pt-2">
                   <Button
                     variant={p.featured ? "hero" : "soft"}
                     size="lg"
@@ -618,28 +617,67 @@ function Landing() {
             );
           })}
         </div>
+
         <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-          Also available: Vendor plans from $0 · Planner plans from $49/mo ·{" "}
+          Vendor plans start at $0 (Starter) ·{" "}
           <Link to="/pricing" className="underline hover:text-foreground">
-            See full pricing →
+            See all plans and full pricing →
           </Link>
         </p>
       </section>
 
 
-      {/* EARLY ACCESS */}
+      {/* WHO IT'S FOR */}
+      <section className="mx-auto max-w-7xl px-6 py-24">
+        <div className="mx-auto max-w-2xl text-center">
+          <SectionEyebrow>Who it's for</SectionEyebrow>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">Built for everyone who plans.</h2>
+        </div>
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              icon: UsersRound,
+              title: "Hosts & families",
+              desc: "Plan celebrations, milestones, and gatherings with everything organized in one place.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Professional planners",
+              desc: "Manage events, clients, vendors, timelines, and planning details from one workspace.",
+            },
+            {
+              icon: Briefcase,
+              title: "Vendors & venues",
+              desc: "Showcase your business, get discovered, and connect with people actively planning events.",
+            },
+          ].map((card) => (
+            <div
+              key={card.title}
+              className="rounded-2xl border border-border bg-card p-7 transition-all hover:-translate-y-0.5 hover:shadow-soft"
+            >
+              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
+                <card.icon className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-semibold">{card.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
       <section className="bg-secondary/40 py-28">
         <div className="mx-auto max-w-3xl px-6 text-center">
-          <SectionEyebrow>Early Access</SectionEyebrow>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl">
-            Now welcoming planners and vendors.
+          <SectionEyebrow>Start planning</SectionEyebrow>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">
+            Make the plan. Keep the joy.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            MelaBridge is in early access. Join the first wave of hosts, planners, and vendors — and help shape the future of event planning.
+            Start free, build an editable plan with AI, and bring in paid tools only when they help you do more.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button asChild variant="hero" size="lg"><Link to="/auth">Get started free</Link></Button>
-            <Button asChild variant="outline" size="lg"><Link to="/vendors">Become a vendor</Link></Button>
+            <Button asChild variant="hero" size="lg"><Link to="/auth">Start planning free</Link></Button>
+            <Button asChild variant="outline" size="lg"><Link to="/auth" search={{ type: "vendor" }}>Join as a vendor or venue</Link></Button>
           </div>
         </div>
       </section>
@@ -649,7 +687,7 @@ function Landing() {
       <section id="faq" className="mx-auto max-w-3xl px-6 py-28">
         <div className="text-center">
           <SectionEyebrow>FAQ</SectionEyebrow>
-          <h2 className="mt-3 font-display text-4xl md:text-5xl">Answers before you ask.</h2>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl">Answers before you ask.</h2>
         </div>
         <Accordion type="single" collapsible className="mt-10 space-y-3">
           {faqs.map((f, i) => (
@@ -668,16 +706,16 @@ function Landing() {
       </section>
 
       {/* FINAL CTA */}
-      <section className="mx-auto max-w-7xl px-6 py-28">
+      <section className="hidden mx-auto max-w-7xl px-6 py-28">
         <div className="relative overflow-hidden rounded-[2.5rem] border border-border bg-gradient-to-br from-primary via-primary to-primary-glow px-8 py-20 text-center text-primary-foreground shadow-elegant">
           <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-gold/40 blur-3xl" />
           <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-          <h2 className="relative font-display text-4xl md:text-6xl">
+          <h2 className="relative font-display text-3xl sm:text-4xl md:text-6xl">
             Your next moment is waiting.
           </h2>
           <p className="relative mx-auto mt-4 max-w-xl text-primary-foreground/80">
-            Join thousands of hosts, planners, vendors and venues building the future of events —
-            together, on MelaBridge.
+            Join hosts, planners, vendors, and venues building better events together
+            with MelaBridge.
           </p>
           <div className="relative mt-8 flex flex-wrap justify-center gap-3">
             <Button variant="gold" size="xl" asChild>
@@ -696,6 +734,70 @@ function Landing() {
       </section>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+function HomepagePlannerPlanCard({
+  plan,
+  audienceLabel,
+}: {
+  plan: ReturnType<typeof getPlan>;
+  audienceLabel: string;
+}) {
+  const [cadence, setCadence] = useState<PlannerBillingCadence>("monthly");
+  const selectedPlan = getPlannerPlan(cadence);
+  const { amount, period } = formatPrice(selectedPlan);
+  const next = `/subscription?audience=planner&billing=${cadence}`;
+
+  return (
+    <div className="relative flex flex-col rounded-3xl border border-primary/40 bg-gradient-to-b from-primary/5 to-transparent p-6 shadow-elegant sm:p-8">
+      <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-primary to-gold px-3 py-1 text-xs font-semibold text-primary-foreground">
+        Most Popular
+      </div>
+      <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">{audienceLabel}</p>
+      <div className="mt-1 text-sm font-semibold text-primary">{selectedPlan.name}</div>
+      <p className="mt-1 text-sm text-muted-foreground">{selectedPlan.tagline}</p>
+      <div className="mt-5 flex items-baseline gap-1">
+        <span className="font-display text-4xl sm:text-5xl">{amount}</span>
+        <span className="text-muted-foreground">{period}</span>
+      </div>
+      <div className="mt-4 grid grid-cols-2 rounded-lg border border-border bg-background/60 p-1" role="group" aria-label="Planner Pro billing cadence">
+        {(["monthly", "annual"] as const).map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => setCadence(option)}
+            aria-pressed={cadence === option}
+            className={`rounded-md px-2 py-2 text-xs font-medium transition ${
+              cadence === option ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {option === "monthly" ? "Monthly · $29/month" : "Annual · $290/year"}
+          </button>
+        ))}
+      </div>
+      {cadence === "annual" && (
+        <p className="mt-2 text-xs text-primary">Save $58 versus 12 monthly payments · paid annually.</p>
+      )}
+      <p className="mt-1 text-xs text-primary">
+        5-day free trial · payment method required · first charge after the trial unless canceled
+      </p>
+      <ul className="mt-6 space-y-2.5 text-sm">
+        {selectedPlan.features.slice(0, 5).map((f) => (
+          <li key={f} className="flex items-start gap-2">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-8 pt-2">
+        <Button variant="hero" size="lg" className="w-full" asChild>
+          <Link to="/auth" search={{ type: "planner", next }}>
+            {selectedPlan.ctaLabel} <ArrowRight className="ml-1 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }

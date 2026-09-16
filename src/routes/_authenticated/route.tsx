@@ -1,26 +1,45 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async ({ location }) => {
-    const result = await Promise.race([
-      supabase.auth.getUser().then(({ data, error }) => ({ user: data.user, error: error?.message ?? null })),
-      new Promise<{ user: null; error: string }>((resolve) => {
-        window.setTimeout(() => resolve({ user: null, error: "Authentication timed out" }), 10_000);
-      }),
-    ]);
-    if (result.error || !result.user) {
-      // Preserve the intended destination so we can return the user here after sign-in.
-      if (typeof window !== "undefined") {
-        const intended = `${location.pathname}${location.searchStr ?? ""}`;
-        if (intended.startsWith("/") && !intended.startsWith("//") && intended !== "/auth") {
-          window.sessionStorage.setItem("melabridge.auth.next", intended);
-        }
-      }
-      throw redirect({ to: "/auth" });
-    }
-    return { user: result.user };
-  },
-  component: () => <Outlet />,
+  head: () => ({
+    meta: [{ name: "robots", content: "noindex, nofollow" }],
+  }),
+  component: AuthenticatedLayout,
 });
+
+function AuthenticatedLayout() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading || user) return;
+    const search = typeof location.search === "string" ? location.search : "";
+    const intended = `${location.pathname}${search}`;
+    if (
+      intended.startsWith("/") &&
+      !intended.startsWith("//") &&
+      !intended.startsWith("/auth")
+    ) {
+      window.sessionStorage.setItem("melabridge.auth.next", intended);
+    }
+    navigate({ to: "/auth", replace: true });
+  }, [loading, location.pathname, location.search, navigate, user]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center text-sm text-muted-foreground">
+          <Loader2 className="mx-auto mb-3 h-6 w-6 animate-spin text-primary" />
+          Checking your secure session…
+        </div>
+      </div>
+    );
+  }
+
+  return <Outlet />;
+}

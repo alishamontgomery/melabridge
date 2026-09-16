@@ -3,16 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sparkles, ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site-footer";
-
-import { BrandMark } from "@/components/brand-logo";
-function MarketingLogo() {
-  return (
-    <Link to="/" className="flex items-center gap-2">
-      <BrandMark size="md" />
-      <span className="font-display text-xl font-semibold tracking-tight">MelaBridge</span>
-    </Link>
-  );
-}
+import { SiteHeader } from "@/components/site-header";
 
 export function MarketingPage({
   eyebrow,
@@ -27,25 +18,7 @@ export function MarketingPage({
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <MarketingLogo />
-          <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
-            <Link to="/features" className="text-sm text-muted-foreground hover:text-foreground">Features</Link>
-            <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link>
-            <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">About</Link>
-            <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground">Contact</Link>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="rounded-full" asChild>
-              <Link to="/auth">Log in</Link>
-            </Button>
-            <Button variant="hero" size="sm" className="rounded-full" asChild>
-              <Link to="/auth" search={{ intent: "signup" } as never}>Sign up</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="bg-hero-radial relative overflow-hidden border-b border-border/60">
         <div className="mx-auto max-w-4xl px-6 py-20 sm:py-28">

@@ -11,6 +11,7 @@
  * the event date changes later. Runsheet times are relative to a target
  * start hour so they render regardless of whether the user set one.
  */
+import { EVENT_TEMPLATE_EXPANSIONS } from "./event-template-expansions";
 
 export type TaskTemplate = {
   title: string;
@@ -87,7 +88,7 @@ const BIRTHDAY: EventTemplate = {
     { category: "Invitations", label: "Invitations and stationery", share: 0.03 },
     { category: "Rentals", label: "Tableware and rentals", share: 0.05 },
     { category: "Favors", label: "Party favors", share: 0.04 },
-    { category: "Contingency", label: "Miscellaneous / buffer", share: 0.03 },
+    { category: "Contingency", label: "Contingency reserve", share: 0.03 },
   ],
   runsheet: [
     { offset_min: -120, duration_min: 60, title: "Vendor arrival & venue setup", owner: "Host" },
@@ -342,6 +343,7 @@ const TEMPLATES: Record<string, EventTemplate> = {
   sangeet: WEDDING,
   mehndi: WEDDING,
   festival: BIRTHDAY,
+  ...EVENT_TEMPLATE_EXPANSIONS,
 };
 
 export function getEventTemplate(eventType: string | null | undefined): EventTemplate {
@@ -449,6 +451,26 @@ const INVITE_BY_KEY: Record<string, string> = {
     "Send formal invitations 8 weeks out with an early-bird ticket tier. Follow up with sponsors individually and send a final registration push 1 week out.",
   fundraiser:
     "Announce 8 weeks out with a compelling ask and matching-gift info. Send tiered email sequences (announce → early-bird close → last week → last day). Personal outreach converts best.",
+  "bridal shower":
+    "Send invitations 6–8 weeks out with the registry link, RSVP deadline, dress guidance, and whether the shower is co-ed. Follow up 10 days before with parking, dietary, and gift-opening details.",
+  "engagement party":
+    "Send invitations 6–8 weeks out with the RSVP deadline, dress code, parking, and whether guests should expect a cash bar or hosted drinks. Send a final logistics note one week before.",
+  "anniversary celebration":
+    "Send invitations 8–10 weeks out with the milestone being celebrated, RSVP deadline, dress code, and meal details. Ask guests to submit memories or photos before the tribute deadline.",
+  "retirement party":
+    "Send invitations 6–8 weeks out with RSVP and dietary questions. Include parking and accessibility information, and ask invitees to submit a short memory or photo for the honoree's tribute.",
+  "holiday party":
+    "Send invitations 6–8 weeks out with the holiday theme, RSVP deadline, dress code, gift-exchange rules, dietary questions, and transportation or parking details. Send one reminder one week before.",
+  "fundraiser or gala":
+    "Open registration 8–12 weeks out with the mission story, ticket levels, sponsor recognition, dress code, accessibility, and parking. Send a final reminder one week before and a donor follow-up after the event.",
+  "conference or networking event":
+    "Open registration 8–12 weeks out with the agenda, speaker list, ticket deadline, parking or transit, accessibility, and dietary questions. Send logistics and calendar reminders two weeks and three days before.",
+  "school event or prom":
+    "Open ticket sales 8–10 weeks out with permission requirements, dress code, arrival and pickup rules, parking, accessibility, and the RSVP deadline. Send students and families a final safety and logistics reminder one week before.",
+  quinceañera:
+    "Send save-the-dates about 6 months out, then formal invitations 10–12 weeks before with ceremony and reception locations, RSVP deadline, dress guidance, and transportation details. Confirm church and family requirements separately.",
+  "dinner party":
+    "Send invitations 3–4 weeks out with the menu style, RSVP deadline, dietary questions, dress guidance, parking, and accessibility details. Confirm final portions and seating one week before.",
 };
 
 export function getInvitationGuidance(eventType: string | null | undefined): string {

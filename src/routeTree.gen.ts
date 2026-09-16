@@ -12,10 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as VisionRouteImport } from './routes/vision'
 import { Route as VendorsRouteImport } from './routes/vendors'
-import { Route as VendorPortalRouteImport } from './routes/vendor-portal'
+import { Route as VendorTermsRouteImport } from './routes/vendor-terms'
 import { Route as TutorialsRouteImport } from './routes/tutorials'
 import { Route as TravelRouteImport } from './routes/travel'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as TicketingTermsRouteImport } from './routes/ticketing-terms'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TasksRouteImport } from './routes/tasks'
@@ -24,9 +25,12 @@ import { Route as ShareRouteImport } from './routes/share'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as RefundRouteImport } from './routes/refund'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PaymentTermsRouteImport } from './routes/payment-terms'
+import { Route as OrganizerTermsRouteImport } from './routes/organizer-terms'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as MarketplaceRouteImport } from './routes/marketplace'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -45,11 +49,11 @@ import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ConciergeRouteImport } from './routes/concierge'
 import { Route as CollaborationRouteImport } from './routes/collaboration'
+import { Route as CancellationRouteImport } from './routes/cancellation'
 import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as BridgeworldRouteImport } from './routes/bridgeworld'
 import { Route as BridgevaultRouteImport } from './routes/bridgevault'
 import { Route as BridgestudioRouteImport } from './routes/bridgestudio'
-import { Route as BridgepilotRouteImport } from './routes/bridgepilot'
 import { Route as BridgepayRouteImport } from './routes/bridgepay'
 import { Route as BridgeliveRouteImport } from './routes/bridgelive'
 import { Route as BridgegraphRouteImport } from './routes/bridgegraph'
@@ -64,12 +68,23 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as VendorProfileVendorIdRouteImport } from './routes/vendor-profile.$vendorId'
+import { Route as TicketTicketCodeRouteImport } from './routes/ticket.$ticketCode'
+import { Route as TEventIdRouteImport } from './routes/t.$eventId'
+import { Route as StaffCheckinEventIdRouteImport } from './routes/staff-checkin.$eventId'
+import { Route as RsvpTokenRouteImport } from './routes/rsvp.$token'
+import { Route as EEventIdRouteImport } from './routes/e.$eventId'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as AdminVendorsRouteImport } from './routes/admin.vendors'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscriptions'
+import { Route as AdminSourcingRouteImport } from './routes/admin.sourcing'
 import { Route as AdminInviteRouteImport } from './routes/admin.invite'
 import { Route as AuthenticatedVendorSettingsRouteImport } from './routes/_authenticated/vendor-settings'
 import { Route as AuthenticatedVendorProfileBuilderRouteImport } from './routes/_authenticated/vendor-profile-builder'
+import { Route as AuthenticatedVendorPackagesRouteImport } from './routes/_authenticated/vendor-packages'
 import { Route as AuthenticatedVendorRouteImport } from './routes/_authenticated/vendor'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDraftsRouteImport } from './routes/_authenticated/drafts'
@@ -77,18 +92,26 @@ import { Route as AuthenticatedCalendarRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedEventsIndexRouteImport } from './routes/_authenticated/events/index'
 import { Route as AuthenticatedCalendarIndexRouteImport } from './routes/_authenticated/calendar.index'
 import { Route as AuthenticatedBookingsIndexRouteImport } from './routes/_authenticated/bookings.index'
+import { Route as TEventIdConfirmRouteImport } from './routes/t.$eventId.confirm'
+import { Route as StudioEditDesignIdRouteImport } from './routes/studio.edit.$designId'
+import { Route as ApiTelemetryClientErrorRouteImport } from './routes/api/telemetry/client-error'
+import { Route as ApiMonitorSyntheticRouteImport } from './routes/api/monitor/synthetic'
+import { Route as ApiMonitorReportRouteImport } from './routes/api/monitor/report'
+import { Route as ApiCronProcessScheduledMessagesRouteImport } from './routes/api/cron/process-scheduled-messages'
+import { Route as ApiAuthSessionPresenceRouteImport } from './routes/api/auth/session-presence'
 import { Route as AuthenticatedSettingsCalendarRouteImport } from './routes/_authenticated/settings.calendar'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events/new'
 import { Route as AuthenticatedEventsAiNewRouteImport } from './routes/_authenticated/events/ai-new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events/$eventId'
+import { Route as AuthenticatedEventDayEventIdRouteImport } from './routes/_authenticated/event-day.$eventId'
+import { Route as AuthenticatedCheckinEventIdRouteImport } from './routes/_authenticated/checkin.$eventId'
 import { Route as AuthenticatedCalendarSettingsRouteImport } from './routes/_authenticated/calendar.settings'
 import { Route as AuthenticatedCalendarRequestsRouteImport } from './routes/_authenticated/calendar.requests'
 import { Route as AuthenticatedCalendarDashboardRouteImport } from './routes/_authenticated/calendar.dashboard'
 import { Route as AuthenticatedBookingsIdRouteImport } from './routes/_authenticated/bookings.$id'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicMarketplaceGoogleRouteImport } from './routes/api/public/marketplace/google'
+import { Route as ApiPublicCalendarTokenRouteImport } from './routes/api/public/calendar.$token'
 import { Route as AuthenticatedCalendarEventsIdRouteImport } from './routes/_authenticated/calendar.events.$id'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
@@ -106,9 +129,9 @@ const VendorsRoute = VendorsRouteImport.update({
   path: '/vendors',
   getParentRoute: () => rootRouteImport,
 } as any)
-const VendorPortalRoute = VendorPortalRouteImport.update({
-  id: '/vendor-portal',
-  path: '/vendor-portal',
+const VendorTermsRoute = VendorTermsRouteImport.update({
+  id: '/vendor-terms',
+  path: '/vendor-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TutorialsRoute = TutorialsRouteImport.update({
@@ -124,6 +147,11 @@ const TravelRoute = TravelRouteImport.update({
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketingTermsRoute = TicketingTermsRouteImport.update({
+  id: '/ticketing-terms',
+  path: '/ticketing-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -166,6 +194,11 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -179,6 +212,16 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentTermsRoute = PaymentTermsRouteImport.update({
+  id: '/payment-terms',
+  path: '/payment-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizerTermsRoute = OrganizerTermsRouteImport.update({
+  id: '/organizer-terms',
+  path: '/organizer-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -271,6 +314,11 @@ const CollaborationRoute = CollaborationRouteImport.update({
   path: '/collaboration',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CancellationRoute = CancellationRouteImport.update({
+  id: '/cancellation',
+  path: '/cancellation',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BudgetRoute = BudgetRouteImport.update({
   id: '/budget',
   path: '/budget',
@@ -289,11 +337,6 @@ const BridgevaultRoute = BridgevaultRouteImport.update({
 const BridgestudioRoute = BridgestudioRouteImport.update({
   id: '/bridgestudio',
   path: '/bridgestudio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BridgepilotRoute = BridgepilotRouteImport.update({
-  id: '/bridgepilot',
-  path: '/bridgepilot',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BridgepayRoute = BridgepayRouteImport.update({
@@ -365,6 +408,36 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VendorProfileVendorIdRoute = VendorProfileVendorIdRouteImport.update({
+  id: '/vendor-profile/$vendorId',
+  path: '/vendor-profile/$vendorId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketTicketCodeRoute = TicketTicketCodeRouteImport.update({
+  id: '/ticket/$ticketCode',
+  path: '/ticket/$ticketCode',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TEventIdRoute = TEventIdRouteImport.update({
+  id: '/t/$eventId',
+  path: '/t/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffCheckinEventIdRoute = StaffCheckinEventIdRouteImport.update({
+  id: '/staff-checkin/$eventId',
+  path: '/staff-checkin/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RsvpTokenRoute = RsvpTokenRouteImport.update({
+  id: '/rsvp/$token',
+  path: '/rsvp/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EEventIdRoute = EEventIdRouteImport.update({
+  id: '/e/$eventId',
+  path: '/e/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -375,9 +448,29 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/callback',
   getParentRoute: () => AuthRoute,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVendorsRoute = AdminVendorsRouteImport.update({
+  id: '/admin/vendors',
+  path: '/admin/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSubscriptionsRoute = AdminSubscriptionsRouteImport.update({
+  id: '/admin/subscriptions',
+  path: '/admin/subscriptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSourcingRoute = AdminSourcingRouteImport.update({
+  id: '/admin/sourcing',
+  path: '/admin/sourcing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminInviteRoute = AdminInviteRouteImport.update({
@@ -395,6 +488,12 @@ const AuthenticatedVendorProfileBuilderRoute =
   AuthenticatedVendorProfileBuilderRouteImport.update({
     id: '/vendor-profile-builder',
     path: '/vendor-profile-builder',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedVendorPackagesRoute =
+  AuthenticatedVendorPackagesRouteImport.update({
+    id: '/vendor-packages',
+    path: '/vendor-packages',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedVendorRoute = AuthenticatedVendorRouteImport.update({
@@ -435,6 +534,42 @@ const AuthenticatedBookingsIndexRoute =
     path: '/bookings/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const TEventIdConfirmRoute = TEventIdConfirmRouteImport.update({
+  id: '/confirm',
+  path: '/confirm',
+  getParentRoute: () => TEventIdRoute,
+} as any)
+const StudioEditDesignIdRoute = StudioEditDesignIdRouteImport.update({
+  id: '/studio/edit/$designId',
+  path: '/studio/edit/$designId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiTelemetryClientErrorRoute = ApiTelemetryClientErrorRouteImport.update({
+  id: '/api/telemetry/client-error',
+  path: '/api/telemetry/client-error',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMonitorSyntheticRoute = ApiMonitorSyntheticRouteImport.update({
+  id: '/api/monitor/synthetic',
+  path: '/api/monitor/synthetic',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMonitorReportRoute = ApiMonitorReportRouteImport.update({
+  id: '/api/monitor/report',
+  path: '/api/monitor/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronProcessScheduledMessagesRoute =
+  ApiCronProcessScheduledMessagesRouteImport.update({
+    id: '/api/cron/process-scheduled-messages',
+    path: '/api/cron/process-scheduled-messages',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiAuthSessionPresenceRoute = ApiAuthSessionPresenceRouteImport.update({
+  id: '/api/auth/session-presence',
+  path: '/api/auth/session-presence',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsCalendarRoute =
   AuthenticatedSettingsCalendarRouteImport.update({
     id: '/settings/calendar',
@@ -456,6 +591,18 @@ const AuthenticatedEventsEventIdRoute =
   AuthenticatedEventsEventIdRouteImport.update({
     id: '/events/$eventId',
     path: '/events/$eventId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEventDayEventIdRoute =
+  AuthenticatedEventDayEventIdRouteImport.update({
+    id: '/event-day/$eventId',
+    path: '/event-day/$eventId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCheckinEventIdRoute =
+  AuthenticatedCheckinEventIdRouteImport.update({
+    id: '/checkin/$eventId',
+    path: '/checkin/$eventId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCalendarSettingsRoute =
@@ -481,28 +628,23 @@ const AuthenticatedBookingsIdRoute = AuthenticatedBookingsIdRouteImport.update({
   path: '/bookings/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicMarketplaceGoogleRoute =
+  ApiPublicMarketplaceGoogleRouteImport.update({
+    id: '/api/public/marketplace/google',
+    path: '/api/public/marketplace/google',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCalendarTokenRoute = ApiPublicCalendarTokenRouteImport.update({
+  id: '/api/public/calendar/$token',
+  path: '/api/public/calendar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedCalendarEventsIdRoute =
   AuthenticatedCalendarEventsIdRouteImport.update({
     id: '/events/$id',
@@ -523,11 +665,11 @@ export interface FileRoutesByFullPath {
   '/bridgegraph': typeof BridgegraphRoute
   '/bridgelive': typeof BridgeliveRoute
   '/bridgepay': typeof BridgepayRoute
-  '/bridgepilot': typeof BridgepilotRoute
   '/bridgestudio': typeof BridgestudioRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
+  '/cancellation': typeof CancellationRoute
   '/collaboration': typeof CollaborationRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
@@ -546,9 +688,12 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/marketplace': typeof MarketplaceRoute
   '/notifications': typeof NotificationsRoute
+  '/organizer-terms': typeof OrganizerTermsRoute
+  '/payment-terms': typeof PaymentTermsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/refund': typeof RefundRoute
   '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
@@ -557,10 +702,11 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/ticketing-terms': typeof TicketingTermsRoute
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
   '/tutorials': typeof TutorialsRoute
-  '/vendor-portal': typeof VendorPortalRoute
+  '/vendor-terms': typeof VendorTermsRoute
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
@@ -568,29 +714,48 @@ export interface FileRoutesByFullPath {
   '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
+  '/vendor-packages': typeof AuthenticatedVendorPackagesRoute
   '/vendor-profile-builder': typeof AuthenticatedVendorProfileBuilderRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
   '/admin/invite': typeof AdminInviteRoute
+  '/admin/sourcing': typeof AdminSourcingRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vendors': typeof AdminVendorsRoute
+  '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/e/$eventId': typeof EEventIdRoute
+  '/rsvp/$token': typeof RsvpTokenRoute
+  '/staff-checkin/$eventId': typeof StaffCheckinEventIdRoute
+  '/t/$eventId': typeof TEventIdRouteWithChildren
+  '/ticket/$ticketCode': typeof TicketTicketCodeRoute
+  '/vendor-profile/$vendorId': typeof VendorProfileVendorIdRoute
   '/admin/': typeof AdminIndexRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
   '/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
+  '/checkin/$eventId': typeof AuthenticatedCheckinEventIdRoute
+  '/event-day/$eventId': typeof AuthenticatedEventDayEventIdRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/ai-new': typeof AuthenticatedEventsAiNewRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
+  '/api/auth/session-presence': typeof ApiAuthSessionPresenceRoute
+  '/api/cron/process-scheduled-messages': typeof ApiCronProcessScheduledMessagesRoute
+  '/api/monitor/report': typeof ApiMonitorReportRoute
+  '/api/monitor/synthetic': typeof ApiMonitorSyntheticRoute
+  '/api/telemetry/client-error': typeof ApiTelemetryClientErrorRoute
+  '/studio/edit/$designId': typeof StudioEditDesignIdRoute
+  '/t/$eventId/confirm': typeof TEventIdConfirmRoute
   '/bookings/': typeof AuthenticatedBookingsIndexRoute
   '/calendar/': typeof AuthenticatedCalendarIndexRoute
   '/events/': typeof AuthenticatedEventsIndexRoute
   '/calendar/events/$id': typeof AuthenticatedCalendarEventsIdRoute
+  '/api/public/calendar/$token': typeof ApiPublicCalendarTokenRoute
+  '/api/public/marketplace/google': typeof ApiPublicMarketplaceGoogleRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -605,11 +770,11 @@ export interface FileRoutesByTo {
   '/bridgegraph': typeof BridgegraphRoute
   '/bridgelive': typeof BridgeliveRoute
   '/bridgepay': typeof BridgepayRoute
-  '/bridgepilot': typeof BridgepilotRoute
   '/bridgestudio': typeof BridgestudioRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
+  '/cancellation': typeof CancellationRoute
   '/collaboration': typeof CollaborationRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
@@ -628,9 +793,12 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/marketplace': typeof MarketplaceRoute
   '/notifications': typeof NotificationsRoute
+  '/organizer-terms': typeof OrganizerTermsRoute
+  '/payment-terms': typeof PaymentTermsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/refund': typeof RefundRoute
   '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
@@ -639,39 +807,59 @@ export interface FileRoutesByTo {
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/ticketing-terms': typeof TicketingTermsRoute
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
   '/tutorials': typeof TutorialsRoute
-  '/vendor-portal': typeof VendorPortalRoute
+  '/vendor-terms': typeof VendorTermsRoute
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
   '/drafts': typeof AuthenticatedDraftsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vendor': typeof AuthenticatedVendorRoute
+  '/vendor-packages': typeof AuthenticatedVendorPackagesRoute
   '/vendor-profile-builder': typeof AuthenticatedVendorProfileBuilderRoute
   '/vendor-settings': typeof AuthenticatedVendorSettingsRoute
   '/admin/invite': typeof AdminInviteRoute
+  '/admin/sourcing': typeof AdminSourcingRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vendors': typeof AdminVendorsRoute
+  '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/e/$eventId': typeof EEventIdRoute
+  '/rsvp/$token': typeof RsvpTokenRoute
+  '/staff-checkin/$eventId': typeof StaffCheckinEventIdRoute
+  '/t/$eventId': typeof TEventIdRouteWithChildren
+  '/ticket/$ticketCode': typeof TicketTicketCodeRoute
+  '/vendor-profile/$vendorId': typeof VendorProfileVendorIdRoute
   '/admin': typeof AdminIndexRoute
   '/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
   '/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
+  '/checkin/$eventId': typeof AuthenticatedCheckinEventIdRoute
+  '/event-day/$eventId': typeof AuthenticatedEventDayEventIdRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/ai-new': typeof AuthenticatedEventsAiNewRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
   '/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
+  '/api/auth/session-presence': typeof ApiAuthSessionPresenceRoute
+  '/api/cron/process-scheduled-messages': typeof ApiCronProcessScheduledMessagesRoute
+  '/api/monitor/report': typeof ApiMonitorReportRoute
+  '/api/monitor/synthetic': typeof ApiMonitorSyntheticRoute
+  '/api/telemetry/client-error': typeof ApiTelemetryClientErrorRoute
+  '/studio/edit/$designId': typeof StudioEditDesignIdRoute
+  '/t/$eventId/confirm': typeof TEventIdConfirmRoute
   '/bookings': typeof AuthenticatedBookingsIndexRoute
   '/calendar': typeof AuthenticatedCalendarIndexRoute
   '/events': typeof AuthenticatedEventsIndexRoute
   '/calendar/events/$id': typeof AuthenticatedCalendarEventsIdRoute
+  '/api/public/calendar/$token': typeof ApiPublicCalendarTokenRoute
+  '/api/public/marketplace/google': typeof ApiPublicMarketplaceGoogleRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -688,11 +876,11 @@ export interface FileRoutesById {
   '/bridgegraph': typeof BridgegraphRoute
   '/bridgelive': typeof BridgeliveRoute
   '/bridgepay': typeof BridgepayRoute
-  '/bridgepilot': typeof BridgepilotRoute
   '/bridgestudio': typeof BridgestudioRoute
   '/bridgevault': typeof BridgevaultRoute
   '/bridgeworld': typeof BridgeworldRoute
   '/budget': typeof BudgetRoute
+  '/cancellation': typeof CancellationRoute
   '/collaboration': typeof CollaborationRoute
   '/concierge': typeof ConciergeRoute
   '/contact': typeof ContactRoute
@@ -711,9 +899,12 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/marketplace': typeof MarketplaceRoute
   '/notifications': typeof NotificationsRoute
+  '/organizer-terms': typeof OrganizerTermsRoute
+  '/payment-terms': typeof PaymentTermsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
+  '/refund': typeof RefundRoute
   '/reports': typeof ReportsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
@@ -722,10 +913,11 @@ export interface FileRoutesById {
   '/tasks': typeof TasksRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
+  '/ticketing-terms': typeof TicketingTermsRoute
   '/timeline': typeof TimelineRoute
   '/travel': typeof TravelRoute
   '/tutorials': typeof TutorialsRoute
-  '/vendor-portal': typeof VendorPortalRoute
+  '/vendor-terms': typeof VendorTermsRoute
   '/vendors': typeof VendorsRoute
   '/vision': typeof VisionRoute
   '/workspace': typeof WorkspaceRoute
@@ -733,29 +925,48 @@ export interface FileRoutesById {
   '/_authenticated/drafts': typeof AuthenticatedDraftsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vendor': typeof AuthenticatedVendorRoute
+  '/_authenticated/vendor-packages': typeof AuthenticatedVendorPackagesRoute
   '/_authenticated/vendor-profile-builder': typeof AuthenticatedVendorProfileBuilderRoute
   '/_authenticated/vendor-settings': typeof AuthenticatedVendorSettingsRoute
   '/admin/invite': typeof AdminInviteRoute
+  '/admin/sourcing': typeof AdminSourcingRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/vendors': typeof AdminVendorsRoute
+  '/api/health': typeof ApiHealthRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/e/$eventId': typeof EEventIdRoute
+  '/rsvp/$token': typeof RsvpTokenRoute
+  '/staff-checkin/$eventId': typeof StaffCheckinEventIdRoute
+  '/t/$eventId': typeof TEventIdRouteWithChildren
+  '/ticket/$ticketCode': typeof TicketTicketCodeRoute
+  '/vendor-profile/$vendorId': typeof VendorProfileVendorIdRoute
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/bookings/$id': typeof AuthenticatedBookingsIdRoute
   '/_authenticated/calendar/dashboard': typeof AuthenticatedCalendarDashboardRoute
   '/_authenticated/calendar/requests': typeof AuthenticatedCalendarRequestsRoute
   '/_authenticated/calendar/settings': typeof AuthenticatedCalendarSettingsRoute
+  '/_authenticated/checkin/$eventId': typeof AuthenticatedCheckinEventIdRoute
+  '/_authenticated/event-day/$eventId': typeof AuthenticatedEventDayEventIdRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/ai-new': typeof AuthenticatedEventsAiNewRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
   '/_authenticated/settings/calendar': typeof AuthenticatedSettingsCalendarRoute
+  '/api/auth/session-presence': typeof ApiAuthSessionPresenceRoute
+  '/api/cron/process-scheduled-messages': typeof ApiCronProcessScheduledMessagesRoute
+  '/api/monitor/report': typeof ApiMonitorReportRoute
+  '/api/monitor/synthetic': typeof ApiMonitorSyntheticRoute
+  '/api/telemetry/client-error': typeof ApiTelemetryClientErrorRoute
+  '/studio/edit/$designId': typeof StudioEditDesignIdRoute
+  '/t/$eventId/confirm': typeof TEventIdConfirmRoute
   '/_authenticated/bookings/': typeof AuthenticatedBookingsIndexRoute
   '/_authenticated/calendar/': typeof AuthenticatedCalendarIndexRoute
   '/_authenticated/events/': typeof AuthenticatedEventsIndexRoute
   '/_authenticated/calendar/events/$id': typeof AuthenticatedCalendarEventsIdRoute
+  '/api/public/calendar/$token': typeof ApiPublicCalendarTokenRoute
+  '/api/public/marketplace/google': typeof ApiPublicMarketplaceGoogleRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -772,11 +983,11 @@ export interface FileRouteTypes {
     | '/bridgegraph'
     | '/bridgelive'
     | '/bridgepay'
-    | '/bridgepilot'
     | '/bridgestudio'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
+    | '/cancellation'
     | '/collaboration'
     | '/concierge'
     | '/contact'
@@ -795,9 +1006,12 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/marketplace'
     | '/notifications'
+    | '/organizer-terms'
+    | '/payment-terms'
     | '/pricing'
     | '/privacy'
     | '/profile'
+    | '/refund'
     | '/reports'
     | '/reset-password'
     | '/settings'
@@ -806,10 +1020,11 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/terms'
+    | '/ticketing-terms'
     | '/timeline'
     | '/travel'
     | '/tutorials'
-    | '/vendor-portal'
+    | '/vendor-terms'
     | '/vendors'
     | '/vision'
     | '/workspace'
@@ -817,29 +1032,48 @@ export interface FileRouteTypes {
     | '/drafts'
     | '/onboarding'
     | '/vendor'
+    | '/vendor-packages'
     | '/vendor-profile-builder'
     | '/vendor-settings'
     | '/admin/invite'
+    | '/admin/sourcing'
+    | '/admin/subscriptions'
     | '/admin/users'
+    | '/admin/vendors'
+    | '/api/health'
     | '/auth/callback'
     | '/checkout/return'
+    | '/e/$eventId'
+    | '/rsvp/$token'
+    | '/staff-checkin/$eventId'
+    | '/t/$eventId'
+    | '/ticket/$ticketCode'
+    | '/vendor-profile/$vendorId'
     | '/admin/'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
     | '/calendar/settings'
+    | '/checkin/$eventId'
+    | '/event-day/$eventId'
     | '/events/$eventId'
     | '/events/ai-new'
     | '/events/new'
     | '/settings/calendar'
+    | '/api/auth/session-presence'
+    | '/api/cron/process-scheduled-messages'
+    | '/api/monitor/report'
+    | '/api/monitor/synthetic'
+    | '/api/telemetry/client-error'
+    | '/studio/edit/$designId'
+    | '/t/$eventId/confirm'
     | '/bookings/'
     | '/calendar/'
     | '/events/'
     | '/calendar/events/$id'
+    | '/api/public/calendar/$token'
+    | '/api/public/marketplace/google'
     | '/api/public/payments/webhook'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
-    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -854,11 +1088,11 @@ export interface FileRouteTypes {
     | '/bridgegraph'
     | '/bridgelive'
     | '/bridgepay'
-    | '/bridgepilot'
     | '/bridgestudio'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
+    | '/cancellation'
     | '/collaboration'
     | '/concierge'
     | '/contact'
@@ -877,9 +1111,12 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/marketplace'
     | '/notifications'
+    | '/organizer-terms'
+    | '/payment-terms'
     | '/pricing'
     | '/privacy'
     | '/profile'
+    | '/refund'
     | '/reports'
     | '/reset-password'
     | '/settings'
@@ -888,39 +1125,59 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/terms'
+    | '/ticketing-terms'
     | '/timeline'
     | '/travel'
     | '/tutorials'
-    | '/vendor-portal'
+    | '/vendor-terms'
     | '/vendors'
     | '/vision'
     | '/workspace'
     | '/drafts'
     | '/onboarding'
     | '/vendor'
+    | '/vendor-packages'
     | '/vendor-profile-builder'
     | '/vendor-settings'
     | '/admin/invite'
+    | '/admin/sourcing'
+    | '/admin/subscriptions'
     | '/admin/users'
+    | '/admin/vendors'
+    | '/api/health'
     | '/auth/callback'
     | '/checkout/return'
+    | '/e/$eventId'
+    | '/rsvp/$token'
+    | '/staff-checkin/$eventId'
+    | '/t/$eventId'
+    | '/ticket/$ticketCode'
+    | '/vendor-profile/$vendorId'
     | '/admin'
     | '/bookings/$id'
     | '/calendar/dashboard'
     | '/calendar/requests'
     | '/calendar/settings'
+    | '/checkin/$eventId'
+    | '/event-day/$eventId'
     | '/events/$eventId'
     | '/events/ai-new'
     | '/events/new'
     | '/settings/calendar'
+    | '/api/auth/session-presence'
+    | '/api/cron/process-scheduled-messages'
+    | '/api/monitor/report'
+    | '/api/monitor/synthetic'
+    | '/api/telemetry/client-error'
+    | '/studio/edit/$designId'
+    | '/t/$eventId/confirm'
     | '/bookings'
     | '/calendar'
     | '/events'
     | '/calendar/events/$id'
+    | '/api/public/calendar/$token'
+    | '/api/public/marketplace/google'
     | '/api/public/payments/webhook'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
-    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -936,11 +1193,11 @@ export interface FileRouteTypes {
     | '/bridgegraph'
     | '/bridgelive'
     | '/bridgepay'
-    | '/bridgepilot'
     | '/bridgestudio'
     | '/bridgevault'
     | '/bridgeworld'
     | '/budget'
+    | '/cancellation'
     | '/collaboration'
     | '/concierge'
     | '/contact'
@@ -959,9 +1216,12 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/marketplace'
     | '/notifications'
+    | '/organizer-terms'
+    | '/payment-terms'
     | '/pricing'
     | '/privacy'
     | '/profile'
+    | '/refund'
     | '/reports'
     | '/reset-password'
     | '/settings'
@@ -970,10 +1230,11 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/team'
     | '/terms'
+    | '/ticketing-terms'
     | '/timeline'
     | '/travel'
     | '/tutorials'
-    | '/vendor-portal'
+    | '/vendor-terms'
     | '/vendors'
     | '/vision'
     | '/workspace'
@@ -981,29 +1242,48 @@ export interface FileRouteTypes {
     | '/_authenticated/drafts'
     | '/_authenticated/onboarding'
     | '/_authenticated/vendor'
+    | '/_authenticated/vendor-packages'
     | '/_authenticated/vendor-profile-builder'
     | '/_authenticated/vendor-settings'
     | '/admin/invite'
+    | '/admin/sourcing'
+    | '/admin/subscriptions'
     | '/admin/users'
+    | '/admin/vendors'
+    | '/api/health'
     | '/auth/callback'
     | '/checkout/return'
+    | '/e/$eventId'
+    | '/rsvp/$token'
+    | '/staff-checkin/$eventId'
+    | '/t/$eventId'
+    | '/ticket/$ticketCode'
+    | '/vendor-profile/$vendorId'
     | '/admin/'
     | '/_authenticated/bookings/$id'
     | '/_authenticated/calendar/dashboard'
     | '/_authenticated/calendar/requests'
     | '/_authenticated/calendar/settings'
+    | '/_authenticated/checkin/$eventId'
+    | '/_authenticated/event-day/$eventId'
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/ai-new'
     | '/_authenticated/events/new'
     | '/_authenticated/settings/calendar'
+    | '/api/auth/session-presence'
+    | '/api/cron/process-scheduled-messages'
+    | '/api/monitor/report'
+    | '/api/monitor/synthetic'
+    | '/api/telemetry/client-error'
+    | '/studio/edit/$designId'
+    | '/t/$eventId/confirm'
     | '/_authenticated/bookings/'
     | '/_authenticated/calendar/'
     | '/_authenticated/events/'
     | '/_authenticated/calendar/events/$id'
+    | '/api/public/calendar/$token'
+    | '/api/public/marketplace/google'
     | '/api/public/payments/webhook'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
-    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1020,11 +1300,11 @@ export interface RootRouteChildren {
   BridgegraphRoute: typeof BridgegraphRoute
   BridgeliveRoute: typeof BridgeliveRoute
   BridgepayRoute: typeof BridgepayRoute
-  BridgepilotRoute: typeof BridgepilotRoute
   BridgestudioRoute: typeof BridgestudioRoute
   BridgevaultRoute: typeof BridgevaultRoute
   BridgeworldRoute: typeof BridgeworldRoute
   BudgetRoute: typeof BudgetRoute
+  CancellationRoute: typeof CancellationRoute
   CollaborationRoute: typeof CollaborationRoute
   ConciergeRoute: typeof ConciergeRoute
   ContactRoute: typeof ContactRoute
@@ -1043,9 +1323,12 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   MarketplaceRoute: typeof MarketplaceRoute
   NotificationsRoute: typeof NotificationsRoute
+  OrganizerTermsRoute: typeof OrganizerTermsRoute
+  PaymentTermsRoute: typeof PaymentTermsRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
+  RefundRoute: typeof RefundRoute
   ReportsRoute: typeof ReportsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
@@ -1054,21 +1337,37 @@ export interface RootRouteChildren {
   TasksRoute: typeof TasksRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
+  TicketingTermsRoute: typeof TicketingTermsRoute
   TimelineRoute: typeof TimelineRoute
   TravelRoute: typeof TravelRoute
   TutorialsRoute: typeof TutorialsRoute
-  VendorPortalRoute: typeof VendorPortalRoute
+  VendorTermsRoute: typeof VendorTermsRoute
   VendorsRoute: typeof VendorsRoute
   VisionRoute: typeof VisionRoute
   WorkspaceRoute: typeof WorkspaceRoute
   AdminInviteRoute: typeof AdminInviteRoute
+  AdminSourcingRoute: typeof AdminSourcingRoute
+  AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminVendorsRoute: typeof AdminVendorsRoute
+  ApiHealthRoute: typeof ApiHealthRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  EEventIdRoute: typeof EEventIdRoute
+  RsvpTokenRoute: typeof RsvpTokenRoute
+  StaffCheckinEventIdRoute: typeof StaffCheckinEventIdRoute
+  TEventIdRoute: typeof TEventIdRouteWithChildren
+  TicketTicketCodeRoute: typeof TicketTicketCodeRoute
+  VendorProfileVendorIdRoute: typeof VendorProfileVendorIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  ApiAuthSessionPresenceRoute: typeof ApiAuthSessionPresenceRoute
+  ApiCronProcessScheduledMessagesRoute: typeof ApiCronProcessScheduledMessagesRoute
+  ApiMonitorReportRoute: typeof ApiMonitorReportRoute
+  ApiMonitorSyntheticRoute: typeof ApiMonitorSyntheticRoute
+  ApiTelemetryClientErrorRoute: typeof ApiTelemetryClientErrorRoute
+  StudioEditDesignIdRoute: typeof StudioEditDesignIdRoute
+  ApiPublicCalendarTokenRoute: typeof ApiPublicCalendarTokenRoute
+  ApiPublicMarketplaceGoogleRoute: typeof ApiPublicMarketplaceGoogleRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
-  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
-  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1094,11 +1393,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VendorsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/vendor-portal': {
-      id: '/vendor-portal'
-      path: '/vendor-portal'
-      fullPath: '/vendor-portal'
-      preLoaderRoute: typeof VendorPortalRouteImport
+    '/vendor-terms': {
+      id: '/vendor-terms'
+      path: '/vendor-terms'
+      fullPath: '/vendor-terms'
+      preLoaderRoute: typeof VendorTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tutorials': {
@@ -1120,6 +1419,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ticketing-terms': {
+      id: '/ticketing-terms'
+      path: '/ticketing-terms'
+      fullPath: '/ticketing-terms'
+      preLoaderRoute: typeof TicketingTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -1178,6 +1484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -1197,6 +1510,20 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-terms': {
+      id: '/payment-terms'
+      path: '/payment-terms'
+      fullPath: '/payment-terms'
+      preLoaderRoute: typeof PaymentTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizer-terms': {
+      id: '/organizer-terms'
+      path: '/organizer-terms'
+      fullPath: '/organizer-terms'
+      preLoaderRoute: typeof OrganizerTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -1325,6 +1652,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollaborationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cancellation': {
+      id: '/cancellation'
+      path: '/cancellation'
+      fullPath: '/cancellation'
+      preLoaderRoute: typeof CancellationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/budget': {
       id: '/budget'
       path: '/budget'
@@ -1351,13 +1685,6 @@ declare module '@tanstack/react-router' {
       path: '/bridgestudio'
       fullPath: '/bridgestudio'
       preLoaderRoute: typeof BridgestudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bridgepilot': {
-      id: '/bridgepilot'
-      path: '/bridgepilot'
-      fullPath: '/bridgepilot'
-      preLoaderRoute: typeof BridgepilotRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bridgepay': {
@@ -1458,6 +1785,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vendor-profile/$vendorId': {
+      id: '/vendor-profile/$vendorId'
+      path: '/vendor-profile/$vendorId'
+      fullPath: '/vendor-profile/$vendorId'
+      preLoaderRoute: typeof VendorProfileVendorIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ticket/$ticketCode': {
+      id: '/ticket/$ticketCode'
+      path: '/ticket/$ticketCode'
+      fullPath: '/ticket/$ticketCode'
+      preLoaderRoute: typeof TicketTicketCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/t/$eventId': {
+      id: '/t/$eventId'
+      path: '/t/$eventId'
+      fullPath: '/t/$eventId'
+      preLoaderRoute: typeof TEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff-checkin/$eventId': {
+      id: '/staff-checkin/$eventId'
+      path: '/staff-checkin/$eventId'
+      fullPath: '/staff-checkin/$eventId'
+      preLoaderRoute: typeof StaffCheckinEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rsvp/$token': {
+      id: '/rsvp/$token'
+      path: '/rsvp/$token'
+      fullPath: '/rsvp/$token'
+      preLoaderRoute: typeof RsvpTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/e/$eventId': {
+      id: '/e/$eventId'
+      path: '/e/$eventId'
+      fullPath: '/e/$eventId'
+      preLoaderRoute: typeof EEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -1472,11 +1841,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/vendors': {
+      id: '/admin/vendors'
+      path: '/admin/vendors'
+      fullPath: '/admin/vendors'
+      preLoaderRoute: typeof AdminVendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/subscriptions': {
+      id: '/admin/subscriptions'
+      path: '/admin/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AdminSubscriptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/sourcing': {
+      id: '/admin/sourcing'
+      path: '/admin/sourcing'
+      fullPath: '/admin/sourcing'
+      preLoaderRoute: typeof AdminSourcingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/invite': {
@@ -1498,6 +1895,13 @@ declare module '@tanstack/react-router' {
       path: '/vendor-profile-builder'
       fullPath: '/vendor-profile-builder'
       preLoaderRoute: typeof AuthenticatedVendorProfileBuilderRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/vendor-packages': {
+      id: '/_authenticated/vendor-packages'
+      path: '/vendor-packages'
+      fullPath: '/vendor-packages'
+      preLoaderRoute: typeof AuthenticatedVendorPackagesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/vendor': {
@@ -1549,6 +1953,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBookingsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/t/$eventId/confirm': {
+      id: '/t/$eventId/confirm'
+      path: '/confirm'
+      fullPath: '/t/$eventId/confirm'
+      preLoaderRoute: typeof TEventIdConfirmRouteImport
+      parentRoute: typeof TEventIdRoute
+    }
+    '/studio/edit/$designId': {
+      id: '/studio/edit/$designId'
+      path: '/studio/edit/$designId'
+      fullPath: '/studio/edit/$designId'
+      preLoaderRoute: typeof StudioEditDesignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/telemetry/client-error': {
+      id: '/api/telemetry/client-error'
+      path: '/api/telemetry/client-error'
+      fullPath: '/api/telemetry/client-error'
+      preLoaderRoute: typeof ApiTelemetryClientErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/monitor/synthetic': {
+      id: '/api/monitor/synthetic'
+      path: '/api/monitor/synthetic'
+      fullPath: '/api/monitor/synthetic'
+      preLoaderRoute: typeof ApiMonitorSyntheticRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/monitor/report': {
+      id: '/api/monitor/report'
+      path: '/api/monitor/report'
+      fullPath: '/api/monitor/report'
+      preLoaderRoute: typeof ApiMonitorReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/process-scheduled-messages': {
+      id: '/api/cron/process-scheduled-messages'
+      path: '/api/cron/process-scheduled-messages'
+      fullPath: '/api/cron/process-scheduled-messages'
+      preLoaderRoute: typeof ApiCronProcessScheduledMessagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/session-presence': {
+      id: '/api/auth/session-presence'
+      path: '/api/auth/session-presence'
+      fullPath: '/api/auth/session-presence'
+      preLoaderRoute: typeof ApiAuthSessionPresenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/calendar': {
       id: '/_authenticated/settings/calendar'
       path: '/settings/calendar'
@@ -1575,6 +2028,20 @@ declare module '@tanstack/react-router' {
       path: '/events/$eventId'
       fullPath: '/events/$eventId'
       preLoaderRoute: typeof AuthenticatedEventsEventIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/event-day/$eventId': {
+      id: '/_authenticated/event-day/$eventId'
+      path: '/event-day/$eventId'
+      fullPath: '/event-day/$eventId'
+      preLoaderRoute: typeof AuthenticatedEventDayEventIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/checkin/$eventId': {
+      id: '/_authenticated/checkin/$eventId'
+      path: '/checkin/$eventId'
+      fullPath: '/checkin/$eventId'
+      preLoaderRoute: typeof AuthenticatedCheckinEventIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calendar/settings': {
@@ -1605,32 +2072,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBookingsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/marketplace/google': {
+      id: '/api/public/marketplace/google'
+      path: '/api/public/marketplace/google'
+      fullPath: '/api/public/marketplace/google'
+      preLoaderRoute: typeof ApiPublicMarketplaceGoogleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/calendar/$token': {
+      id: '/api/public/calendar/$token'
+      path: '/api/public/calendar/$token'
+      fullPath: '/api/public/calendar/$token'
+      preLoaderRoute: typeof ApiPublicCalendarTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/calendar/events/$id': {
@@ -1669,9 +2129,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDraftsRoute: typeof AuthenticatedDraftsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedVendorRoute: typeof AuthenticatedVendorRoute
+  AuthenticatedVendorPackagesRoute: typeof AuthenticatedVendorPackagesRoute
   AuthenticatedVendorProfileBuilderRoute: typeof AuthenticatedVendorProfileBuilderRoute
   AuthenticatedVendorSettingsRoute: typeof AuthenticatedVendorSettingsRoute
   AuthenticatedBookingsIdRoute: typeof AuthenticatedBookingsIdRoute
+  AuthenticatedCheckinEventIdRoute: typeof AuthenticatedCheckinEventIdRoute
+  AuthenticatedEventDayEventIdRoute: typeof AuthenticatedEventDayEventIdRoute
   AuthenticatedEventsEventIdRoute: typeof AuthenticatedEventsEventIdRoute
   AuthenticatedEventsAiNewRoute: typeof AuthenticatedEventsAiNewRoute
   AuthenticatedEventsNewRoute: typeof AuthenticatedEventsNewRoute
@@ -1685,10 +2148,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDraftsRoute: AuthenticatedDraftsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedVendorRoute: AuthenticatedVendorRoute,
+  AuthenticatedVendorPackagesRoute: AuthenticatedVendorPackagesRoute,
   AuthenticatedVendorProfileBuilderRoute:
     AuthenticatedVendorProfileBuilderRoute,
   AuthenticatedVendorSettingsRoute: AuthenticatedVendorSettingsRoute,
   AuthenticatedBookingsIdRoute: AuthenticatedBookingsIdRoute,
+  AuthenticatedCheckinEventIdRoute: AuthenticatedCheckinEventIdRoute,
+  AuthenticatedEventDayEventIdRoute: AuthenticatedEventDayEventIdRoute,
   AuthenticatedEventsEventIdRoute: AuthenticatedEventsEventIdRoute,
   AuthenticatedEventsAiNewRoute: AuthenticatedEventsAiNewRoute,
   AuthenticatedEventsNewRoute: AuthenticatedEventsNewRoute,
@@ -1710,6 +2176,18 @@ const AuthRouteChildren: AuthRouteChildren = {
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
+interface TEventIdRouteChildren {
+  TEventIdConfirmRoute: typeof TEventIdConfirmRoute
+}
+
+const TEventIdRouteChildren: TEventIdRouteChildren = {
+  TEventIdConfirmRoute: TEventIdConfirmRoute,
+}
+
+const TEventIdRouteWithChildren = TEventIdRoute._addFileChildren(
+  TEventIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -1724,11 +2202,11 @@ const rootRouteChildren: RootRouteChildren = {
   BridgegraphRoute: BridgegraphRoute,
   BridgeliveRoute: BridgeliveRoute,
   BridgepayRoute: BridgepayRoute,
-  BridgepilotRoute: BridgepilotRoute,
   BridgestudioRoute: BridgestudioRoute,
   BridgevaultRoute: BridgevaultRoute,
   BridgeworldRoute: BridgeworldRoute,
   BudgetRoute: BudgetRoute,
+  CancellationRoute: CancellationRoute,
   CollaborationRoute: CollaborationRoute,
   ConciergeRoute: ConciergeRoute,
   ContactRoute: ContactRoute,
@@ -1747,9 +2225,12 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   MarketplaceRoute: MarketplaceRoute,
   NotificationsRoute: NotificationsRoute,
+  OrganizerTermsRoute: OrganizerTermsRoute,
+  PaymentTermsRoute: PaymentTermsRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
+  RefundRoute: RefundRoute,
   ReportsRoute: ReportsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
@@ -1758,21 +2239,37 @@ const rootRouteChildren: RootRouteChildren = {
   TasksRoute: TasksRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
+  TicketingTermsRoute: TicketingTermsRoute,
   TimelineRoute: TimelineRoute,
   TravelRoute: TravelRoute,
   TutorialsRoute: TutorialsRoute,
-  VendorPortalRoute: VendorPortalRoute,
+  VendorTermsRoute: VendorTermsRoute,
   VendorsRoute: VendorsRoute,
   VisionRoute: VisionRoute,
   WorkspaceRoute: WorkspaceRoute,
   AdminInviteRoute: AdminInviteRoute,
+  AdminSourcingRoute: AdminSourcingRoute,
+  AdminSubscriptionsRoute: AdminSubscriptionsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminVendorsRoute: AdminVendorsRoute,
+  ApiHealthRoute: ApiHealthRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  EEventIdRoute: EEventIdRoute,
+  RsvpTokenRoute: RsvpTokenRoute,
+  StaffCheckinEventIdRoute: StaffCheckinEventIdRoute,
+  TEventIdRoute: TEventIdRouteWithChildren,
+  TicketTicketCodeRoute: TicketTicketCodeRoute,
+  VendorProfileVendorIdRoute: VendorProfileVendorIdRoute,
   AdminIndexRoute: AdminIndexRoute,
+  ApiAuthSessionPresenceRoute: ApiAuthSessionPresenceRoute,
+  ApiCronProcessScheduledMessagesRoute: ApiCronProcessScheduledMessagesRoute,
+  ApiMonitorReportRoute: ApiMonitorReportRoute,
+  ApiMonitorSyntheticRoute: ApiMonitorSyntheticRoute,
+  ApiTelemetryClientErrorRoute: ApiTelemetryClientErrorRoute,
+  StudioEditDesignIdRoute: StudioEditDesignIdRoute,
+  ApiPublicCalendarTokenRoute: ApiPublicCalendarTokenRoute,
+  ApiPublicMarketplaceGoogleRoute: ApiPublicMarketplaceGoogleRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
-  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
-  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

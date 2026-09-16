@@ -178,17 +178,17 @@ function EventDetailPage() {
         <Card className="p-5 lg:col-span-2">
           <h3 className="font-display text-lg font-semibold">Details</h3>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Field label="Event name"><Input value={form.event_name} onChange={(e) => setForm({ ...form, event_name: e.target.value })} /></Field>
-            <Field label="Event type"><Input value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="Wedding, Sangeet…" /></Field>
-            <Field label="Client"><Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} /></Field>
-            <Field label="Venue"><Input value={form.venue_name} onChange={(e) => setForm({ ...form, venue_name: e.target.value })} /></Field>
-            <Field label="Address" className="sm:col-span-2"><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
-            <Field label="Start"><Input type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} onBlur={runConflicts} /></Field>
-            <Field label="End"><Input type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} onBlur={runConflicts} /></Field>
-            <Field label="Setup (min)"><Input type="number" min={0} value={form.setup_minutes} onChange={(e) => setForm({ ...form, setup_minutes: e.target.value })} onBlur={runConflicts} /></Field>
-            <Field label="Breakdown (min)"><Input type="number" min={0} value={form.breakdown_minutes} onChange={(e) => setForm({ ...form, breakdown_minutes: e.target.value })} onBlur={runConflicts} /></Field>
-            <Field label="Internal notes" className="sm:col-span-2">
-              <Textarea rows={3} value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} />
+            <Field id="calendar-event-name" label="Event name"><Input id="calendar-event-name" value={form.event_name} onChange={(e) => setForm({ ...form, event_name: e.target.value })} /></Field>
+            <Field id="calendar-event-type" label="Event type"><Input id="calendar-event-type" value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })} placeholder="Wedding, Sangeet…" /></Field>
+            <Field id="calendar-client" label="Client"><Input id="calendar-client" value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} /></Field>
+            <Field id="calendar-venue" label="Venue"><Input id="calendar-venue" value={form.venue_name} onChange={(e) => setForm({ ...form, venue_name: e.target.value })} /></Field>
+            <Field id="calendar-address" label="Address" className="sm:col-span-2"><Input id="calendar-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></Field>
+            <Field id="calendar-start" label="Start"><Input id="calendar-start" type="datetime-local" value={form.starts_at} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} onBlur={runConflicts} /></Field>
+            <Field id="calendar-end" label="End"><Input id="calendar-end" type="datetime-local" value={form.ends_at} onChange={(e) => setForm({ ...form, ends_at: e.target.value })} onBlur={runConflicts} /></Field>
+            <Field id="calendar-setup" label="Setup (min)"><Input id="calendar-setup" type="number" min={0} value={form.setup_minutes} onChange={(e) => setForm({ ...form, setup_minutes: e.target.value })} onBlur={runConflicts} /></Field>
+            <Field id="calendar-breakdown" label="Breakdown (min)"><Input id="calendar-breakdown" type="number" min={0} value={form.breakdown_minutes} onChange={(e) => setForm({ ...form, breakdown_minutes: e.target.value })} onBlur={runConflicts} /></Field>
+            <Field id="calendar-notes" label="Internal notes" className="sm:col-span-2">
+              <Textarea id="calendar-notes" rows={3} value={form.internal_notes} onChange={(e) => setForm({ ...form, internal_notes: e.target.value })} />
             </Field>
           </div>
         </Card>
@@ -196,15 +196,15 @@ function EventDetailPage() {
         <Card className="p-5">
           <h3 className="font-display text-lg font-semibold">Status & payment</h3>
           <div className="mt-4 space-y-3">
-            <Field label="Status">
+            <Field id="calendar-status" label="Status">
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="calendar-status"><SelectValue /></SelectTrigger>
                 <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
-            <Field label="Payment status"><Input value={form.payment_status ?? ""} onChange={(e) => setForm({ ...form, payment_status: e.target.value })} placeholder="Unpaid, Deposit, Paid…" /></Field>
-            <Field label="Contract status"><Input value={form.contract_status ?? ""} onChange={(e) => setForm({ ...form, contract_status: e.target.value })} placeholder="Sent, Signed…" /></Field>
-            <Field label="Revenue ($)"><Input type="number" min={0} value={form.revenue_amount ?? 0} onChange={(e) => setForm({ ...form, revenue_amount: e.target.value })} /></Field>
+            <Field id="calendar-payment-status" label="Payment status"><Input id="calendar-payment-status" value={form.payment_status ?? ""} onChange={(e) => setForm({ ...form, payment_status: e.target.value })} placeholder="Unpaid, Deposit, Paid…" /></Field>
+            <Field id="calendar-contract-status" label="Contract status"><Input id="calendar-contract-status" value={form.contract_status ?? ""} onChange={(e) => setForm({ ...form, contract_status: e.target.value })} placeholder="Sent, Signed…" /></Field>
+            <Field id="calendar-revenue" label="Revenue ($)"><Input id="calendar-revenue" type="number" min={0} value={form.revenue_amount ?? 0} onChange={(e) => setForm({ ...form, revenue_amount: e.target.value })} /></Field>
           </div>
         </Card>
       </div>
@@ -212,10 +212,10 @@ function EventDetailPage() {
   );
 }
 
-function Field({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+function Field({ id, label, children, className }: { id: string; label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label htmlFor={id} className="text-xs text-muted-foreground">{label}</Label>
       <div className="mt-1">{children}</div>
     </div>
   );

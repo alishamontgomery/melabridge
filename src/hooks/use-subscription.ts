@@ -56,16 +56,31 @@ export function useSubscription() {
   useEffect(() => {
     refetch();
     if (!user) return;
-    const channel = supabase
-      .channel(`subscriptions:${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
-        () => refetch(),
-      )
-      .subscribe();
+
+    // Wrap in try/catch: Supabase Realtime can throw synchronously when
+    // the table isn't in the realtime publication, or during React StrictMode's
+    // effect double-invoke. A crash here should never take down the whole page —
+    // the subscription data is already fetched via refetch() above.
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      channel = supabase
+        // Supabase reuses channels by topic. React StrictMode can remount this
+        // effect before the prior async removal finishes, so every subscription
+        // needs a distinct topic rather than attaching handlers to a subscribed
+        // channel from the previous effect.
+        .channel(`subscriptions:${user.id}:${crypto.randomUUID()}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${user.id}` },
+          () => refetch(),
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn("[useSubscription] Realtime setup failed (live updates disabled):", e);
+    }
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, env]);

@@ -94,25 +94,26 @@ export async function sendOrderConfirmation({ orderId, siteUrl }: SendConfirmati
   if (!order.buyer_email) throw new Error('No email on order')
 
   const [{ data: ev }, { data: type }, { data: attendees }] = await Promise.all([
-    supabaseAdmin.from('events').select('name, event_date, event_time, location, owner_id').eq('id', order.event_id).maybeSingle(),
+    supabaseAdmin.from('events').select('name, event_date, event_time, start_time, end_time, location, owner_id, ticket_contact_name, ticket_contact_email, ticket_cancellation_policy, ticket_cancellation_window_hours, ticket_cancellation_terms').eq('id', order.event_id).maybeSingle(),
     supabaseAdmin.from('ticket_types').select('name').eq('id', order.ticket_type_id).maybeSingle(),
     supabaseAdmin.from('ticket_attendees').select('qr_code, full_name').eq('order_id', orderId).order('created_at', { ascending: true }),
   ])
   let organizerEmail: string | null = null
   if (ev?.owner_id) {
-    const { data: prof } = await supabaseAdmin.from('profiles').select('email').eq('id', ev.owner_id).maybeSingle()
-    organizerEmail = (prof as any)?.email ?? null
+    const { data: prof } = await supabaseAdmin.from('profiles').select('email, display_name').eq('id', ev.owner_id).maybeSingle()
+    organizerEmail = ev.ticket_contact_email ?? (prof as any)?.email ?? null
+    if (!ev.ticket_contact_name) ev.ticket_contact_name = (prof as any)?.display_name ?? null
   }
 
   const firstQr = attendees?.[0]?.qr_code as string | undefined
   const qr = firstQr ? await qrDataUrl(firstQr) : null
 
-  await sendTemplateEmail('ticket-confirmation', order.buyer_email, {
+  const delivery = await sendTemplateEmail('ticket-confirmation', order.buyer_email, {
     idempotencyKey: `ticket-order:${order.id}`,
     templateData: {
       siteName: 'MelaBridge',
       eventName: ev?.name ?? 'Your event',
-      eventDate: fmtDate(ev?.event_date as any, ev?.event_time as any),
+      eventDate: fmtDate(ev?.event_date as any, (ev?.start_time ?? ev?.event_time) as any),
       eventLocation: ev?.location ?? null,
       buyerName: order.buyer_name,
       ticketName: type?.name ?? 'Admission',
@@ -120,12 +121,20 @@ export async function sendOrderConfirmation({ orderId, siteUrl }: SendConfirmati
       amountFormatted: money(order.amount_cents ?? 0, (order.currency as string) ?? 'usd'),
       orderId: order.id,
       organizerEmail,
+      organizerName: ev?.ticket_contact_name ?? null,
+      cancellationPolicy: ev?.ticket_cancellation_policy ?? 'no_cancellations',
+      cancellationWindowHours: ev?.ticket_cancellation_window_hours ?? null,
+      cancellationTerms: ev?.ticket_cancellation_terms ?? null,
       qrDataUrl: qr,
       attendeeQrCode: firstQr ?? null,
       ticketsUrl: siteUrl ? `${siteUrl}/tickets/order/${order.id}` : null,
     },
     replyTo: organizerEmail ?? undefined,
   })
+
+  if (!delivery.sent) {
+    return { sent: false, reason: delivery.reason, email: order.buyer_email }
+  }
 
   if (!order.email_sent_at) {
     await supabaseAdmin.from('ticket_orders').update({ email_sent_at: new Date().toISOString() }).eq('id', order.id)

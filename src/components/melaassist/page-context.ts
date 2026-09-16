@@ -21,10 +21,10 @@ const VENDOR_PROFILE: MelaAssistPrompt[] = [
 ];
 
 const VENDOR_DASH: MelaAssistPrompt[] = [
-  { label: "What should I do today?", prompt: "Based on my bookings, leads, and tasks — what's the one thing I should do next?" },
-  { label: "Draft a lead reply", prompt: "Draft a warm, professional reply to a new inquiry lead." },
   { label: "Improve my profile", prompt: "Review my vendor profile and suggest specific improvements." },
-  { label: "Follow up on deposits", prompt: "Draft a friendly deposit reminder for clients with outstanding payments." },
+  { label: "Write a clearer description", prompt: "Rewrite my vendor description to be specific, warm, and easy to scan." },
+  { label: "Suggest service highlights", prompt: "Suggest concise service highlights for my vendor profile." },
+  { label: "Create profile FAQs", prompt: "Write useful FAQs for my public vendor profile." },
 ];
 
 const PLANNER_DASH: MelaAssistPrompt[] = [
@@ -61,7 +61,7 @@ const PLANNER_TIMELINE: MelaAssistPrompt[] = [
 
 const PLANNER_GUESTS: MelaAssistPrompt[] = [
   { label: "Draft my invite copy", prompt: "Write invitation copy for my event." },
-  { label: "Chase RSVPs", prompt: "Draft a polite nudge for guests who haven't RSVP'd." },
+  { label: "Review pending RSVPs", prompt: "Help me review the guests who haven't RSVP'd yet." },
   { label: "Suggest seating groups", prompt: "Suggest sensible seating groups given my guest list." },
 ];
 
@@ -101,16 +101,16 @@ export function getPageContext(pathname: string, role: MelaAssistRole): PageCont
         surface: "Vendor profile",
         greeting: "I can help improve your profile, create packages, write FAQs, or optimize your business listing.",
         suggestions: VENDOR_PROFILE,
-        tip: "Uploading at least 10 portfolio photos typically creates a stronger profile than uploading only 2.",
+      tip: "A consistent gallery and complete service list make your public profile easier to understand.",
         tipKey: "vendor-profile-photos",
       };
     }
     return {
       surface: "Vendor dashboard",
-      greeting: "I can help you win more bookings — draft replies, chase deposits, and sharpen your profile.",
+      greeting: "I can help you improve your public profile, services, packages, and FAQs.",
       suggestions: VENDOR_DASH,
-      tip: "Replying to new leads within 24 hours dramatically boosts conversion.",
-      tipKey: "vendor-lead-24h",
+      tip: "Complete your profile details and keep your packages current so your listing stays useful.",
+      tipKey: "vendor-profile-current",
     };
   }
 
@@ -173,13 +173,13 @@ export function getPageContext(pathname: string, role: MelaAssistRole): PageCont
   if (matches(pathname, ["/guests", "/guest-portal"])) {
     return {
       surface: "Guests",
-      greeting: "I can draft invites, chase RSVPs, and suggest seating groups.",
+      greeting: "I can help review RSVPs, organize guest details, and suggest seating groups.",
       suggestions: PLANNER_GUESTS,
-      tip: "A single follow-up nudge typically doubles RSVP response rates.",
+      tip: "Reviewing pending RSVPs early keeps your guest list accurate.",
       tipKey: "planner-rsvp-nudge",
     };
   }
-  if (matches(pathname, ["/marketplace", "/vendors"])) {
+  if (matches(pathname, ["/marketplace"])) {
     return {
       surface: "Marketplace",
       greeting: "I can recommend vendors, compare shortlists, and draft outreach messages.",

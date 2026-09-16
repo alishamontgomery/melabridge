@@ -1,0 +1,73 @@
+That is a critical authentication/role assignment bug. A user who selects Vendor during sign-up should never be provisioned as a Personal user.
+
+Send this to Replit:
+
+⸻
+
+Critical Bug: Vendor Sign-up Creates Personal Account
+
+The account creation flow is not respecting the selected account type.
+
+Current behavior
+
+* User clicks Create Vendor Account.
+* Completes registration.
+* Is authenticated successfully.
+* Lands in the Personal dashboard.
+* Vendor profile is never created.
+
+Expected behavior
+
+When a user selects Vendor before signing up:
+
+* Create the user with role = vendor.
+* Create a record in the vendor/business profile table.
+* Route the user directly to the Vendor onboarding/dashboard.
+* Never create a Personal profile unless the user explicitly chooses a Personal account.
+
+Audit the entire authentication flow
+
+Inspect:
+
+* Sign Up page
+* Account type selector
+* Supabase auth callback
+* User creation logic
+* Profile creation trigger/function
+* Role assignment
+* Dashboard routing after login
+* Middleware/Protected Routes
+* Session restoration after refresh
+
+Verify that each account type creates the correct profile:
+
+* Personal → Personal profile + Personal dashboard
+* Planner → Planner profile + Planner dashboard
+* Vendor → Vendor profile + Vendor dashboard
+* Admin → Admin dashboard only (authorized users)
+
+Database checks
+
+Verify:
+
+* profiles.role (or equivalent) is being populated correctly.
+* Vendor profile table is populated.
+* No default value is overwriting the selected role with personal.
+* Any database trigger or Edge Function is not forcing every new user to personal.
+
+Test all account types
+
+Perform a clean test using brand-new email addresses for:
+
+* Personal
+* Planner
+* Vendor
+
+Each must:
+
+* Receive the correct role.
+* Be routed to the proper dashboard.
+* Display the correct navigation.
+* Retain the correct role after logging out and back in.
+
+This should be treated as a blocking issue because role selection is fundamental to the platform and currently the Vendor experience cannot be accessed.

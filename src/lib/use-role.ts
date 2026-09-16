@@ -11,10 +11,15 @@ export type AppRole = "personal" | "organization" | "vendor" | "admin";
  * profiles.account_type fallback (for users who onboarded before RBAC) →
  * "personal" default.
  */
-export function useRole(): { role: AppRole; loading: boolean } {
+export function useRole(): {
+  role: AppRole;
+  loading: boolean;
+  error: boolean;
+  retry: () => void;
+} {
   const { user, loading: authLoading } = useAuth();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["user-role", user?.id],
     enabled: !!user,
     staleTime: 60_000,
@@ -26,19 +31,38 @@ export function useRole(): { role: AppRole; loading: boolean } {
         supabase.from("profiles").select("account_type").eq("id", user.id).maybeSingle(),
       ]);
 
+      if (rolesRes.error) {
+        throw new Error("Unable to verify account permissions");
+      }
+
       const roles = (rolesRes.data ?? []).map((r) => r.role as AppRole);
       if (roles.includes("admin")) return "admin";
-      if (roles.includes("organization")) return "organization";
-      if (roles.includes("vendor")) return "vendor";
-      if (roles.includes("personal")) return "personal";
+
+      if (profileRes.error) {
+        throw new Error("Unable to verify account permissions");
+      }
 
       const acct = profileRes.data?.account_type as AppRole | null | undefined;
       if (acct === "personal" || acct === "organization" || acct === "vendor" || acct === "admin") {
         return acct;
       }
+      if (roles.includes("vendor")) return "vendor";
+      if (roles.includes("organization")) return "organization";
+      if (roles.includes("personal")) return "personal";
+      const metadataRole = user.user_metadata?.account_type;
+      if (metadataRole === "vendor" || metadataRole === "organization" || metadataRole === "personal") {
+        return metadataRole;
+      }
       return "personal";
     },
   });
 
-  return { role: data ?? "personal", loading: authLoading || isLoading };
+  return {
+    role: data ?? "personal",
+    loading: authLoading || isLoading,
+    error: isError,
+    retry: () => {
+      void refetch();
+    },
+  };
 }

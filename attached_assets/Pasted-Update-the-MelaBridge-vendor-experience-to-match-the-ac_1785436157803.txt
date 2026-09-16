@@ -1,0 +1,317 @@
+Update the MelaBridge vendor experience to match the actual business model.
+
+IMPORTANT:
+MelaBridge is NOT an internal vendor messaging platform and is NOT a vendor booking CRM.
+
+Personal users should use MelaBridge primarily to DISCOVER vendors, VIEW vendor profiles, SAVE/FAVORITE vendors, and then CONTACT vendors directly outside of MelaBridge.
+
+Do not build functionality that implies MelaBridge knows what happens after a user contacts a vendor externally.
+
+==================================================
+1. REMOVE "BOOKINGS" FROM PERSONAL ACCOUNTS
+==================================================
+
+The Personal account currently shows "Bookings" in navigation and a "Vendor bookings" page.
+
+Remove this from PERSONAL accounts.
+
+Personal users should NOT see:
+- Bookings
+- Vendor Bookings
+- Booking Pipeline
+- Contacted status
+- Availability status
+- Quote Sent status
+- Quote Received status
+- Waiting for Response
+- Hired status
+- Any manually selected vendor relationship statuses
+
+Do not simply rename the existing booking pipeline.
+
+Remove the unnecessary workflow from the Personal experience.
+
+==================================================
+2. MAKE "VENDORS" THE DISCOVERY CENTER
+==================================================
+
+The existing Vendors section should become the central place for Personal users to discover and save vendors.
+
+Personal users should be able to:
+
+- Browse vendors
+- Search vendors
+- Filter vendors
+- View vendor profiles
+- Favorite vendors
+- Unfavorite vendors
+- View all saved/favorite vendors
+- View vendor contact information
+- Contact vendors outside MelaBridge
+
+If useful, create tabs inside Vendors such as:
+
+Discover
+Favorites
+
+Do NOT create another unnecessary sidebar item if Favorites can be handled cleanly inside Vendors.
+
+==================================================
+3. FAVORITES MUST BE A REAL FEATURE
+==================================================
+
+Add a clear heart/favorite control to:
+
+- Vendor discovery cards
+- Vendor profile pages
+
+When a user favorites a vendor:
+
+- Save it to the authenticated user's account/database
+- Immediately update the UI
+- Keep the favorite after logout/login
+- Allow the user to unfavorite
+- Show favorited vendors under Favorites
+- Prevent duplicate favorite records
+
+Do not implement favorites using temporary browser/local state only.
+
+If appropriate, allow a user to associate a favorite vendor with one of their events for organization, but do not turn this into a booking workflow.
+
+==================================================
+4. VENDOR DISCOVERY CARDS
+==================================================
+
+Vendor cards should be designed for discovery, not CRM management.
+
+Prioritize:
+
+- Cover/portfolio image
+- Business name
+- Vendor category
+- Location/service area
+- Short business description
+- Starting price/pricing indicator if provided
+- Favorite heart
+- View Profile
+
+Keep cards visually clean and responsive.
+
+Do not display booking statuses or relationship pipelines.
+
+==================================================
+5. VENDOR PROFILE
+==================================================
+
+Vendor profiles should help potential customers decide whether they want to contact the business.
+
+Clearly display available information such as:
+
+- Business name
+- Category
+- Business description
+- Location/service area
+- Portfolio/gallery
+- Services
+- Packages
+- Pricing when provided
+- Phone number
+- Email
+- Website
+- Social media links
+- Favorite button
+- Appropriate plan/profile badge
+
+Contact information should be easy to find.
+
+==================================================
+6. CONTACTING A VENDOR
+==================================================
+
+MelaBridge users will contact vendors OUTSIDE of MelaBridge.
+
+Provide external contact actions based on information supplied by the vendor.
+
+Examples:
+
+Call
+Email
+Visit Website
+Instagram
+Other supported social links
+
+"Contact Vendor" must NOT open an internal MelaBridge chat unless an actual messaging platform is intentionally built in the future.
+
+Do not create fake communication tracking.
+
+MelaBridge cannot reliably know whether:
+
+- A vendor responded
+- Availability was confirmed
+- A quote was sent
+- A quote was accepted
+- The vendor was hired
+- A conversation occurred
+
+Therefore, do not automatically or manually display those statuses.
+
+==================================================
+7. FIX MELAASSIST PROFESSIONAL PLAN LANGUAGE
+==================================================
+
+The Professional pricing card currently says:
+
+"MelaAssist AI messaging"
+
+This is misleading because MelaBridge does not provide an internal messaging platform.
+
+Replace it with:
+
+"MelaAssist AI business tools"
+
+On the detailed pricing comparison or feature explanation, describe it as:
+
+"AI-powered help creating and improving your business profile, service descriptions, packages, and client-ready business content."
+
+MelaAssist can help create content a vendor may COPY and use externally, but do not imply MelaBridge sends or receives those communications.
+
+Also change the Professional subtitle from:
+
+"Everything you need to book more events."
+
+to:
+
+"Powerful tools to grow your business and get discovered by more customers."
+
+This better reflects what the Professional subscription actually provides.
+
+==================================================
+8. VENDOR PROFESSIONAL EXPERIENCE
+==================================================
+
+The Vendor/Professional experience should focus on helping businesses become more discoverable and present themselves professionally.
+
+Prioritize:
+
+- Business profile management
+- Business description
+- Category/services
+- Service area
+- Contact information
+- Website/social links
+- Portfolio management
+- Packages/pricing
+- MelaAssist business tools
+- Profile visibility
+- Profile analytics if supported
+- Featured/sponsored visibility
+- Subscription management
+
+Do not add unnecessary CRM functionality.
+
+==================================================
+9. AUDIT EXISTING LANGUAGE
+==================================================
+
+Search the entire codebase and UI for language implying that MelaBridge provides functionality it does not actually provide.
+
+Specifically search for:
+
+"messaging"
+"message vendor"
+"book vendor"
+"booking"
+"vendor booking"
+"quote sent"
+"availability"
+"waiting for response"
+"contacted"
+"inbox"
+"conversation"
+"lead status"
+
+Do NOT blindly remove every occurrence.
+
+Evaluate each occurrence based on the user's role and the actual feature.
+
+Remove or rewrite anything that falsely implies internal vendor communication or booking management.
+
+==================================================
+10. PRESERVE OTHER REAL MELABRIDGE FEATURES
+==================================================
+
+Do not accidentally remove unrelated functionality while simplifying vendor discovery.
+
+Preserve working event-planning functionality, including appropriate:
+
+- Events
+- Guests
+- Budget
+- Tasks
+- Timeline
+- Calendar
+- Files
+- BridgeStudio
+- MelaAssist
+- Vendor directory
+- Vendor profiles
+- Packages/pricing
+- Ticketing functionality where currently intended
+- Admin functionality
+
+==================================================
+11. ROLE-BASED NAVIGATION
+==================================================
+
+After making these changes, verify every role separately.
+
+PERSONAL:
+Event planning + vendor discovery/favorites.
+
+VENDOR:
+Business profile + discovery/visibility/business tools.
+
+PLANNER/PROFESSIONAL:
+Professional event-planning functionality appropriate to that role.
+
+ADMIN:
+Platform administration.
+
+Do not expose navigation or routes to a role simply because the page exists.
+
+Enforce authorization at both the UI/navigation level AND route/server level.
+
+==================================================
+12. RESPONSIVE DESIGN
+==================================================
+
+The screenshots show mobile layout issues, including controls extending beyond the card/viewport.
+
+Test all modified pages at:
+
+- Small mobile
+- Large mobile
+- Tablet
+- Laptop
+- Desktop
+
+Nothing should overflow horizontally.
+
+Cards, buttons, filters, contact information, images, tabs, pricing cards, and navigation must resize correctly.
+
+==================================================
+FINAL PRODUCT MODEL
+==================================================
+
+Use this as the guiding rule:
+
+MelaBridge helps users DISCOVER vendors.
+Vendor profiles help users EVALUATE vendors.
+Favorites help users SAVE vendors.
+Contact information helps users CONNECT directly with vendors outside MelaBridge.
+
+Do not turn vendor discovery into a booking CRM.
+
+Implement the changes, then test the complete Personal and Vendor flows using separate test accounts.
+
+Do not report this task as complete until the old Personal booking/status workflow is actually removed, Favorites persist correctly, vendor contact information works, role separation is correct, and mobile/desktop layouts have been tested.

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
-import { Brain, Radio, Boxes, Network, Globe2, Dna, Vault, BarChart3, ArrowUpRight } from "lucide-react";
+import { Brain, Radio, Boxes, Network, Globe2, Sparkles, Vault, BarChart3, ArrowUpRight } from "lucide-react";
 
 export const Route = createFileRoute("/ai-memory")({
   head: () => ({
@@ -19,7 +19,7 @@ const MODULES = [
   { to: "/digital-twin", label: "Digital Twin™", icon: Boxes, desc: "A living simulation of your event so you can rehearse before the real thing." },
   { to: "/bridgegraph", label: "BridgeGraph™", icon: Network, desc: "Relationship graph across guests, vendors, venues, and organizations." },
   { to: "/bridgeworld", label: "BridgeWorld™", icon: Globe2, desc: "Global map of MelaBridge activity — culture, category, and geography." },
-  { to: "/bridgedna", label: "BridgeDNA™", icon: Dna, desc: "The unique fingerprint of your planning style, tastes, and traditions." },
+  { to: "/concierge", label: "MelaAssist™", icon: Sparkles, desc: "Your AI planning partner — learns your style and makes every recommendation feel personal." },
   { to: "/bridgevault", label: "BridgeVault™", icon: Vault, desc: "Long-term memory of every event, decision, and moment — searchable forever." },
   { to: "/bridge-intelligence", label: "Bridge Intelligence™", icon: BarChart3, desc: "Cross-event benchmarks, predictions, and executive insight." },
 ] as const;

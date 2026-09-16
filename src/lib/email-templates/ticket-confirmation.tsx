@@ -14,6 +14,10 @@ export interface TicketConfirmationProps {
   amountFormatted: string
   orderId: string
   organizerEmail?: string | null
+  organizerName?: string | null
+  cancellationPolicy?: 'no_cancellations' | 'case_by_case' | 'allowed_until'
+  cancellationWindowHours?: number | null
+  cancellationTerms?: string | null
   /** Data URL (image/png) of the first attendee's QR. */
   qrDataUrl?: string | null
   attendeeQrCode?: string | null
@@ -22,7 +26,9 @@ export interface TicketConfirmationProps {
 
 export const TicketConfirmationEmail = ({
   siteName, eventName, eventDate, eventLocation, buyerName, ticketName,
-  quantity, amountFormatted, orderId, organizerEmail, qrDataUrl, attendeeQrCode, ticketsUrl,
+  quantity, amountFormatted, orderId, organizerEmail, organizerName,
+  cancellationPolicy = 'no_cancellations', cancellationWindowHours,
+  cancellationTerms, qrDataUrl, attendeeQrCode, ticketsUrl,
 }: TicketConfirmationProps) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -61,8 +67,28 @@ export const TicketConfirmationEmail = ({
           </Text>
         )}
 
+        <Section style={supportCard}>
+          <Text style={supportHeading}>Need help with this order?</Text>
+          <Text style={supportText}>
+            {cancellationPolicy === 'allowed_until'
+              ? `Cancellations are allowed until ${Math.max(1, Math.round((cancellationWindowHours ?? 24) / 24))} day${Math.round((cancellationWindowHours ?? 24) / 24) === 1 ? '' : 's'} before the event.`
+              : cancellationPolicy === 'case_by_case'
+                ? 'Cancellation and refund requests are reviewed by the event organizer.'
+                : 'Tickets are non-refundable and cancellations are not allowed.'}
+            {cancellationTerms ? ` ${cancellationTerms}` : ''}
+          </Text>
+          {organizerEmail && (
+            <Link href={`mailto:${organizerEmail}?subject=${encodeURIComponent(`Order ${orderId} — ${eventName}`)}`} style={button}>
+              Contact {organizerName || 'the organizer'}
+            </Link>
+          )}
+          <Text style={supportMeta}>
+            Include order number <strong>{orderId}</strong> when contacting the organizer.
+          </Text>
+        </Section>
+
         <Text style={footer}>
-          Sent by {siteName}{organizerEmail ? <> · Questions? <Link style={link} href={`mailto:${organizerEmail}`}>{organizerEmail}</Link></> : null}
+          Ticket confirmation sent by {siteName}{organizerEmail ? <> · Replies go to {organizerName || organizerEmail}</> : null}
         </Text>
       </Container>
     </Body>
@@ -71,9 +97,9 @@ export const TicketConfirmationEmail = ({
 
 export default TicketConfirmationEmail
 
-const main = { backgroundColor: '#f6f7f9', fontFamily: 'Arial, sans-serif' }
+const main = { backgroundColor: '#f6f7f9', fontFamily: "'Inter', Arial, sans-serif" }
 const container = { padding: '28px 24px', maxWidth: 560, margin: '0 auto', backgroundColor: '#ffffff' }
-const h1 = { fontSize: 22, fontWeight: 'bold' as const, color: '#111', margin: '0 0 16px' }
+const h1 = { fontFamily: "'Manrope', Arial, sans-serif", fontSize: 22, fontWeight: 'bold' as const, color: '#111', margin: '0 0 16px' }
 const text = { fontSize: 14, color: '#333', lineHeight: '1.55', margin: '0 0 18px' }
 const card = { backgroundColor: '#fafafa', border: '1px solid #eee', borderRadius: 10, padding: '16px 18px', margin: '4px 0 8px' }
 const label = { fontSize: 11, textTransform: 'uppercase' as const, letterSpacing: 0.6, color: '#888', margin: '10px 0 2px' }
@@ -82,3 +108,8 @@ const mono = { fontSize: 12, color: '#555', fontFamily: 'ui-monospace, Menlo, mo
 const hr = { borderColor: '#eee', margin: '14px 0' }
 const link = { color: '#2563eb', textDecoration: 'underline' }
 const footer = { fontSize: 12, color: '#888', margin: '28px 0 0', textAlign: 'center' as const }
+const supportCard = { backgroundColor: '#fff8f2', border: '1px solid #f3dcc7', borderRadius: 10, padding: '18px', margin: '24px 0 8px' }
+const supportHeading = { fontSize: 16, fontWeight: 'bold' as const, color: '#542d2b', margin: '0 0 8px' }
+const supportText = { fontSize: 13, color: '#4b3b35', lineHeight: '1.55', margin: '0 0 16px' }
+const supportMeta = { fontSize: 11, color: '#786760', lineHeight: '1.45', margin: '14px 0 0' }
+const button = { backgroundColor: '#542d2b', borderRadius: 7, color: '#fff', display: 'inline-block', fontSize: 13, fontWeight: 'bold' as const, padding: '11px 16px', textDecoration: 'none' }

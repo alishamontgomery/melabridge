@@ -3,14 +3,15 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
-  useRouter,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { ClerkProvider } from "@clerk/tanstack-react-start";
+import { publishableKeyFromHost } from "@clerk/shared/keys";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportClientReliabilityError } from "../lib/reliability-client";
 import { AuthProvider } from "@/lib/auth";
 import { EcosystemProvider } from "@/lib/ecosystem-store";
 import { MelaAssistProvider } from "@/components/melaassist";
@@ -52,9 +53,16 @@ function NotFoundComponent() {
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
-  const router = useRouter();
+  // NOTE: do NOT call useRouter() here. This component renders inside
+  // CatchBoundaryImpl which may fire when the router context itself is
+  // broken (e.g. mid-session Vite dep re-bundle splits module instances).
+  // Calling useRouter() in that state produces a second "Invalid hook call"
+  // error that masks the real one. Use window.location for hard navigation.
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportClientReliabilityError(error, {
+      source: "react_error_boundary",
+      operation: "tanstack_root_error_component",
+    });
   }, [error]);
 
   return (
@@ -69,8 +77,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
-              router.invalidate();
-              reset();
+              // Hard reload is the safest recovery when the router context may
+              // be in an invalid state.
+              if (typeof window !== "undefined") {
+                window.location.reload();
+              } else {
+                reset();
+              }
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
@@ -109,21 +122,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "MelaBridge — AI Event Planning Platform" },
       { name: "twitter:description", content: "Plan unforgettable events with AI. MelaBridge brings venues, vendors, guests, budgets, payments, and collaboration into one intelligent platform." },
-      { property: "og:image", content: "https://melabridge.lovable.app/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
-      { name: "twitter:image", content: "https://melabridge.lovable.app/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
+      { property: "og:image", content: "/melabridge-logo.png" },
+      { name: "twitter:image", content: "/melabridge-logo.png" },
       { name: "theme-color", content: "#6a2fbf" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/png", href: "/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
-      { rel: "apple-touch-icon", href: "/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png" },
+      { rel: "icon", type: "image/png", href: "/melabridge-logo.png" },
+      { rel: "apple-touch-icon", href: "/melabridge-logo.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap",
-      },
     ],
   }),
   shellComponent: RootShell,
@@ -148,18 +155,67 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const publishableKey =
+    typeof window === "undefined"
+      ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+      : publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
+  const isClerkTestInstance = publishableKey.startsWith("pk_test_");
+  const isLiveMelaBridgeHost =
+    typeof window !== "undefined" && window.location.hostname === "melabridge.com";
+  // Clerk test instances should use their direct accounts.dev endpoint.
+  // The proxy is reserved for a configured live instance; forcing it for
+  // test keys on the published custom domain can create a session-refresh
+  // loop even when the browser and server test keys are valid.
+  const clerkProxyUrl =
+    import.meta.env.PROD && !isClerkTestInstance && !isLiveMelaBridgeHost
+      ? "/api/__clerk"
+      : undefined;
+
+  useEffect(() => {
+    const onError = (event: ErrorEvent) => {
+      reportClientReliabilityError(event.error ?? event.message, {
+        source: "window_error",
+      });
+    };
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      reportClientReliabilityError(event.reason, {
+        source: "unhandled_rejection",
+      });
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onUnhandledRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onUnhandledRejection);
+    };
+  }, []);
+
+  if (!publishableKey) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-xl font-semibold text-foreground">Authentication is unavailable</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sign-in is temporarily unavailable. Please refresh the page and try again later.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <EcosystemProvider>
-          <MelaAssistProvider>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-            <Toaster richColors position="top-right" closeButton />
-          </MelaAssistProvider>
-        </EcosystemProvider>
-      </AuthProvider>
+      <ClerkProvider publishableKey={publishableKey} proxyUrl={clerkProxyUrl}>
+        <AuthProvider>
+          <EcosystemProvider>
+            <MelaAssistProvider>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+              <Toaster richColors position="top-right" closeButton />
+            </MelaAssistProvider>
+          </EcosystemProvider>
+        </AuthProvider>
+      </ClerkProvider>
     </QueryClientProvider>
   );
 }

@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/app-shell";
 import { PublicShell } from "@/components/public-shell";
-import { CreditCard, ShieldCheck, Receipt, RefreshCw, Banknote, PiggyBank, Lock, Sparkles } from "lucide-react";
-import { ModuleGrid, MetricRow, Section, CTARow } from "@/components/module-page";
+import { CreditCard, ShieldCheck, Receipt, RefreshCw, Banknote, Lock, Sparkles } from "lucide-react";
+import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ export const Route = createFileRoute("/bridgepay")({
   head: () => ({
     meta: [
       { title: "BridgePay™ — MelaBridge" },
-      { name: "description", content: "Secure payments powered by Stripe for every event." },
+      { name: "description", content: "Stripe-powered subscription and eligible ticket checkout in MelaBridge." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: BridgePayPage,
@@ -23,27 +24,25 @@ function BridgePayPage() {
       <div className="space-y-6">
         <PageHeader
           eyebrow="BridgePay™"
-          title="Secure payments for every event"
-          description="Deposits, milestone payments, vendor payouts, and refunds — powered by Stripe and reconciled with your budget in real time."
+          title="Stripe checkout for subscriptions and tickets"
+          description="Manage a MelaBridge subscription or sell tickets from an eligible paid plan. Vendor payments, fundraising, and shared event wallets are not yet available."
           icon={CreditCard}
           actions={<Badge variant="secondary">Beta</Badge>}
         />
         <MetricRow
           metrics={[
-            { label: "Processor", value: "Stripe", hint: "PCI DSS Level 1" },
-            { label: "Payout speed", value: "2 days", hint: "Standard schedule" },
-            { label: "Platform fee", value: "0%", hint: "On fundraising" },
-            { label: "Currencies", value: "40+", hint: "Global support" },
+            { label: "Processor", value: "Stripe", hint: "Secure checkout" },
+            { label: "Subscriptions", value: "Live", hint: "Monthly and annual plans" },
+            { label: "Ticket checkout", value: "Live", hint: "Eligible paid plans" },
+            { label: "MelaBridge ticket fee", value: "$0", hint: "Processor fees may apply" },
           ]}
         />
         <ModuleGrid
           features={[
-            { icon: Lock, title: "Milestone-based payments", detail: "Release funds to vendors only when agreed milestones are approved by both parties." },
-            { icon: RefreshCw, title: "Split payments", detail: "Share costs across family, sponsors, or co-hosts with clear allocations." },
-            { icon: Banknote, title: "Fast vendor payouts", detail: "Vendors receive funds shortly after milestone approval, via Stripe." },
-            { icon: Receipt, title: "Automatic receipts", detail: "Every transaction is receipted and mirrored into BridgeVault™." },
-            { icon: ShieldCheck, title: "Dispute support", detail: "In-app dispute flow with concierge support." },
-            { icon: PiggyBank, title: "Savings goals", detail: "Set aside recurring contributions toward event milestones." },
+            { icon: Lock, title: "Subscription checkout", detail: "Start or change an eligible MelaBridge plan through Stripe checkout." },
+            { icon: CreditCard, title: "Paid tickets", detail: "Create paid ticket types and send buyers through Stripe checkout." },
+            { icon: Receipt, title: "Ticket order records", detail: "Track completed ticket orders and attendee quantities in MelaBridge." },
+            { icon: Banknote, title: "Budget payment tracking", detail: "Record planned costs and amounts paid in the event budget." },
           ]}
         />
         <Section title="Payments today">
@@ -51,20 +50,18 @@ function BridgePayPage() {
             <div className="flex items-start gap-3">
               <Sparkles className="mt-0.5 h-4 w-4 text-primary" />
               <div className="flex-1">
-                <p className="text-sm font-semibold">Subscriptions are live — event-wallet payments are next</p>
+                <p className="text-sm font-semibold">Subscriptions and eligible ticket checkout are available today</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  You can already subscribe to MelaAssist™ plans with secure Stripe checkout. Milestone payments, split payments,
-                  and vendor payouts arrive in the next release wave.
+                  Vendor milestone payments, deposits, payouts, fundraising, and shared event wallets remain on the roadmap.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button asChild variant="hero" size="sm"><Link to="/subscription">Manage subscription</Link></Button>
+                  <Button asChild variant="hero" size="sm"><Link to="/subscription" search={{ audience: undefined }}>Manage subscription</Link></Button>
                   <Button asChild variant="outline" size="sm"><Link to="/budget">Track budget</Link></Button>
                 </div>
               </div>
             </div>
           </Card>
         </Section>
-        <CTARow label="Get notified when BridgePay launches" note="We'll email you the moment milestone payments and payouts open." cta="Notify me" />
       </div>
     </PublicShell>
   );

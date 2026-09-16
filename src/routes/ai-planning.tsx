@@ -5,7 +5,7 @@ export const Route = createFileRoute("/ai-planning")({
   head: () => ({
     meta: [
       { title: "AI Planning — MelaBridge" },
-      { name: "description", content: "Meet MelaAssist™ — the AI planning assistant that drafts, reviews, and runs every event alongside you." },
+      { name: "description", content: "Meet MelaAssist™ — AI-assisted drafts for event tasks, budgets, runsheets, vendor needs, and event details." },
       { property: "og:title", content: "AI Planning — MelaBridge" },
       { property: "og:description", content: "An AI planning assistant that always asks before it acts." },
     ],
@@ -14,34 +14,31 @@ export const Route = createFileRoute("/ai-planning")({
     <MarketingPage
       eyebrow="AI Planning"
       title={<>MelaAssist™ — your planning <span className="text-gradient">co-pilot.</span></>}
-      description="MelaAssist guides you through a natural conversation, drafts a full plan, and hands you the wheel. You review and approve — nothing is created without you."
+      description="MelaAssist turns the event details you provide into practical starting drafts. You review, edit, and decide what to use."
     >
       <h2>Planning Assistant</h2>
-      <p>Describe your event and MelaAssist drafts a complete workspace — timeline, guest strategy, vendor shortlist, and budget — for your review. Change your mind halfway through? Just say so, and the plan updates.</p>
+      <p>Describe your event and MelaAssist can prepare editable starter tasks, budget categories, a day-of runsheet, vendor needs, and event details.</p>
 
-      <h2>Smart Recommendations</h2>
-      <p>Contextual nudges as your event evolves. RSVP follow-ups when replies stall. Budget rebalancing when a vendor comes in high. Vendor suggestions when a category is still empty two months out.</p>
+      <h2>Editable starting point</h2>
+      <p>AI output is a draft, not an automatic decision. Review each suggestion, change the details, and keep only what fits your event.</p>
 
-      <h2>Timeline Intelligence</h2>
-      <p>Auto-generated timelines you can edit, with prompts as key milestones approach. MelaAssist knows how long a mandap takes to set up, when caterers need final counts, and when to send the seating chart.</p>
+      <h2>Tasks &amp; runsheets</h2>
+      <p>Generate a starter checklist and day-of schedule from your event type, date, and timing, then adjust every item in the workspace.</p>
 
-      <h2>Budget Intelligence</h2>
-      <p>Category forecasting, drift alerts, and re-allocation suggestions so you catch overspend early — not on event week.</p>
+      <h2>Budget starting point</h2>
+      <p>Create suggested budget categories and line items, then enter your own planned and paid amounts as decisions are made.</p>
 
-      <h2>Risk Detection</h2>
-      <p>MelaAssist continuously reviews your event and flags issues before they become emergencies: missing vendor, unpaid deposit, RSVP shortfall, timeline conflict.</p>
+      <h2>Vendor needs</h2>
+      <p>Turn your event description into a list of vendor categories to consider, then browse marketplace profiles and packages yourself.</p>
 
-      <h2>Vendor Assistance</h2>
-      <p>Help drafting vendor inquiries, comparing quotes side-by-side, and evaluating contracts. MelaAssist writes the first draft; you send the final word.</p>
+      <h2>Guest-message drafts</h2>
+      <p>Draft an event update or reminder, review the wording and recipients, and send only when it is ready.</p>
 
-      <h2>Decision Support</h2>
-      <p>When you're stuck, MelaAssist lays out the trade-offs — venue A versus venue B, buffet versus plated, live band versus DJ — never the decision itself.</p>
-
-      <h2>How AI approvals work</h2>
-      <p>Every AI-drafted event, task, vendor invitation, message, or booking lives in a review queue. Approve, edit, or discard with one click. Nothing ships until you say yes.</p>
+      <h2>Current scope</h2>
+      <p>MelaAssist does not book vendors, move money, evaluate contracts, or continuously monitor your event. Those decisions and actions stay with you.</p>
 
       <h2>Privacy &amp; data</h2>
-      <p>Your event details, guest data, budgets, and messages are never sold and never used to train external models. Delete everything with one click, anytime.</p>
+      <p>Use MelaAssist for planning details you are comfortable including in an AI request. Review generated content before adding it to your event or sending it to guests.</p>
     </MarketingPage>
   ),
 });

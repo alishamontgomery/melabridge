@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus, Trash2, Clock, User, Sparkles, Lock, LockOpen, GripVertical,
   CheckCircle2, AlertTriangle, Flame, RotateCw,
@@ -81,7 +81,7 @@ export function RunsheetTab({ eventId }: { eventId: string }) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  async function load() {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("event_runsheet_items")
       .select("*")
@@ -90,8 +90,10 @@ export function RunsheetTab({ eventId }: { eventId: string }) {
       .order("start_time", { ascending: true, nullsFirst: false });
     if (error) toast.error(error.message);
     setItems((data ?? []) as Row[]);
-  }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [eventId]);
+  }, [eventId]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function generate() {
     setBusy(true);
@@ -248,8 +250,8 @@ export function RunsheetTab({ eventId }: { eventId: string }) {
 
       <Card className="border-border/60 p-5">
         <h3 className="mb-3 text-sm font-semibold">Add a custom item</h3>
-        <div className="grid gap-3 sm:grid-cols-[1fr_120px_100px_1fr_auto]">
-          <div>
+        <div className="grid gap-3 grid-cols-2 lg:grid-cols-[1fr_120px_100px_1fr_auto]">
+          <div className="col-span-2 lg:col-span-1">
             <Label className="text-xs">Title</Label>
             <Input value={draft.title} onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))} placeholder="e.g. Speeches" />
           </div>
@@ -265,8 +267,8 @@ export function RunsheetTab({ eventId }: { eventId: string }) {
             <Label className="text-xs">Owner</Label>
             <Input value={draft.owner} onChange={(e) => setDraft((d) => ({ ...d, owner: e.target.value }))} placeholder="Optional" />
           </div>
-          <div className="flex items-end">
-            <Button onClick={add}><Plus className="mr-1 h-4 w-4" />Add</Button>
+          <div className="flex items-end col-span-2 lg:col-span-1">
+            <Button onClick={add} className="w-full lg:w-auto"><Plus className="mr-1 h-4 w-4" />Add</Button>
           </div>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
@@ -326,7 +328,7 @@ function SortableRow({
 
   return (
     <li ref={setNodeRef} style={style} className={cn("bg-card", row.status === "skipped" && "opacity-60")}>
-      <div className="flex items-start gap-2 p-3 sm:gap-4 sm:p-4">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-2 gap-y-2 p-3 sm:flex sm:gap-4 sm:p-4">
         <button
           type="button"
           className="mt-1 cursor-grab touch-none text-muted-foreground hover:text-foreground"
@@ -336,58 +338,60 @@ function SortableRow({
         >
           <GripVertical className="h-4 w-4" />
         </button>
-        <div className="w-20 shrink-0 text-sm font-medium tabular-nums sm:w-24">{formatTime(row.start_time)}</div>
-        <div className="w-12 shrink-0 text-xs text-muted-foreground tabular-nums sm:w-16">{row.duration_min}m</div>
         <button
           type="button"
           onClick={onToggleExpand}
           className="min-w-0 flex-1 text-left"
           aria-expanded={expanded}
         >
+          <div className="mb-1 flex items-center gap-3">
+            <span className="whitespace-nowrap text-sm font-medium tabular-nums">{formatTime(row.start_time)}</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">{row.duration_min}m</span>
+          </div>
           <p className={cn("truncate font-medium", row.status === "complete" && "line-through text-muted-foreground")}>
             {row.title}
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             {row.owner && (
-              <span className="inline-flex items-center gap-1"><User className="h-3 w-3" />{row.owner}</span>
+              <span className="inline-flex max-w-full items-center gap-1 whitespace-nowrap"><User className="h-3 w-3 shrink-0" /><span className="truncate">{row.owner}</span></span>
             )}
             <Badge variant="outline" className={cn("h-5 px-1.5 text-[10px] uppercase tracking-wide", statusStyles[row.status])}>
               {statusLabel[row.status]}
             </Badge>
             {row.ai_generated && (
-              <span className="inline-flex items-center gap-1 text-primary/70"><Sparkles className="h-3 w-3" />AI</span>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap text-primary/70"><Sparkles className="h-3 w-3" />AI</span>
             )}
             {row.locked && (
-              <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" />Locked</span>
+              <span className="inline-flex items-center gap-1 whitespace-nowrap"><Lock className="h-3 w-3" />Locked</span>
             )}
           </div>
         </button>
-        <div className="flex items-center gap-1">
+        <div className="col-span-2 flex items-center justify-end gap-0.5 border-t border-border/40 pt-2 sm:col-auto sm:shrink-0 sm:border-0 sm:pt-0">
           <Button
-            size="icon" variant="ghost" title={row.locked ? "Unlock" : "Lock (protect from regenerate)"}
+            size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" title={row.locked ? "Unlock" : "Lock (protect from regenerate)"}
             onClick={() => onUpdate({ locked: !row.locked })}
           >
             {row.locked ? <Lock className="h-4 w-4 text-primary" /> : <LockOpen className="h-4 w-4 text-muted-foreground" />}
           </Button>
           <Button
-            size="icon" variant="ghost" title="Mark complete"
+            size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" title="Mark complete"
             onClick={() => onUpdate({ status: row.status === "complete" ? "planned" : "complete" })}
           >
             <CheckCircle2 className={cn("h-4 w-4", row.status === "complete" ? "text-emerald-500" : "text-muted-foreground")} />
           </Button>
           <Button
-            size="icon" variant="ghost" title="Mark delayed"
+            size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" title="Mark delayed"
             onClick={() => onUpdate({ status: row.status === "delayed" ? "planned" : "delayed" })}
           >
             <AlertTriangle className={cn("h-4 w-4", row.status === "delayed" ? "text-amber-500" : "text-muted-foreground")} />
           </Button>
           <Button
-            size="icon" variant="ghost" title="Mark critical"
+            size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" title="Mark critical"
             onClick={() => onUpdate({ status: row.status === "critical" ? "planned" : "critical" })}
           >
             <Flame className={cn("h-4 w-4", row.status === "critical" ? "text-rose-500" : "text-muted-foreground")} />
           </Button>
-          <Button size="icon" variant="ghost" onClick={onDelete} aria-label="Delete item">
+          <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9" onClick={onDelete} aria-label="Delete item">
             <Trash2 className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>

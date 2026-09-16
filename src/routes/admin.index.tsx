@@ -1,29 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell, PageHeader } from "@/components/app-shell";
-import { ShieldCheck, Users, Activity, AlertTriangle, Server, DollarSign, BadgeCheck, Flag, Settings2, Percent, Ticket, HandCoins, Lock, FlaskConical, Trash2, Mail, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
-import { ModuleGrid, MetricRow, Section } from "@/components/module-page";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { billingConfig, getPlansFor, formatPrice, audienceMeta, type BillingAudience } from "@/lib/billing-config";
-import { useRole } from "@/lib/use-role";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  Activity, AlertTriangle, ArrowUpRight, BadgeCheck, CheckCircle2,
+  ChevronDown, CreditCard, FlaskConical, Layers3, Loader2, Lock, Mail, RefreshCw,
+  Server, Settings2, ShieldCheck, Store, Ticket, Trash2, Users,
+} from "lucide-react";
+import { AppShell, PageHeader } from "@/components/app-shell";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { billingConfig } from "@/lib/billing-config";
 import { getAdminStats } from "@/lib/admin-stats.functions";
+import { getSystemHealth, type SystemHealthResult } from "@/lib/admin-health.functions";
 import { seedTestData, wipeTestData } from "@/lib/test-seed.functions";
 import { sendDomainTestEmail } from "@/lib/email-test.functions";
 import { useRequireAuth } from "@/lib/use-require-auth";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useRole } from "@/lib/use-role";
 
 export const Route = createFileRoute("/admin/")({
-  head: () => ({
-    meta: [
-      { title: "AdminOS™ — MelaBridge" },
-      { name: "description", content: "Enterprise controls for teams, vendors, safety, and platform health." },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "AdminOS — MelaBridge" }, { name: "robots", content: "noindex" }] }),
   component: AdminPage,
 });
 
@@ -31,380 +29,80 @@ function AdminPage() {
   const { user, loading: authLoading } = useRequireAuth();
   const { role, loading: roleLoading } = useRole();
   const isAdmin = role === "admin";
-
   const fetchStats = useServerFn(getAdminStats);
   const stats = useQuery({
-    queryKey: ["admin-stats"],
-    enabled: isAdmin,
+    queryKey: ["admin-stats"], enabled: isAdmin,
     queryFn: async () => {
-      const res = await fetchStats({ data: undefined } as any);
-      if (res && "error" in res) throw new Error(res.error);
-      return res;
+      const result = await fetchStats({ data: undefined } as never);
+      if ("error" in result) throw new Error(result.error);
+      return result;
     },
   });
+  const [health, setHealth] = useState<SystemHealthResult | null>(null);
+  const [checking, setChecking] = useState(false);
+  const fetchHealth = useServerFn(getSystemHealth);
 
-  if (authLoading || roleLoading) {
-    return (
-      <AppShell active="/admin">
-        <Card className="p-10 text-center text-sm text-muted-foreground">Checking access…</Card>
-      </AppShell>
-    );
+  async function runHealthCheck() {
+    setChecking(true);
+    try { setHealth(await fetchHealth({ data: undefined } as never)); }
+    catch { toast.error("Health check failed"); }
+    finally { setChecking(false); }
   }
+  if (authLoading || roleLoading) return <AppShell active="/admin"><Card className="p-10 text-center text-sm text-muted-foreground">Checking access…</Card></AppShell>;
+  if (!user || !isAdmin) return <AppShell active="/admin"><Card className="flex flex-col items-center gap-3 p-10 text-center"><Lock className="h-7 w-7 text-primary" /><h1 className="font-display text-xl font-semibold">AdminOS is restricted</h1><p className="max-w-md text-sm text-muted-foreground">This command center is available to platform administrators only.</p><Button asChild variant="outline"><Link to="/dashboard">Back to dashboard</Link></Button></Card></AppShell>;
 
-  if (!user || !isAdmin) {
-    return (
-      <AppShell active="/admin">
-        <Card className="flex flex-col items-center gap-3 p-10 text-center">
-          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
-            <Lock className="h-5 w-5" />
-          </div>
-          <h1 className="font-display text-xl font-semibold">AdminOS™ is restricted</h1>
-          <p className="max-w-md text-sm text-muted-foreground">
-            This surface is only available to workspace administrators. If you should have access, ask your organization owner to grant the admin role.
-          </p>
-          <Button asChild variant="outline"><Link to="/dashboard">Back to dashboard</Link></Button>
-        </Card>
-      </AppShell>
-    );
-  }
-
-  const fmt = (n?: number) => (typeof n === "number" ? n.toLocaleString() : "—");
-
-  const metricCards: Array<{ label: string; value: string; hint?: string; to: string }> = [
-    { label: "Total users", value: fmt(stats.data?.activeUsers), to: "/admin/users" },
-    { label: "Vendor applications", value: fmt(stats.data?.vendorApplications), hint: "Awaiting review", to: "/vendors" },
-    { label: "Open reports", value: fmt(stats.data?.openReports), to: "/reports" },
-    { label: "System status", value: "Operational", hint: "All services green", to: "/analytics" },
-  ];
-
-  const moduleTiles: Array<{ icon: React.ComponentType<{ className?: string }>; title: string; detail: string; to: string }> = [
-    { icon: Users, title: "User management", detail: "Search, filter, edit roles, suspend or reactivate.", to: "/admin/users" },
-    { icon: BadgeCheck, title: "Vendor verification", detail: "Review documents, KYC, and grant BridgeCheck™ badges.", to: "/vendors" },
-    { icon: Flag, title: "Trust & safety", detail: "Reports queue, auto-mod, and appeals workflow.", to: "/reports" },
-    { icon: DollarSign, title: "Billing & payouts", detail: "Subscription revenue, refunds, and vendor payout audits.", to: "/bridgepay" },
-    { icon: Server, title: "System health", detail: "Realtime status of AI, payments, messaging, and data pipelines.", to: "/analytics" },
-    { icon: Activity, title: "Audit log", detail: "Immutable log of every privileged action across the platform.", to: "/reports" },
-  ];
-
+  const data = stats.data;
+  const n = (value?: number) => typeof value === "number" ? value.toLocaleString() : "—";
+  const incompleteVendors = Math.max(0, (data?.totalVendors ?? 0) - (data?.activeVendors ?? 0));
+  const metrics = [
+    ["Active users", data?.activeUsers, Users, "/admin/users"],
+    ["Total vendors", data?.totalVendors, Store, "/admin/vendors"],
+    ["Active listings", data?.activeVendors, BadgeCheck, "/admin/vendors"],
+    ["Events", data?.totalEvents, Layers3, "/analytics"],
+    ["Published events", data?.publishedEvents, Activity, "/analytics"],
+    ["Ticket orders", data?.ticketOrders, Ticket, "/analytics"],
+    ["Attendees", data?.ticketAttendees, Users, "/analytics"],
+    ["Checked in", data?.checkedInAttendees, CheckCircle2, "/analytics"],
+  ] as const;
   return (
     <AppShell active="/admin">
-      <div className="space-y-6">
-        <PageHeader
-          eyebrow="AdminOS™"
-          title="Platform controls"
-          description="Users, vendors, safety, billing, and platform health."
-          icon={ShieldCheck}
-          actions={<Button asChild size="sm"><Link to="/admin/invite">Invite users</Link></Button>}
-        />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {metricCards.map((m) => (
-            <Link
-              key={m.label}
-              to={m.to as "/admin/users"}
-              className="rounded-2xl border border-border/60 bg-card p-4 shadow-soft transition hover:border-primary/40 hover:shadow-elegant"
-            >
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{m.label}</p>
-              <p className="mt-1 font-display text-2xl font-semibold">{m.value}</p>
-              {m.hint && <p className="mt-0.5 text-[11px] text-muted-foreground">{m.hint}</p>}
-            </Link>
-          ))}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {moduleTiles.map((t) => (
-            <Link
-              key={t.title}
-              to={t.to as "/admin/users"}
-              className="group rounded-2xl border border-border/60 bg-card p-5 shadow-soft transition hover:border-primary/40 hover:shadow-elegant"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-primary/15 to-primary/5 text-primary">
-                <t.icon className="h-4 w-4" />
-              </span>
-              <p className="mt-3 text-sm font-semibold">{t.title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t.detail}</p>
-              <p className="mt-3 text-xs text-primary opacity-0 transition group-hover:opacity-100">Open →</p>
-            </Link>
-          ))}
-        </div>
-        <Section title="Queues needing attention">
-          <div className="grid gap-3 md:grid-cols-3">
-            <QueueCard icon={BadgeCheck} label="Vendor verifications" count={stats.data?.vendorApplications ?? 0} tone="text-primary" to="/vendors" />
-            <QueueCard icon={AlertTriangle} label="Open reports" count={stats.data?.openReports ?? 0} tone="text-destructive" to="/reports" />
-            <QueueCard icon={DollarSign} label="Refunds pending" count={stats.data?.pendingRefunds ?? 0} tone="text-gold" to="/bridgepay" />
+      <div className="space-y-7">
+        <PageHeader eyebrow="AdminOS" title="The platform, at a glance." description="A quiet command center for the work that keeps MelaBridge moving." icon={ShieldCheck} actions={<Button asChild size="sm"><Link to="/admin/invite"><Users className="mr-1.5 h-4 w-4" />Invite users</Link></Button>} />
+
+        <section aria-labelledby="overview-heading">
+          <div className="mb-3 flex items-end justify-between"><div><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Signal</p><h2 id="overview-heading" className="font-display text-xl font-semibold">Platform overview</h2></div><span className="text-xs text-muted-foreground">Live counts from the platform</span></div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+            {stats.isLoading ? Array.from({ length: 10 }).map((_, i) => <div key={i} className="h-24 animate-pulse rounded-xl border bg-muted/40" />) : metrics.map(([label, value, Icon, to]) => <Link key={label} to={to as "/admin"} className="group rounded-xl border border-border/70 bg-card/80 p-3 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"><div className="flex items-center justify-between"><span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span><Icon className="h-3.5 w-3.5 text-primary/70" /></div><p className="mt-2 font-display text-2xl font-semibold tabular-nums">{n(value)}</p></Link>)}
           </div>
-        </Section>
+        </section>
 
-        {import.meta.env.DEV ? <TestSeedSection /> : null}
+         <section aria-labelledby="attention-heading"><div className="mb-3"><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Triage</p><h2 id="attention-heading" className="font-display text-xl font-semibold">Needs attention</h2><p className="text-sm text-muted-foreground">Small queues worth clearing before they become noise.</p></div><div className="grid gap-3 md:grid-cols-3">
+           <AttentionCard to="/admin/vendors" label="Incomplete vendor profiles" count={incompleteVendors} detail="Profiles not ready for listing" icon={Store} tone="slate" />
+        </div></section>
 
-        <EmailDomainTestSection />
+        <section aria-labelledby="management-heading"><div className="mb-3 flex items-end justify-between"><div><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Workspace</p><h2 id="management-heading" className="font-display text-xl font-semibold">Management</h2></div></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+           <ManagementCard to="/admin/users" icon={Users} label="Users" detail="Roles, status, access" /><ManagementCard to="/admin/invite" icon={Mail} label="Invite" detail="Bring in a teammate" /><ManagementCard to="/admin/vendors" icon={Store} label="Vendors" detail="Profiles and listings" /><ManagementCard to="/admin/sourcing" icon={Layers3} label="Vendor Demand" detail="Aggregate marketplace demand" /><ManagementCard to="/admin/subscriptions" icon={CreditCard} label="Subscriptions" detail="Plans and billing status" />
+        </div></section>
 
-        <Section title="Billing configuration">
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent p-5 shadow-soft">
-            <div className="flex items-start gap-3">
-              <Settings2 className="mt-0.5 h-5 w-5 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold">Centralized pricing source of truth</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Every plan, price, feature, trial length, and promise across MelaBridge reads
-                  from a single config. Update once — Pricing page, checkout, upgrade screens,
-                  billing portal, and marketing pages update everywhere.
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <ConfigStat icon={Percent} label="Donation platform fee" value={`${billingConfig.donationPlatformFeeRate * 100}%`} note="Always zero" />
-                  <ConfigStat icon={Ticket} label="Ticketing platform fee" value={`${billingConfig.ticketingPlatformFeeRate * 100}%`} note="Paid plans, no fee" />
-                  <ConfigStat
-                    icon={HandCoins}
-                    label="Marketplace commission"
-                    value={billingConfig.marketplaceCommissionEnabled ? `${billingConfig.marketplaceCommissionRate * 100}%` : "Disabled"}
-                    note={billingConfig.marketplaceCommissionEnabled ? "Enabled" : "Off at launch"}
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
+         <section aria-labelledby="health-heading"><div className="mb-3"><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Reliability</p><h2 id="health-heading" className="font-display text-xl font-semibold">Platform health</h2></div><Card className="border-border/70 p-4"><div className="flex flex-wrap items-center gap-3"><div className="flex items-center gap-2">{health ? health.overall === "ok" ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertTriangle className="h-4 w-4 text-amber-600" /> : <Server className="h-4 w-4 text-muted-foreground" />}<span className="text-sm font-medium">{health ? health.overall === "ok" ? "All checked services operational" : "One or more services degraded" : "Not checked yet"}</span>{health && <span className="text-xs text-muted-foreground">at {new Date(health.checkedAt).toLocaleTimeString()}</span>}</div><Button className="ml-auto" size="sm" variant="outline" onClick={runHealthCheck} disabled={checking}>{checking ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1.5 h-4 w-4" />}{health ? "Re-check services" : "Check services"}</Button></div>{health && <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">{health.services.map((service) => <div key={service.name} className="rounded-lg bg-muted/45 p-3"><div className="flex items-center gap-2 text-sm font-medium">{service.status === "ok" ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />}{service.name}</div><p className="mt-1 text-xs text-muted-foreground">{service.status === "ok" ? "Operational" : "Degraded"}{service.latencyMs !== undefined && ` · ${service.latencyMs}ms`}</p></div>)}</div>}{health?.synthetic && <div className="mt-4 rounded-lg border border-border/70 bg-muted/20 p-3"><div className="flex items-center justify-between gap-3"><div><p className="text-sm font-medium">Synthetic monitor: {health.synthetic.overall}</p><p className="text-xs text-muted-foreground">Last run {new Date(health.synthetic.completedAt).toLocaleString()} · {health.synthetic.checks.filter((check) => check.status === "ok").length}/{health.synthetic.checks.length} checks passed</p></div><span className="text-xs text-muted-foreground">Every 5 minutes</span></div>{health.synthetic.checks.some((check) => check.status === "degraded") && <ul className="mt-2 space-y-1 text-xs text-amber-700">{health.synthetic.checks.filter((check) => check.status === "degraded").slice(0, 3).map((check) => <li key={check.name}><strong>{check.name}:</strong> {check.detail}</li>)}</ul>}</div>}</Card></section>
 
-          {(["host", "vendor", "planner"] as BillingAudience[]).map((a) => (
-            <div key={a} className="mt-6">
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-semibold">{audienceMeta[a].label}</p>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/pricing">View public page →</Link>
-                </Button>
-              </div>
-              <Card className="divide-y divide-border/60 border-border/60 shadow-soft">
-                {getPlansFor(a).map((p) => {
-                  const { amount, period } = formatPrice(p);
-                  return (
-                    <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium">{p.name}</p>
-                          {p.featured && <Badge className="bg-primary/10 text-primary text-[10px]">Most Popular</Badge>}
-                          {!p.visible && <Badge variant="secondary" className="text-[10px]">Hidden</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{p.tagline}</p>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>Trial: {p.trialDays}d</span>
-                        <span className="font-display text-base font-semibold text-foreground">
-                          {amount}
-                          {period && p.price !== null && (
-                            <span className="ml-0.5 text-xs font-normal text-muted-foreground">{period}</span>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </Card>
-            </div>
-          ))}
-        </Section>
+        <AdvancedTools />
       </div>
     </AppShell>
   );
 }
 
-function QueueCard({
-  icon: Icon,
-  label,
-  count,
-  tone,
-  to,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  count: number;
-  tone: string;
-  to: string;
-}) {
-  return (
-    <Link to={to as "/admin/users"} className="block">
-      <Card className="flex items-center justify-between border-border/60 p-4 shadow-soft transition hover:border-primary/40 hover:shadow-elegant">
-        <div className="flex items-center gap-2">
-          <Icon className={`h-4 w-4 ${tone}`} />
-          <span className="text-sm font-medium">{label}</span>
-        </div>
-        <Badge variant="secondary">{count}</Badge>
-      </Card>
-    </Link>
-  );
+function AttentionCard({ to, label, count, detail, icon: Icon, tone }: { to: string; label: string; count?: number; detail: string; icon: React.ComponentType<{ className?: string }>; tone: "amber" | "teal" | "slate" }) {
+  return <Link to={to as "/admin"} className="group flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition hover:border-primary/40 hover:shadow-soft"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${tone === "amber" ? "bg-amber-100 text-amber-700" : tone === "teal" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{label}</span><span className="block text-xs text-muted-foreground">{detail}</span></span><span className="flex items-center gap-1 font-display text-xl font-semibold">{count ?? "—"}<ArrowUpRight className="h-4 w-4 text-primary opacity-0 transition group-hover:opacity-100" /></span></Link>;
 }
+function ManagementCard({ to, icon: Icon, label, detail }: { to: string; icon: React.ComponentType<{ className?: string }>; label: string; detail: string }) { return <Link to={to as "/admin"} className="group rounded-xl border border-border/70 bg-card p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"><Icon className="h-4 w-4 text-primary" /><p className="mt-3 text-sm font-semibold">{label}</p><p className="mt-0.5 text-xs text-muted-foreground">{detail}</p><ArrowUpRight className="mt-3 h-3.5 w-3.5 text-primary opacity-0 transition group-hover:opacity-100" /></Link>; }
 
-function TestSeedSection() {
-  const seed = useServerFn(seedTestData);
-  const wipe = useServerFn(wipeTestData);
-  const [busy, setBusy] = useState<"seed" | "wipe" | null>(null);
-  const [lastResult, setLastResult] = useState<string | null>(null);
-
-  const isProdHost = typeof window !== "undefined" && /(^|\.)melabridge\.com$/.test(window.location.hostname);
-  if (isProdHost) return null;
-
-  const runSeed = async () => {
-    setBusy("seed");
-    setLastResult(null);
-    try {
-      const res = await seed({ data: undefined } as never);
-      if (!res.ok) throw new Error(res.error);
-      setLastResult(`Seeded ${res.accounts.length} accounts, ${res.events} events, ${res.guests} guests, ${res.notifications} notifications.`);
-      toast.success("Test data seeded");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Seed failed");
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const runWipe = async () => {
-    if (!confirm("Delete all rows tagged as test seed? This cannot be undone.")) return;
-    setBusy("wipe");
-    setLastResult(null);
-    try {
-      const res = await wipe({ data: undefined } as never);
-      if (!res.ok) throw new Error(res.error ?? "Wipe failed");
-      setLastResult("Test data wiped.");
-      toast.success("Test data wiped");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Wipe failed");
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  return (
-    <Section title="QA test data (dev/preview only)">
-      <Card className="border-dashed border-primary/30 bg-primary/5 p-5 shadow-soft">
-        <div className="flex items-start gap-3">
-          <FlaskConical className="mt-0.5 h-5 w-5 text-primary" />
-          <div className="flex-1 space-y-3">
-            <div>
-              <p className="text-sm font-semibold">Seed five test accounts + realistic data</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Creates <code className="rounded bg-muted px-1">admin/planner/vendor/attendee/guest@test.melabridge.com</code> (password <code className="rounded bg-muted px-1">MelaTest!2026</code>) and populates events, guests, tasks, budget, files, messages, notifications, vendor profile, and a sandbox subscription. Every row is tagged so it can be wiped surgically. Hidden entirely on the production domain.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={runSeed} disabled={busy !== null}>
-                <FlaskConical className="mr-2 h-4 w-4" />{busy === "seed" ? "Seeding…" : "Seed test data"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={runWipe} disabled={busy !== null}>
-                <Trash2 className="mr-2 h-4 w-4" />{busy === "wipe" ? "Wiping…" : "Wipe test data"}
-              </Button>
-            </div>
-            {lastResult && <p className="text-xs text-muted-foreground">{lastResult}</p>}
-          </div>
-        </div>
-      </Card>
-    </Section>
-  );
+function AdvancedTools() {
+  const [open, setOpen] = useState(false);
+  return <Collapsible open={open} onOpenChange={setOpen}><div className="border-t border-border/70 pt-5"><CollapsibleTrigger className="flex w-full items-center justify-between text-left"><div><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">For operators</p><h2 className="font-display text-xl font-semibold">Advanced tools</h2><p className="text-sm text-muted-foreground">Testing and configuration utilities, kept out of the daily path.</p></div><ChevronDown className={`h-5 w-5 text-muted-foreground transition ${open ? "rotate-180" : ""}`} /></CollapsibleTrigger><CollapsibleContent className="mt-4 grid gap-3 md:grid-cols-2"><TestDataTool /><EmailTool /><TicketTool /><BillingTool /></CollapsibleContent></div></Collapsible>;
 }
-
-function EmailDomainTestSection() {
-  const send = useServerFn(sendDomainTestEmail);
-  const [verified, setVerified] = useState<null | boolean>(null);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const recipient = "hello@melabridge.com";
-
-  const run = async () => {
-    setBusy(true);
-    setMessage(null);
-    try {
-      const res = await send({ data: { recipient } } as never);
-      if (res.ok) {
-        setVerified(true);
-        setMessage(`Test email sent to ${res.recipient}. Check the inbox in a moment.`);
-        toast.success("Test email sent");
-      } else if (res.code === "domain_not_verified") {
-        setVerified(false);
-        setMessage("notify.melabridge.com is not verified yet. DNS is still propagating — try again in a few minutes.");
-        toast.error("Domain not verified yet");
-      } else if (res.code === "forbidden") {
-        setMessage("Admin role required.");
-        toast.error("Admin role required");
-      } else {
-        setMessage(res.message ?? "Send failed.");
-        toast.error(res.message ?? "Send failed");
-      }
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : "Send failed");
-      toast.error("Send failed");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const canSend = verified === true;
-  const showCheck = verified !== true;
-
-  return (
-    <Section title="Email domain">
-      <Card className="border-border/60 p-5 shadow-soft">
-        <div className="flex items-start gap-3">
-          <Mail className="mt-0.5 h-5 w-5 text-primary" />
-          <div className="flex-1 space-y-3">
-            <div>
-              <p className="text-sm font-semibold">Send a test email from notify.melabridge.com</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Sends a delivery test to <code className="rounded bg-muted px-1">{recipient}</code>. The send button only becomes available once DNS verification for <code className="rounded bg-muted px-1">notify.melabridge.com</code> completes.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={run} disabled={busy || !canSend}>
-                <Mail className="mr-2 h-4 w-4" />
-                {busy && canSend ? "Sending…" : "Send test email"}
-              </Button>
-              {showCheck && (
-                <Button size="sm" variant="outline" onClick={run} disabled={busy}>
-                  <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} />
-                  {busy ? "Checking…" : verified === false ? "Recheck verification" : "Check verification"}
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 text-xs">
-              {verified === true && (
-                <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Domain verified — sending is live.
-                </span>
-              )}
-              {verified === false && (
-                <span className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                  <AlertCircle className="h-3.5 w-3.5" /> Domain not verified yet.
-                </span>
-              )}
-              {verified === null && (
-                <span className="text-muted-foreground">Verification status unknown — run a check to confirm.</span>
-              )}
-            </div>
-
-            {message && <p className="text-xs text-muted-foreground">{message}</p>}
-          </div>
-        </div>
-      </Card>
-    </Section>
-  );
-}
-
-function ConfigStat({
-  icon: Icon,
-  label,
-  value,
-  note,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  note: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border/60 bg-card p-3">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
-        {label}
-      </div>
-      <p className="mt-1 font-display text-lg font-semibold">{value}</p>
-      <p className="text-[10px] text-muted-foreground">{note}</p>
-    </div>
-  );
-}
+function TestDataTool() { const seed = useServerFn(seedTestData); const wipe = useServerFn(wipeTestData); const [busy, setBusy] = useState(false); return <ToolCard icon={FlaskConical} title="QA test data" text="Seed or remove tagged preview records." actions={<><Button size="sm" onClick={async () => { setBusy(true); try { const r = await seed({ data: undefined } as never); if (!r.ok) throw new Error(r.error); toast.success("Test data seeded"); } catch (e) { toast.error(e instanceof Error ? e.message : "Seed failed"); } finally { setBusy(false); } }} disabled={busy}>Seed</Button><Button size="sm" variant="outline" onClick={async () => { if (!confirm("Delete all tagged test data?")) return; setBusy(true); try { const r = await wipe({ data: undefined } as never); if (!r.ok) throw new Error(r.error); toast.success("Test data wiped"); } catch (e) { toast.error(e instanceof Error ? e.message : "Wipe failed"); } finally { setBusy(false); } }} disabled={busy}><Trash2 className="mr-1 h-3.5 w-3.5" />Wipe</Button></>} />; }
+function EmailTool() { const send = useServerFn(sendDomainTestEmail); const [busy, setBusy] = useState(false); return <ToolCard icon={Mail} title="Email domain" text="Send a delivery test to hello@melabridge.com." actions={<Button size="sm" variant="outline" disabled={busy} onClick={async () => { setBusy(true); try { const r = await send({ data: { recipient: "hello@melabridge.com" } } as never); if (!r.ok) throw new Error(r.message); toast.success("Test email sent"); } catch (e) { toast.error(e instanceof Error ? e.message : "Send failed"); } finally { setBusy(false); } }}>{busy ? "Sending…" : "Send test"}</Button>} />; }
+function TicketTool() { return <ToolCard icon={Ticket} title="Ticketing sandbox" text="Create a private test event and validate checkout with Stripe test mode." actions={<Button size="sm" variant="outline" asChild><Link to="/events/new">Create test event</Link></Button>} />; }
+function BillingTool() { return <ToolCard icon={Settings2} title="Billing configuration" text={`${billingConfig.ticketingPlatformFeeRate * 100}% ticketing fee · plans are read from the shared config.`} actions={<Button size="sm" variant="outline" asChild><Link to="/pricing">View pricing</Link></Button>} />; }
+function ToolCard({ icon: Icon, title, text, actions }: { icon: React.ComponentType<{ className?: string }>; title: string; text: string; actions: React.ReactNode }) { return <Card className="flex flex-wrap items-center gap-3 border-border/70 p-4"><Icon className="h-4 w-4 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="text-sm font-semibold">{title}</p><p className="text-xs text-muted-foreground">{text}</p></div><div className="flex gap-2">{actions}</div></Card>; }

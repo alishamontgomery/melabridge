@@ -9,13 +9,13 @@
   "theme_color": "#6a2fbf",
   "icons": [
     {
-      "src": "/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png",
+      "src": "/melabridge-logo.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/f2af518e-c162-43da-8bb2-8f926bb9bbf7/melabridge-logo.png",
+      "src": "/melabridge-logo.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "maskable"

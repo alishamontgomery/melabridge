@@ -1,7 +1,9 @@
 import "./lib/error-capture";
 
+import { clerkFrontendApiProxy } from "@clerk/backend/proxy";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
+import { logReliability } from "./lib/reliability-logger";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -20,19 +22,86 @@ async function getServerEntry(): Promise<ServerEntry> {
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(request: Request, response: Response): Promise<Response> {
   if (response.status < 500) return response;
+  const requestPath = new URL(request.url).pathname;
+  if (requestPath === "/auth" || requestPath === "/auth/callback") {
+    return recoverFromInvalidClerkSession(request);
+  }
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
 
   const body = await response.clone().text();
   if (!isH3SwallowedErrorBody(body)) return response;
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const capturedError = consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`);
+  if (
+    isInvalidClerkSessionError(capturedError) ||
+    hasClerkSessionCookie(request)
+  ) {
+    return recoverFromInvalidClerkSession(request);
+  }
+  logReliability("error", "ssr_error", {
+    route: requestPath,
+    detail: capturedError instanceof Error ? capturedError.message : "SSR request failed",
+  });
   return new Response(renderErrorPage(), {
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
+}
+
+function errorText(error: unknown): string {
+  if (!error || typeof error !== "object") return String(error ?? "");
+  const value = error as { name?: unknown; message?: unknown; cause?: unknown };
+  return `${String(value.name ?? "")} ${String(value.message ?? "")} ${errorText(value.cause)}`;
+}
+
+function isInvalidClerkSessionError(error: unknown): boolean {
+  const text = errorText(error).toLowerCase();
+  return (
+    text.includes("handshake token verification failed") ||
+    text.includes("secret-key-invalid") ||
+    text.includes("token-carrier=undefined")
+  );
+}
+
+function hasClerkSessionCookie(request: Request): boolean {
+  const cookie = request.headers.get("cookie") ?? "";
+  return cookie
+    .split(";")
+    .map((part) => part.trim().split("=")[0])
+    .some((name) => name === "__session" || name === "__client_uat" || name.startsWith("__clerk"));
+}
+
+function recoverFromInvalidClerkSession(request: Request): Response {
+  const url = new URL(request.url);
+  if (url.searchParams.get("__clerk_reset") === "1") {
+    return new Response(renderErrorPage(), {
+      status: 500,
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+
+  url.searchParams.set("__clerk_reset", "1");
+  const response = new Response(null, {
+    status: 303,
+    headers: { Location: url.toString() },
+  });
+  const cookieNames = (request.headers.get("cookie") ?? "")
+    .split(";")
+    .map((part) => part.trim().split("=")[0])
+    .filter(Boolean);
+  const namesToClear = cookieNames.length > 0
+    ? cookieNames
+    : ["__session", "__client_uat", "__clerk_db_jwt", "__clerk_handshake", "__clerk_synced"];
+  for (const cookieName of namesToClear) {
+    response.headers.append(
+      "Set-Cookie",
+      `${cookieName}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`,
+    );
+  }
+  return response;
 }
 
 function isH3SwallowedErrorBody(body: string): boolean {
@@ -47,11 +116,29 @@ function isH3SwallowedErrorBody(body: string): boolean {
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const requestPath = new URL(request.url).pathname;
+      if (requestPath === "/api/__clerk" || requestPath.startsWith("/api/__clerk/")) {
+        return await clerkFrontendApiProxy(request, {
+          proxyPath: "/api/__clerk",
+          publishableKey: process.env.CLERK_PUBLISHABLE_KEY?.trim(),
+          secretKey: process.env.CLERK_SECRET_KEY?.trim(),
+        });
+      }
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      return await normalizeCatastrophicSsrResponse(request, response);
     } catch (error) {
-      console.error(error);
+      const url = new URL(request.url);
+      if (
+        (url.pathname === "/auth" || url.pathname === "/auth/callback") &&
+        url.searchParams.get("__clerk_reset") !== "1"
+      ) {
+        return recoverFromInvalidClerkSession(request);
+      }
+      logReliability("error", "server_request_error", {
+        route: url.pathname,
+        detail: error instanceof Error ? error.message : "Server request failed",
+      });
       return new Response(renderErrorPage(), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },

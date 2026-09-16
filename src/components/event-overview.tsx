@@ -1,16 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
-  Activity, ArrowRight, Calendar, CheckCircle2, ClipboardList, Clock,
-  DollarSign, Heart, Map, MapPin, PartyPopper, Plus,
-  Sparkles, Store, Timer, TrendingUp, Users, Wallet, Zap,
+  Activity, Archive, ArrowRight, Calendar, CheckCircle2, ClipboardList, Clock,
+  Copy, DollarSign, Heart, Lock, Map, MapPin, MoreHorizontal, PartyPopper, Plus,
+  Sparkles, Store, Ticket, Timer, Trash2, TrendingUp, Users, Wallet, Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { useFeatureGate } from "@/hooks/use-feature-gate";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { NeedsAttention } from "@/components/needs-attention";
+import { ProactiveSuggestions } from "@/components/proactive-suggestions";
+import { PlanningReadiness } from "@/components/planning-readiness";
+import { useMelaAssistOptional } from "@/components/melaassist/context";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -19,16 +33,23 @@ type Guest = Database["public"]["Tables"]["guests"]["Row"];
 type Activity = Database["public"]["Tables"]["activity_log"]["Row"];
 
 export function EventOverview({
-  event, tasks, budget, guests, onOpenTab,
+  event, tasks, budget, guests, onOpenTab, onArchive, onDelete, onDuplicate,
 }: {
   event: Event;
   tasks: Task[];
   budget: BudgetItem[];
   guests: Guest[];
   onOpenTab: (tab: string) => void;
+  onArchive?: () => void;
+  onDelete?: () => void;
+  onDuplicate?: () => void;
 }) {
   const navigate = useNavigate();
   const [activity, setActivity] = useState<Activity[]>([]);
+  const { allowed: ticketingAllowed, loading: ticketingLoading } = useFeatureGate("ticketing");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     let cancel = false;
@@ -91,42 +112,7 @@ export function EventOverview({
     return { score, label, tone, reasons: reasons.slice(0, 3) };
   }, [tasks, budgetTarget, budgetSpent, countdown, taskPct, rsvpPending, guestTarget, event.event_date, event.location]);
 
-  // AI recommendations (heuristic)
-  const recommendations = useMemo(() => {
-    const recs: { icon: typeof Zap; title: string; body: string; action?: () => void; label?: string }[] = [];
-    const nextTask = tasks.find((t) => t.status !== "done" && t.due_date);
-    if (nextTask) recs.push({
-      icon: Timer,
-      title: `Focus: ${nextTask.title}`,
-      body: `Due ${new Date(nextTask.due_date!).toLocaleDateString()} — knocking this out today keeps momentum.`,
-      action: () => onOpenTab("tasks"), label: "Open tasks",
-    });
-    if (!event.event_date) recs.push({
-      icon: Calendar, title: "Lock in your date",
-      body: "Vendors and venues fill up fast. Setting a date unlocks smarter suggestions.",
-      action: () => onOpenTab("details"), label: "Set date",
-    });
-    if (guestTarget > 0 && rsvpPending > 0) recs.push({
-      icon: Users, title: `${rsvpPending} guests haven't responded`,
-      body: "Send a friendly reminder to boost your RSVP count this week.",
-      action: () => onOpenTab("guests"), label: "Review guests",
-    });
-    if (budget.length === 0) recs.push({
-      icon: Wallet, title: "Draft your budget",
-      body: "Start with venue, catering and photography — MelaAssist will estimate the rest.",
-      action: () => onOpenTab("budget"), label: "Add budget",
-    });
-    if (countdown !== null && countdown < 14 && countdown >= 0) recs.push({
-      icon: Zap, title: "Under two weeks out",
-      body: "Confirm vendor arrival times, finalize seating, and prep a day-of runsheet.",
-      action: () => onOpenTab("runsheet"), label: "Plan runsheet",
-    });
-    if (recs.length === 0) recs.push({
-      icon: Sparkles, title: "You're in great shape",
-      body: "Every core surface is populated. Consider inviting collaborators or uploading contracts.",
-    });
-    return recs.slice(0, 3);
-  }, [tasks, event.event_date, guestTarget, rsvpPending, budget.length, countdown, onOpenTab]);
+  // Recommendations are now handled by the server-driven ProactiveSuggestions component.
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const timeline = useMemo(() => {
@@ -157,6 +143,8 @@ export function EventOverview({
     ].sort((a, b) => (a.when < b.when ? 1 : -1)).slice(0, 6);
     return derived;
   }, [activity, tasks, budget, guests]);
+
+  const melaAssist = useMelaAssistOptional();
 
   return (
     <div className="space-y-6">
@@ -210,6 +198,15 @@ export function EventOverview({
         </div>
       </Card>
 
+      {/* ============ NEEDS ATTENTION ============ */}
+      <NeedsAttention
+        event={event}
+        tasks={tasks}
+        budget={budget}
+        guests={guests}
+        onOpenTab={onOpenTab}
+      />
+
       {/* ============ EDITABLE QUICK CARDS ============ */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <QuickCard icon={Calendar} label="Date" tone="primary" onEdit={() => onOpenTab("details")}
@@ -228,37 +225,23 @@ export function EventOverview({
           value={`${planningPct}%`} sub={`${doneTasks}/${tasks.length || 0} tasks`} />
       </div>
 
-      {/* ============ HEALTH + AI PANEL ROW ============ */}
+      {/* ============ READINESS + AI PANEL ROW ============ */}
       <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
-        {/* Event Health */}
+        {/* Planning Readiness */}
         <Card className="border-border/60 p-5 shadow-soft">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`grid h-8 w-8 place-items-center rounded-lg bg-${health.tone}-500/10 text-${health.tone}-600`}>
-                <Heart className="h-4 w-4" />
-              </div>
-              <h3 className="font-display text-lg font-semibold">Event Health</h3>
+          <div className="mb-4 flex items-center gap-2">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
+              <TrendingUp className="h-4 w-4" />
             </div>
-            <Badge variant="outline" className="text-xs">{health.label}</Badge>
+            <h3 className="font-display text-lg font-semibold">Planning Readiness</h3>
           </div>
-          <div className="mt-4 flex items-end gap-3">
-            <div className="font-display text-5xl font-semibold leading-none text-gradient">{health.score}</div>
-            <div className="pb-1 text-xs text-muted-foreground">/ 100</div>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-            <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary-glow transition-all" style={{ width: `${health.score}%` }} />
-          </div>
-          <ul className="mt-4 space-y-1.5 text-sm">
-            {health.reasons.length === 0 ? (
-              <li className="flex items-center gap-2 text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> All key signals look healthy.
-              </li>
-            ) : health.reasons.map((r) => (
-              <li key={r} className="flex items-center gap-2 text-muted-foreground">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" /> {r}
-              </li>
-            ))}
-          </ul>
+          <PlanningReadiness
+            event={event}
+            tasks={tasks}
+            budget={budget}
+            guests={guests}
+            onOpenTab={onOpenTab}
+          />
         </Card>
 
         {/* MelaAssist AI Panel */}
@@ -273,41 +256,98 @@ export function EventOverview({
                 <h3 className="font-display text-lg font-semibold">Proactive recommendations</h3>
               </div>
             </div>
-            <Button size="sm" variant="ghost" className="gap-1 text-primary hover:bg-primary/5">
-              Ask <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+            {melaAssist && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="gap-1 text-primary hover:bg-primary/5"
+                onClick={() => melaAssist.openAssistant()}
+              >
+                Ask <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
-          <div className="space-y-2.5">
-            {recommendations.map((rec) => (
-              <div key={rec.title} className="group flex items-start gap-3 rounded-xl border border-border/40 bg-background/70 p-3 transition hover:border-primary/40 hover:shadow-soft">
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <rec.icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground">{rec.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{rec.body}</p>
-                </div>
-                {rec.action && (
-                  <Button size="sm" variant="ghost" onClick={rec.action} className="shrink-0 gap-1 text-xs opacity-70 group-hover:opacity-100">
-                    {rec.label} <ArrowRight className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
+          <ProactiveSuggestions eventId={event.id} onOpenTab={onOpenTab} />
         </Card>
       </div>
 
       {/* ============ QUICK ACTIONS ============ */}
       <div>
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Quick actions</h3>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           <QuickAction icon={Plus} label="Add Task" onClick={() => onOpenTab("tasks")} />
           <QuickAction icon={Users} label="Invite Guests" onClick={() => onOpenTab("guests")} />
-          <QuickAction icon={Store} label="Find Vendors" onClick={() => navigate({ to: "/vendors" })} />
-          <QuickAction icon={Map} label="Timeline" onClick={() => navigate({ to: "/timeline" })} />
+          <QuickAction icon={Store} label="Find Vendors" onClick={() => navigate({ to: "/marketplace" })} />
+          <QuickAction
+            icon={Ticket}
+            label="Sell Tickets"
+            locked={!ticketingLoading && !ticketingAllowed}
+            onClick={() => ticketingAllowed ? onOpenTab("tickets") : setUpgradeOpen(true)}
+          />
+          {/* Event Day button — shows within 48 h of the event */}
+          {countdown !== null && countdown >= 0 && countdown <= 2 && (
+            <QuickAction
+              icon={Zap}
+              label="Event Day"
+              highlight
+              onClick={() => navigate({ to: `/event-day/${event.id}` as never })}
+            />
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="group text-left">
+                <Card className="flex h-full items-center gap-3 border-border/60 p-3.5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-elegant">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <span className="text-sm font-medium">More</span>
+                </Card>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              {onDuplicate && (
+                <DropdownMenuItem onClick={onDuplicate}>
+                  <Copy className="mr-2 h-4 w-4" aria-hidden="true" /> Duplicate event
+                </DropdownMenuItem>
+              )}
+              {onDuplicate && (onArchive || onDelete) && <DropdownMenuSeparator />}
+              {onArchive && (
+                <DropdownMenuItem onClick={() => setArchiveConfirmOpen(true)}>
+                  <Archive className="mr-2 h-4 w-4" aria-hidden="true" /> Archive event
+                </DropdownMenuItem>
+              )}
+              {onArchive && onDelete && <DropdownMenuSeparator />}
+              {onDelete && (
+                <DropdownMenuItem
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" /> Delete event
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      <UpgradeModal feature="ticketing" open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+      <ConfirmDialog
+        open={archiveConfirmOpen}
+        onOpenChange={(v) => !v && setArchiveConfirmOpen(false)}
+        title="Archive this event?"
+        description={<p>&ldquo;{event.name}&rdquo; will be hidden from Active events but kept for future reference. You can restore it anytime from the Archived tab.</p>}
+        confirmLabel="Archive"
+        onConfirm={async () => { onArchive?.(); }}
+      />
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={(v) => !v && setDeleteConfirmOpen(false)}
+        destructive
+        title="Delete this event?"
+        description={<p>You&rsquo;re about to delete &ldquo;{event.name}&rdquo;. This event will be moved to Trash and can be restored for 30&nbsp;days. After that it&rsquo;s permanently removed.</p>}
+        confirmLabel="Move to Trash"
+        onConfirm={async () => { onDelete?.(); }}
+      />
 
       {/* ============ TASK PROGRESS + TIMELINE + ACTIVITY ============ */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -450,14 +490,37 @@ function QuickCard({ icon: Icon, label, value, sub, tone, onEdit }: {
   );
 }
 
-function QuickAction({ icon: Icon, label, onClick }: { icon: typeof Zap; label: string; onClick: () => void }) {
+function QuickAction({
+  icon: Icon, label, onClick, locked = false, highlight = false,
+}: {
+  icon: typeof Zap;
+  label: string;
+  onClick: () => void;
+  locked?: boolean;
+  highlight?: boolean;
+}) {
   return (
-    <button onClick={onClick} className="group">
-      <Card className="flex h-full items-center gap-3 border-border/60 p-3.5 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:shadow-elegant">
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition group-hover:bg-primary group-hover:text-primary-foreground">
-          <Icon className="h-4 w-4" />
+    <button onClick={onClick} className="group text-left">
+      <Card className={`flex h-full items-center gap-3 p-3.5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elegant ${
+        highlight
+          ? "border-amber-400/60 bg-amber-50/60 hover:border-amber-500/60 dark:bg-amber-950/20"
+          : "border-border/60 hover:border-primary/40 hover:bg-primary/5"
+      }`}>
+        <div className={`relative grid h-9 w-9 shrink-0 place-items-center rounded-xl transition ${
+          highlight
+            ? "bg-amber-400/20 text-amber-600 group-hover:bg-amber-500 group-hover:text-white dark:text-amber-400"
+            : locked
+            ? "bg-muted text-muted-foreground group-hover:bg-muted/80"
+            : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground"
+        }`}>
+          <Icon className="h-4 w-4" aria-hidden="true" />
+          {locked && (
+            <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 shadow-sm">
+              <Lock className="h-2 w-2 text-white" aria-label="Premium feature" />
+            </span>
+          )}
         </div>
-        <span className="text-sm font-medium">{label}</span>
+        <span className={`text-sm font-medium ${highlight ? "text-amber-700 dark:text-amber-300" : locked ? "text-muted-foreground" : ""}`}>{label}</span>
       </Card>
     </button>
   );

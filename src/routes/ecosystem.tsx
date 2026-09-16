@@ -13,7 +13,7 @@ import {
   Calendar,
   Bell,
   Vault,
-  Dna,
+  Sparkles,
   BarChart3,
   Lightbulb,
   CloudRain,
@@ -144,9 +144,9 @@ const RELATIONSHIPS = [
     icon: Users,
     reacts: [
       { m: "Budget", to: "/budget", icon: Wallet, note: "Per-guest projection" },
-      { m: "Vendors", to: "/vendors", icon: Store, note: "Catering + rentals" },
+      { m: "Vendors", to: "/marketplace", icon: Store, note: "Catering + rentals" },
       { m: "Tasks", to: "/tasks", icon: ClipboardList, note: "Seating chart auto-updates" },
-      { m: "BridgeDNA™", to: "/bridgedna", icon: Dna, note: "Refines guest-style model" },
+      { m: "MelaAssist", to: "/concierge", icon: Sparkles, note: "Refines recommendations" },
     ],
   },
   {
@@ -155,7 +155,7 @@ const RELATIONSHIPS = [
     reacts: [
       { m: "Timeline", to: "/timeline", icon: Calendar, note: "Milestones added" },
       { m: "Tasks", to: "/tasks", icon: ClipboardList, note: "Reminders cleared" },
-      { m: "Budget", to: "/budget", icon: Wallet, note: "Marks amount committed" },
+      { m: "Budget", to: "/budget", icon: Wallet, note: "Marks amount planned" },
       { m: "Team", to: "/team", icon: Users, note: "Team notified" },
     ],
   },

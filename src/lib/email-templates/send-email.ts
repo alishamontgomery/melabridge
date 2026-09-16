@@ -1,22 +1,14 @@
+import { TEMPLATES } from './registry'
 import * as React from 'react'
 import { render } from '@react-email/render'
-import { EmailAPIError, sendLovableEmail } from '@lovable.dev/email-js'
-import { TEMPLATES } from './registry'
+import { ReplitConnectors } from '@replit/connectors-sdk'
 
-// Server-only: reads LOVABLE_API_KEY. Never import from client components.
-
-// Configuration baked in at scaffold time
-const SITE_NAME = "melabridge"
-// SENDER_DOMAIN is the verified sender subdomain FQDN (e.g., "notify.example.com").
-// It MUST match the subdomain delegated to Lovable's nameservers. NEVER use the root domain.
-const SENDER_DOMAIN = "notify.melabridge.com"
-// FROM_DOMAIN is the domain shown in the From: header (e.g., "example.com").
-// Can be the root domain when display_from_root is enabled — this is cosmetic only.
-const FROM_DOMAIN = "notify.melabridge.com"
+// Server-only. Never import from client components.
 
 export type SendTemplateEmailResult =
   | { sent: true }
   | { sent: false; reason: 'recipient_suppressed' }
+  | { sent: false; reason: 'provider_disabled' }
 
 export interface SendTemplateEmailOptions {
   templateData?: Record<string, any>
@@ -25,23 +17,33 @@ export interface SendTemplateEmailOptions {
   replyTo?: string
 }
 
-/**
- * Renders a registered template and sends it through Lovable's managed email
- * API. Suppression, retries, and rate limits are enforced by Lovable
- * server-side. A suppressed recipient is an expected outcome
- * ({ sent: false }); any other failure throws — EmailAPIError exposes
- * .code and .status for branching.
- */
+const connectors = new ReplitConnectors()
+let resendConnectionAvailable: Promise<boolean> | null = null
+
+export function resetEmailProviderCacheForTests(): void {
+  resendConnectionAvailable = null
+}
+
+async function hasResendConnection(): Promise<boolean> {
+  if (!resendConnectionAvailable) {
+    resendConnectionAvailable = connectors
+      .listConnections({ connector_names: 'resend' })
+      .then((connections) => connections.length > 0)
+  }
+  try {
+    return await resendConnectionAvailable
+  } catch (error) {
+    resendConnectionAvailable = null
+    throw error
+  }
+}
+
+/** Renders a registered template and sends it through the configured provider. */
 export async function sendTemplateEmail(
   templateName: string,
   to: string,
   options: SendTemplateEmailOptions = {}
 ): Promise<SendTemplateEmailResult> {
-  const apiKey = process.env.LOVABLE_API_KEY
-  if (!apiKey) {
-    throw new Error('LOVABLE_API_KEY is not configured')
-  }
-
   const template = TEMPLATES[templateName]
   if (!template) {
     throw new Error(
@@ -57,36 +59,37 @@ export async function sendTemplateEmail(
   }
 
   const templateData = options.templateData ?? {}
-  const element = React.createElement(template.component, templateData)
-  const html = await render(element)
-  const text = await render(element, { plainText: true })
-  const subject =
-    typeof template.subject === 'function'
-      ? template.subject(templateData)
-      : template.subject
+  const subject = typeof template.subject === 'function'
+    ? template.subject(templateData)
+    : template.subject
+  const html = await render(React.createElement(template.component, templateData))
 
-  try {
-    await sendLovableEmail(
-      {
-        to: recipient,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html,
-        text,
-        purpose: 'transactional',
-        label: templateName,
-        idempotency_key: options.idempotencyKey || crypto.randomUUID(),
-        reply_to: options.replyTo,
-      },
-      { apiKey, sendUrl: process.env.LOVABLE_SEND_URL }
-    )
-  } catch (error) {
-    if (error instanceof EmailAPIError && error.code === 'recipient_suppressed') {
-      return { sent: false, reason: 'recipient_suppressed' }
-    }
-    throw error
+  if (!(await hasResendConnection())) {
+    return { sent: false, reason: 'provider_disabled' }
   }
 
-  return { sent: true }
+  try {
+    const response = await connectors.proxy('resend', '/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.idempotencyKey ? { 'Idempotency-Key': options.idempotencyKey } : {}),
+      },
+      body: JSON.stringify({
+        from: 'MelaBridge <noreply@melabridge.com>',
+        to: [recipient],
+        subject,
+        html,
+        ...(options.replyTo ? { reply_to: options.replyTo } : {}),
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Email provider rejected the message (${response.status})`)
+    }
+    return { sent: true }
+  } catch (error) {
+    console.error('[email] Provider request failed')
+    throw error
+  }
 }

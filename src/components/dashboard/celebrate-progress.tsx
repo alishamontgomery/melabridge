@@ -18,11 +18,13 @@ export function CelebrateProgress({ milestones }: { milestones: Milestone[] }) {
   const [dismissed, setDismissed] = useState<Set<string>>(() => loadCelebrated());
   const active = milestones.find((m) => !dismissed.has(m.key));
 
+  const activeKey = active?.key;
+  const activeBig = active?.big;
   useEffect(() => {
-    if (active && active.big) {
+    if (activeKey && activeBig) {
       confetti({ particleCount: 90, spread: 70, origin: { y: 0.3 } });
     }
-  }, [active?.key, active?.big]);
+  }, [activeKey, activeBig]);
 
   if (!active) return null;
   const dismiss = () => {

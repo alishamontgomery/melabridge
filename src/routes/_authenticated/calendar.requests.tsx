@@ -15,8 +15,8 @@ import { listBookingRequests, respondToBookingRequest } from "@/lib/calendar.fun
 export const Route = createFileRoute("/_authenticated/calendar/requests")({
   head: () => ({
     meta: [
-      { title: "Booking Requests — MelaBridge" },
-      { name: "description", content: "Approve, decline, or propose an alternate date for booking requests." },
+      { title: "Availability Requests — MelaBridge" },
+      { name: "description", content: "Review and respond to availability requests from planners." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -46,17 +46,17 @@ function RequestsPage() {
       </Link>
       <div className="mt-2">
         <PageHeader
-          eyebrow="Booking Requests"
+          eyebrow="Calendar"
           icon={Inbox}
-          title={<>Pending <span className="text-gradient">approvals</span>.</>}
-          description="Nothing lands on your calendar until you say yes."
+          title={<>Availability <span className="text-gradient">requests</span>.</>}
+          description="Review what planners are asking for — nothing lands on your calendar until you say yes."
         />
       </div>
 
       <div className="mt-6 space-y-3">
         {q.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
         {q.data?.length === 0 && (
-          <Card className="p-10 text-center text-sm text-muted-foreground">No booking requests yet.</Card>
+          <Card className="p-10 text-center text-sm text-muted-foreground">No availability requests yet.</Card>
         )}
         {q.data?.map((r: any) => (
           <Card key={r.id} className="p-5">

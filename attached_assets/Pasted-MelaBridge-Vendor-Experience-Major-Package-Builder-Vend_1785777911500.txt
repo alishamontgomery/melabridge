@@ -1,0 +1,503 @@
+MelaBridge Vendor Experience - Major Package Builder & Vendor Template Redesign
+
+The vendor package builder has improved, but it still feels like a pricing form rather than a professional storefront. This needs to become one of MelaBridge’s defining features because it’s where vendors sell their business and convince customers to book.
+
+The goal is for vendors to feel like they’re creating a polished mini-website—not filling out paperwork.
+
+⸻
+
+Create Dynamic Package Builders by Vendor Category
+
+Do not use one generic package builder for every business.
+
+Instead, when a vendor selects their business category, dynamically load fields, templates, and suggestions designed specifically for that industry.
+
+Each category should have fields that make sense for that business while still allowing complete customization.
+
+⸻
+
+Photo Booth
+
+Allow vendors to showcase:
+
+* Hours Included
+* Unlimited Sessions
+* Unlimited Prints
+* Digital Gallery
+* Instant Sharing
+* GIFs
+* Boomerangs
+* Video
+* AI Features
+* Booth Attendant
+* Props Included
+* Backdrop Options
+* Setup & Breakdown
+* Travel Area
+* Popular Upgrades
+
+⸻
+
+Venues
+
+Venues need a much richer profile.
+
+Allow them to showcase:
+
+* Guest Capacity
+* Indoor Spaces
+* Outdoor Spaces
+* Ceremony Site
+* Reception Space
+* Bridal Suite
+* Groom Suite
+* Covered Outdoor Areas
+* Parking
+* Handicap Accessibility
+* Tables Included
+* Chairs Included
+* Bar Available
+* Catering Options
+* Outside Vendors Allowed
+* Alcohol Policy
+* Decoration Restrictions
+* Curfew
+* Cleanup Included
+* Overnight Accommodations (if applicable)
+
+Add a large section called:
+
+About This Venue
+
+This should allow venue owners to truly sell the experience and uniqueness of their property instead of simply listing amenities.
+
+⸻
+
+DJs
+
+Allow DJs to highlight:
+
+* Music Genres
+* Weddings
+* Corporate Events
+* School Events
+* MC Services
+* Ceremony Audio
+* Reception Audio
+* Wireless Microphones
+* Dance Floor Lighting
+* Uplighting
+* Cold Sparks
+* Fog Machine
+* Karaoke
+* Custom Playlists
+* Song Requests
+* Planning Meetings
+
+Include:
+
+What Makes Your DJ Experience Different?
+
+⸻
+
+MCs / Hosts
+
+Allow:
+
+* Weddings
+* Corporate Events
+* Auctions
+* Award Ceremonies
+* Galas
+* School Events
+* Bilingual Services
+* Script Writing
+* Crowd Engagement
+* Event Coordination
+* Custom Announcements
+
+⸻
+
+Wedding Officiants
+
+Allow:
+
+* Religious Ceremonies
+* Non-Religious Ceremonies
+* Civil Ceremonies
+* Elopements
+* Vow Renewals
+* Rehearsal Attendance
+* Custom Ceremony Writing
+* Marriage License Guidance
+* Languages Spoken
+* Travel Distance
+
+⸻
+
+Caterers
+
+Allow:
+
+* Cuisine Types
+* Buffet
+* Plated
+* Family Style
+* Cocktail Hour
+* Bartending
+* Tastings
+* Dietary Accommodations
+* Minimum Guest Count
+* Maximum Guest Count
+
+⸻
+
+Food Trucks
+
+Allow:
+
+* Cuisine
+* Service Capacity
+* Minimum Booking
+* Travel Radius
+* Power Requirements
+* Self-Contained Kitchen
+* Menu Options
+* Custom Menus
+* Late Night Service
+
+⸻
+
+Cake Bakers & Dessert Vendors
+
+Allow:
+
+* Wedding Cakes
+* Birthday Cakes
+* Cupcakes
+* Dessert Tables
+* Cake Tastings
+* Delivery
+* Setup
+* Dietary Options
+* Serving Sizes
+* Custom Designs
+
+⸻
+
+Balloon Artists
+
+Allow:
+
+* Organic Garlands
+* Balloon Arches
+* Columns
+* Grab-and-Go Balloons
+* Marquee Letters
+* Delivery
+* Setup
+* Breakdown
+* Custom Color Palettes
+
+Include:
+
+Describe Your Design Style
+
+⸻
+
+Florists
+
+Allow:
+
+* Bridal Bouquets
+* Boutonnieres
+* Ceremony Flowers
+* Reception Flowers
+* Floral Installations
+* Floral Arches
+* Delivery
+* Setup
+
+⸻
+
+Photographers
+
+Allow:
+
+* Coverage Hours
+* Second Shooter
+* Engagement Session
+* Online Gallery
+* Sneak Peeks
+* Drone Photography
+* Albums
+* Prints
+* Editing Turnaround
+
+⸻
+
+Videographers
+
+Allow:
+
+* Highlight Film
+* Full Ceremony
+* Drone Footage
+* Social Media Reels
+* Raw Footage
+* Livestreaming
+* Editing Timeline
+
+⸻
+
+Event Planners
+
+Allow:
+
+* Full Planning
+* Partial Planning
+* Month-of Coordination
+* Day-of Coordination
+* Timeline Creation
+* Vendor Management
+* Budget Management
+* Design Assistance
+
+⸻
+
+Decorators
+
+Allow:
+
+* Backdrops
+* Pipe & Drape
+* Table Décor
+* Centerpieces
+* Lounge Furniture
+* Ceiling Installations
+* Custom Designs
+* Setup
+* Teardown
+
+⸻
+
+Security Companies
+
+Allow:
+
+* Armed
+* Unarmed
+* Number of Officers
+* Crowd Control
+* Parking Assistance
+* Bag Checks
+* Overnight Security
+* Event Monitoring
+* Emergency Coordination
+
+⸻
+
+Transportation / Limo Services
+
+Allow:
+
+* Vehicle Types
+* Passenger Capacity
+* Wedding Transportation
+* Shuttle Service
+* Airport Transportation
+* Hourly Service
+* Decorations
+* Chauffeur Included
+
+⸻
+
+Bartenders
+
+Allow:
+
+* Certified Bartenders
+* Cash Bar
+* Open Bar
+* Signature Cocktails
+* Alcohol Purchasing Options
+* Bar Setup
+* Ice Service
+* Mixers Included
+
+⸻
+
+Hair & Makeup Artists
+
+Allow:
+
+* Bridal Hair
+* Bridal Makeup
+* Bridal Party Services
+* Trial Sessions
+* Airbrush Makeup
+* On-Site Services
+* Touch-Up Packages
+
+⸻
+
+Rental Companies
+
+Allow:
+
+* Tables
+* Chairs
+* Linens
+* Tents
+* Dance Floors
+* Furniture
+* Lighting
+* Yard Games
+* Décor Rentals
+
+⸻
+
+Entertainment
+
+Allow:
+
+* Live Bands
+* Musicians
+* DJs
+* String Quartets
+* Magicians
+* Face Painters
+* Caricature Artists
+* Children’s Entertainment
+* Fire Performers
+* Cultural Entertainment
+
+⸻
+
+Universal Sections for Every Vendor
+
+Every vendor should also have polished marketing sections regardless of category.
+
+Include:
+
+* Business Overview
+* Why Choose Us?
+* What Makes Us Different?
+* Services Offered
+* Packages
+* What’s Included
+* Optional Add-ons
+* Service Area
+* Travel Policy
+* Frequently Asked Questions
+* Photo Gallery
+* Video Gallery
+* Customer Reviews
+* Awards & Certifications
+* Languages Spoken
+* Accessibility Information
+* Booking Policies
+* Cancellation Policy
+
+These should complement the category-specific fields so every vendor can create a rich, professional listing.
+
+⸻
+
+Make Package Creation Fast
+
+Reduce typing wherever possible.
+
+Use:
+
+* Toggle switches
+* Checkboxes
+* Multi-select chips
+* Smart defaults
+* AI suggestions
+* Category templates
+* Auto-complete
+* Optional custom fields for anything unique
+
+Typing should primarily be reserved for descriptions and unique selling points.
+
+⸻
+
+Improve the Package Builder
+
+Allow vendors to:
+
+* Create unlimited packages
+* Duplicate packages
+* Drag and reorder packages
+* Feature a package
+* Archive packages
+* Preview packages exactly as customers will see them
+
+The preview should resemble a polished storefront, not an admin form.
+
+⸻
+
+Rename Booking Rules
+
+The wording still feels technical.
+
+Remove the word “Buffer” everywhere in the platform.
+
+Rename the section to:
+
+Availability Preferences
+
+or
+
+Scheduling Preferences
+
+Replace the fields with:
+
+* Preparation Time Before Events
+* Cleanup Time After Events
+* Maximum Events Per Day
+* Travel Time Between Events
+* Vacation Mode
+* Blocked Dates
+
+These labels are much more intuitive for vendors.
+
+⸻
+
+Improve Weekly Availability
+
+The current workflow is too slow because vendors must configure one day at a time.
+
+Instead:
+
+* Display Monday through Sunday on one screen.
+* Allow copying one day’s schedule to weekdays or the entire week.
+* Allow marking days as Closed with one tap.
+* Support multiple availability windows in a single day.
+
+⸻
+
+Simplify Blocked Dates
+
+The calendar should be the primary focus.
+
+Instead of several empty fields, show the calendar immediately.
+
+After selecting dates, prompt the vendor to choose:
+
+* Vacation
+* Personal
+* Already Booked
+* Holiday
+* Maintenance
+* Other
+
+Then allow optional notes and save.
+
+⸻
+
+Overall Vision
+
+The vendor experience should feel premium, modern, and effortless. A vendor should be able to complete their profile and build impressive packages in 10–15 minutes while feeling like they’ve created a professional storefront that showcases everything their business offers.
+
+This should become one of MelaBridge’s strongest competitive advantages and be flexible enough to support virtually any event professional without feeling generic.

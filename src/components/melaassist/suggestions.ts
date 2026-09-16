@@ -43,7 +43,7 @@ export function getSuggestionsForRole(role: MelaAssistRole): MelaAssistPrompt[] 
 export function greetingForRole(role: MelaAssistRole): string {
   switch (role) {
     case "vendor":
-      return "I can help you sharpen your profile, draft packages, and win more bookings.";
+      return "I can help you sharpen your profile, draft packages, and keep your listing current.";
     case "admin":
       return "I can help you monitor the platform and spot anything that needs attention.";
     case "personal":

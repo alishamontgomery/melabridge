@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -7,21 +7,23 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  FolderOpen, Upload, Vault, FileText, Image as ImageIcon, Receipt,
-  Utensils, Mail, MapPin, Loader2, Download, Trash2, Plus,
+  FolderOpen, Upload, FileText, Image as ImageIcon, Receipt,
+  FileCheck2, Loader2, Download, Trash2, Pencil, File,
+  Check, X,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/lib/use-require-auth";
-import { useEcosystem } from "@/lib/ecosystem-store";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { ModuleError, ModuleLoading, RouteError } from "@/components/module-states";
-
+import { ModuleLoading, RouteError } from "@/components/module-states";
+import { PremiumUpgradeGate } from "@/components/premium-upgrade-gate";
+import { useFeatureGate } from "@/hooks/use-feature-gate";
 
 export const Route = createFileRoute("/files")({
   head: () => ({
     meta: [
       { title: "File Center — MelaBridge" },
-      { name: "description", content: "Contracts, photos, invoices and floor plans — securely stored in BridgeVault™." },
+      { name: "description", content: "Upload, organise, and share your business files." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -32,194 +34,214 @@ export const Route = createFileRoute("/files")({
 const BUCKET = "bridgevault";
 const MAX_FILE_MB = 25;
 
-type Category = "contracts" | "photos" | "invoices" | "floorplans" | "menus" | "invitations" | "other";
-const CATEGORIES: { key: Category; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
-  { key: "contracts", icon: FileText, label: "Contracts" },
-  { key: "photos", icon: ImageIcon, label: "Photos & videos" },
-  { key: "invoices", icon: Receipt, label: "Invoices & receipts" },
-  { key: "floorplans", icon: MapPin, label: "Floor plans" },
-  { key: "menus", icon: Utensils, label: "Menus" },
-  { key: "invitations", icon: Mail, label: "Invitations" },
+const ALLOWED_MIME_PREFIXES = [
+  "image/",
+  "video/",
+  "audio/",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+  "application/zip",
+  "text/plain",
+  "text/csv",
 ];
 
-type EventFile = {
+function isMimeAllowed(mimeType: string): boolean {
+  if (!mimeType) return true; // allow unknown types (browser may not report)
+  return ALLOWED_MIME_PREFIXES.some((prefix) => mimeType.startsWith(prefix));
+}
+
+type Category = "documents" | "photos" | "contracts" | "invoices" | "other";
+const CATEGORIES: { key: Category; icon: React.ComponentType<{ className?: string }>; label: string }[] = [
+  { key: "documents",  icon: FileText,   label: "Documents"  },
+  { key: "photos",     icon: ImageIcon,  label: "Photos & media" },
+  { key: "contracts",  icon: FileCheck2, label: "Contracts"  },
+  { key: "invoices",   icon: Receipt,    label: "Invoices"   },
+  { key: "other",      icon: File,       label: "Other"      },
+];
+
+type UserFile = {
   id: string;
-  event_id: string;
-  uploaded_by: string;
+  user_id: string;
   category: string;
   storage_path: string;
   filename: string;
   mime_type: string | null;
   size_bytes: number | null;
   created_at: string;
+  deleted_at: string | null;
 };
 
-// Loose cast so we can use event_files before regenerated types land.
-const db = supabase;
+const db = supabase as any;
 
 function FilesPage() {
   const { user } = useRequireAuth();
-  const { event, hasEvent, loading: eventLoading } = useEcosystem();
+  const { allowed: filesAllowed } = useFeatureGate("document_storage_expanded");
   const qc = useQueryClient();
-  const [category, setCategory] = useState<Category>("contracts");
+  const [category, setCategory] = useState<Category>("documents");
   const [uploading, setUploading] = useState(false);
-  const [pendingDelete, setPendingDelete] = useState<EventFile | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<UserFile | null>(null);
+  const [inlineRename, setInlineRename] = useState<{ id: string; value: string } | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  // ── Fetch all user files ───────────────────────────────────────────
   const filesQ = useQuery({
-    queryKey: ["event-files", event.id],
-    enabled: !!event.id,
-    queryFn: async (): Promise<EventFile[]> => {
+    queryKey: ["user-files", user?.id],
+    enabled: !!user?.id && filesAllowed,
+    queryFn: async (): Promise<UserFile[]> => {
       const { data, error } = await db
-        .from("event_files")
+        .from("user_files")
         .select("*")
-        .eq("event_id", event.id!)
+        .eq("user_id", user!.id)
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as EventFile[];
+      return (data ?? []) as UserFile[];
     },
   });
 
-  const files = filesQ.data ?? [];
+  const files = useMemo(() => filesQ.data ?? [], [filesQ.data]);
   const counts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const f of files) c[f.category] = (c[f.category] ?? 0) + 1;
     return c;
   }, [files]);
 
+  // ── Upload ─────────────────────────────────────────────────────────
   const upload = useMutation({
     mutationFn: async (items: File[]) => {
-      if (!user || !event.id) throw new Error("Sign in and pick an event first.");
+      if (!user) throw new Error("Sign in to upload files.");
       if (items.length === 0) throw new Error("No files selected.");
       for (const file of items) {
-        if (file.size > MAX_FILE_MB * 1024 * 1024) {
-          throw new Error(`${file.name} is larger than ${MAX_FILE_MB} MB.`);
-        }
-        const safeName = file.name.replace(/[^\w.\-]+/g, "_");
-        const path = `${user.id}/${event.id}/${Date.now()}-${safeName}`;
-        const up = await supabase.storage.from(BUCKET).upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || undefined,
-        });
-        if (up.error) throw up.error;
-        const ins = await db.from("event_files").insert({
-          event_id: event.id,
-          uploaded_by: user.id,
+        if (file.size > MAX_FILE_MB * 1024 * 1024)
+          throw new Error(`${file.name} exceeds the ${MAX_FILE_MB} MB limit.`);
+        if (file.type && !isMimeAllowed(file.type))
+          throw new Error(`${file.name}: file type not permitted.`);
+        const safeName = file.name.replace(/[^\w.-]+/g, "_").slice(0, 200);
+        const path = `${user.id}/${category}/${Date.now()}-${safeName}`;
+        const { error: upErr } = await supabase.storage
+          .from(BUCKET)
+          .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+        if (upErr) throw upErr;
+        const { error: insErr } = await db.from("user_files").insert({
+          user_id: user.id,
           category,
           storage_path: path,
           filename: file.name,
           mime_type: file.type || null,
           size_bytes: file.size,
-        } as never);
-        if (ins.error) {
+        });
+        if (insErr) {
           await supabase.storage.from(BUCKET).remove([path]);
-          throw ins.error;
+          throw insErr;
         }
       }
     },
     onSuccess: () => {
-      toast.success("Uploaded to BridgeVault");
-      qc.invalidateQueries({ queryKey: ["event-files", event.id] });
+      toast.success(`${uploading ? "Files" : "File"} uploaded.`);
+      qc.invalidateQueries({ queryKey: ["user-files", user?.id] });
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Upload failed"),
     onSettled: () => setUploading(false),
   });
 
-
-  const remove = useMutation({
-    mutationFn: async (f: EventFile) => {
-      // Soft-delete: keep the storage object until the row is purged, so restore
-      // is possible. Hard delete happens in a follow-up sweep alongside the
-      // events trash purge.
-      const del = await db
-        .from("event_files")
-        .update({ deleted_at: new Date().toISOString() } as never)
-        .eq("id", f.id);
-      if (del.error) throw del.error;
+  // ── Rename ─────────────────────────────────────────────────────────
+  const rename = useMutation({
+    mutationFn: async ({ id, newName }: { id: string; newName: string }) => {
+      if (!user) throw new Error("Not authenticated");
+      const trimmed = newName.trim().slice(0, 500);
+      if (!trimmed) throw new Error("Filename cannot be empty.");
+      const { error } = await db.from("user_files").update({ filename: trimmed }).eq("id", id).eq("user_id", user.id);
+      if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Document moved to Trash");
-      qc.invalidateQueries({ queryKey: ["event-files", event.id] });
+      toast.success("File renamed.");
+      qc.invalidateQueries({ queryKey: ["user-files", user?.id] });
+      setInlineRename(null);
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Rename failed"),
+  });
+
+  // ── Delete (soft) ──────────────────────────────────────────────────
+  const remove = useMutation({
+    mutationFn: async (f: UserFile) => {
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await db
+        .from("user_files")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", f.id)
+        .eq("user_id", user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("File deleted.");
+      qc.invalidateQueries({ queryKey: ["user-files", user?.id] });
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Delete failed"),
   });
 
-  async function handleDownload(f: EventFile) {
-    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(f.storage_path, 60);
-    if (error || !data?.signedUrl) {
-      toast.error("Could not create download link");
-      return;
-    }
+  // ── Download / preview ─────────────────────────────────────────────
+  async function handleOpen(f: UserFile) {
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(f.storage_path, 120);
+    if (error || !data?.signedUrl) { toast.error("Could not create download link."); return; }
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
+  // ── Commit inline rename ──────────────────────────────────────────
+  function commitRename() {
+    if (!inlineRename || !inlineRename.value.trim()) { setInlineRename(null); return; }
+    rename.mutate({ id: inlineRename.id, newName: inlineRename.value });
+  }
+
+  const catInfo = (key: string) => CATEGORIES.find((c) => c.key === key) ?? CATEGORIES[4];
+
   return (
     <AppShell active="/files">
+      <PremiumUpgradeGate
+        feature="document_storage_expanded"
+      >
       <PageHeader
-        eyebrow="File Center · BridgeVault™"
+        eyebrow="File Center"
         icon={FolderOpen}
-        title={<>Every document, <span className="text-gradient">safely stored</span>.</>}
-        description={
-          hasEvent
-            ? `${event.name} · ${files.length} file${files.length === 1 ? "" : "s"} in BridgeVault™.`
-            : "Create an event to start uploading documents to BridgeVault™."
-        }
+        title={<>Your files, <span className="text-gradient">all in one place</span>.</>}
+        description="Upload, rename and view your business documents, photos, contracts and more."
         actions={
-          hasEvent ? (
-            <Button
-              variant="hero"
-              disabled={uploading}
-              onClick={() => inputRef.current?.click()}
-            >
-              {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-              Upload files
-            </Button>
-          ) : (
-            <Button asChild variant="hero">
-              <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create event</Link>
-            </Button>
-          )
+          <Button
+            variant="hero"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading
+              ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              : <Upload className="mr-2 h-4 w-4" />}
+            Upload files
+          </Button>
         }
       />
 
+      {/* Hidden file input */}
       <input
         ref={inputRef}
         type="file"
         multiple
         className="hidden"
         onChange={(e) => {
-          // Snapshot into a File[] BEFORE resetting input.value — a live
-          // FileList reference is emptied when we clear the input, which
-          // caused the async mutation to see 0 files ("No files selected").
           const items = e.target.files ? Array.from(e.target.files) : [];
           e.target.value = "";
-          if (items.length) {
-            setUploading(true);
-            upload.mutate(items);
-          }
+          if (items.length) { setUploading(true); upload.mutate(items); }
         }}
       />
 
-      <Card className="mt-8 border-primary/20 bg-hero-radial p-6">
-        <div className="mb-2 flex items-center gap-2 text-xs font-medium text-primary">
-          <Vault className="h-3.5 w-3.5" />BridgeVault™
-        </div>
-        <p className="font-display text-lg font-semibold">Private, per-event document storage</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Files are stored privately and only visible to members of this event. Downloads use short-lived signed links.
-          Max file size {MAX_FILE_MB} MB.
-        </p>
-      </Card>
-
+      {/* Category picker */}
       <div className="mt-6 flex flex-wrap items-center gap-2">
         <span className="text-xs uppercase tracking-widest text-muted-foreground">Upload as</span>
         {CATEGORIES.map((c) => (
           <button
             key={c.key}
             onClick={() => setCategory(c.key)}
-            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${
+            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               category === c.key
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-border bg-card text-muted-foreground hover:text-foreground"
@@ -231,102 +253,161 @@ function FilesPage() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-3">
+      {/* Category summary cards */}
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {CATEGORIES.map((c) => (
-          <Card key={c.key} className="border-border/60 p-5 shadow-soft">
-            <c.icon className="h-6 w-6 text-primary" />
-            <p className="mt-3 font-medium">{c.label}</p>
-            <p className="text-xs text-muted-foreground">{counts[c.key] ?? 0} file{(counts[c.key] ?? 0) === 1 ? "" : "s"}</p>
-          </Card>
+          <button
+            key={c.key}
+            onClick={() => { setCategory(c.key); inputRef.current?.click(); }}
+            className="group rounded-xl border border-border bg-card p-4 text-left shadow-soft transition hover:border-primary/40 hover:shadow-md"
+          >
+            <c.icon className="h-5 w-5 text-primary" />
+            <p className="mt-2 text-sm font-medium">{c.label}</p>
+            <p className="text-xs text-muted-foreground">
+              {counts[c.key] ?? 0} file{(counts[c.key] ?? 0) === 1 ? "" : "s"}
+            </p>
+          </button>
         ))}
       </div>
 
+      {/* File list */}
       <div className="mt-8">
         <h2 className="mb-3 font-display text-lg font-semibold">All files</h2>
-        {eventLoading || filesQ.isLoading ? (
-          <ModuleLoading rows={3} showStats={false} />
-        ) : hasEvent && filesQ.isError ? (
-          <ModuleError error={filesQ.error} onRetry={() => filesQ.refetch()} />
 
-        ) : !hasEvent ? (
-          <Card className="border-2 border-dashed border-border bg-background p-10 text-center">
-            <Vault className="mx-auto h-8 w-8 text-muted-foreground" />
-            <p className="mt-3 font-display text-lg font-semibold">Create an event to start uploading</p>
-            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-              BridgeVault™ scopes files to an event so your team sees exactly what they need.
-            </p>
-            <Button asChild className="mt-4" variant="hero">
-              <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create event</Link>
-            </Button>
+        {filesQ.isLoading ? (
+          <ModuleLoading rows={3} showStats={false} />
+        ) : filesQ.isError ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">
+            Could not load files.{" "}
+            <button className="underline" onClick={() => filesQ.refetch()}>Retry</button>
           </Card>
         ) : files.length === 0 ? (
           <Card className="border-2 border-dashed border-border bg-background p-10 text-center">
             <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="mt-3 font-display text-lg font-semibold">No files yet</p>
-            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-              Upload contracts, invoices, photos and more. Files stay private to members of this event.
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              Upload documents, photos, contracts and more. Files are private to your account.
             </p>
             <Button className="mt-4" variant="hero" onClick={() => inputRef.current?.click()} disabled={uploading}>
-              <Upload className="mr-2 h-4 w-4" />Upload files
+              <Upload className="mr-2 h-4 w-4" />Upload your first file
             </Button>
           </Card>
         ) : (
           <Card className="overflow-hidden border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-widest text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-2 text-left">File</th>
-                  <th className="px-4 py-2 text-left">Category</th>
-                  <th className="px-4 py-2 text-left">Size</th>
-                  <th className="px-4 py-2 text-left">Uploaded</th>
-                  <th className="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {files.map((f) => (
-                  <tr key={f.id} className="border-t border-border">
-                    <td className="px-4 py-2.5">
-                      <p className="font-medium">{f.filename}</p>
-                      {f.mime_type && <p className="text-xs text-muted-foreground">{f.mime_type}</p>}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <Badge variant="secondary" className="capitalize">{f.category}</Badge>
-                    </td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{formatSize(f.size_bytes)}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{new Date(f.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-2.5 text-right">
-                      <div className="inline-flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => handleDownload(f)}>
+            <ul className="divide-y divide-border">
+              {files.map((f) => {
+                const cat = catInfo(f.category);
+                const isRenaming = inlineRename?.id === f.id;
+                return (
+                  <li key={f.id} className="flex items-center gap-3 px-4 py-3">
+                    {/* Icon */}
+                    <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <cat.icon className="h-4 w-4" />
+                    </div>
+
+                    {/* Name / inline rename */}
+                    <div className="min-w-0 flex-1">
+                      {isRenaming ? (
+                        <div className="flex items-center gap-1.5">
+                          <Input
+                            autoFocus
+                            value={inlineRename.value}
+                            onChange={(e) => setInlineRename({ id: f.id, value: e.target.value })}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") commitRename();
+                              if (e.key === "Escape") setInlineRename(null);
+                            }}
+                            className="h-7 text-sm"
+                          />
+                          <button
+                            onClick={commitRename}
+                            disabled={rename.isPending}
+                            className="rounded p-1 text-primary hover:bg-primary/10"
+                            aria-label="Save rename"
+                          >
+                            {rename.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          </button>
+                          <button
+                            onClick={() => setInlineRename(null)}
+                            className="rounded p-1 text-muted-foreground hover:bg-muted"
+                            aria-label="Cancel rename"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <p
+                            className="truncate text-sm font-medium cursor-pointer hover:text-primary"
+                            onClick={() => handleOpen(f)}
+                            title="Click to open"
+                          >
+                            {f.filename}
+                          </p>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <Badge variant="secondary" className="px-1.5 py-0 text-[10px] capitalize">
+                              {cat.label}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{formatSize(f.size_bytes)}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(f.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    {!isRenaming && (
+                      <div className="shrink-0 flex items-center gap-0.5">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          aria-label={`Rename ${f.filename}`}
+                          onClick={() => setInlineRename({ id: f.id, value: f.filename })}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          aria-label={`Open ${f.filename}`}
+                          onClick={() => handleOpen(f)}
+                        >
                           <Download className="h-3.5 w-3.5" />
                         </Button>
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="ghost"
+                          className="h-8 w-8"
+                          aria-label={`Delete ${f.filename}`}
                           disabled={remove.isPending}
                           onClick={() => setPendingDelete(f)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                          <Trash2 className="h-3.5 w-3.5 text-rose-500" />
                         </Button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           </Card>
         )}
       </div>
+
       <ConfirmDialog
         open={!!pendingDelete}
         onOpenChange={(o) => !o && setPendingDelete(null)}
         destructive
-        title="Delete this document?"
-        description={
-          <p>&ldquo;{pendingDelete?.filename}&rdquo; will be moved to Trash and permanently removed after 30 days.</p>
-        }
-        confirmLabel="Move to Trash"
+        title="Delete this file?"
+        description={<p>&ldquo;{pendingDelete?.filename}&rdquo; will be permanently removed.</p>}
+        confirmLabel="Delete"
         onConfirm={async () => { if (pendingDelete) await remove.mutateAsync(pendingDelete); }}
       />
+      </PremiumUpgradeGate>
     </AppShell>
   );
 }

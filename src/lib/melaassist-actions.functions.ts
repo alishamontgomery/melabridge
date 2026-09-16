@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { callAi, aiErrorMessage, hasAiProvider } from "@/lib/ai-client.server";
+import {
+  isClearlyOutsideMelaAssistScope,
+  OUT_OF_SCOPE_MELAASSIST_ANSWER,
+} from "@/lib/melaassist-scope";
 
 /**
  * MelaAssist turn — extends `askMelaAssist` with:
@@ -16,7 +21,6 @@ const ROLE_KINDS: Record<string, string[]> = {
     "update_business_description",
     "create_package",
     "create_faq",
-    "draft_message",
   ],
   personal: [
     "update_event_notes",
@@ -25,7 +29,6 @@ const ROLE_KINDS: Record<string, string[]> = {
     "generate_timeline",
     "generate_budget",
     "recommend_vendors",
-    "draft_message",
     "create_event_draft",
     "add_timeline_milestone",
   ],
@@ -36,7 +39,6 @@ const ROLE_KINDS: Record<string, string[]> = {
     "generate_timeline",
     "generate_budget",
     "recommend_vendors",
-    "draft_message",
     "create_event_draft",
     "add_timeline_milestone",
   ],
@@ -163,14 +165,25 @@ function safeStringify(v: unknown): string {
 
 export const melaAssistTurn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => TurnInput.parse(input))
+  .validator((input: unknown) => TurnInput.parse(input))
   .handler(async ({ data, context }) => {
     type OutAction = { kind: string; title: string; summary: string | null; payloadJson: string };
     type TurnResult = { answer: string; actions: OutAction[]; nextSteps: string[]; degraded: boolean };
     const makeResult = (r: TurnResult): TurnResult => r;
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) {
+    if (isClearlyOutsideMelaAssistScope(data.question)) {
+      return makeResult({
+        answer: OUT_OF_SCOPE_MELAASSIST_ANSWER,
+        actions: [],
+        nextSteps: [],
+        degraded: false,
+      });
+    }
+
+    if (!hasAiProvider()) {
+      console.error(
+        "[MelaAssist] melaAssistTurn: No AI provider configured. Add GEMINI_API_KEY to Replit Secrets.",
+      );
       return makeResult({
         answer: "MelaAssist is temporarily unavailable. Please try again shortly.",
         actions: [],
@@ -261,32 +274,47 @@ Rules:
 
     const userMessage = `Workspace (JSON):\n${JSON.stringify(workspace)}\n\nUser message: ${data.question}`;
 
-    try {
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: system },
-            ...historyMessages,
-            { role: "user", content: userMessage },
-          ],
-        }),
+    const aiResult = await callAi(
+      [
+        { role: "system", content: system },
+        ...historyMessages,
+        { role: "user", content: userMessage },
+      ],
+      {
+        isAcceptable: (text) => {
+          const parsed = extractJsonBlock(text);
+          return Boolean(
+            parsed &&
+              typeof parsed === "object" &&
+              typeof (parsed as { answer?: unknown }).answer === "string",
+          );
+        },
+      },
+    );
+
+    if (!aiResult.ok) {
+      return makeResult({
+        answer: aiErrorMessage(aiResult.error),
+        actions: [],
+        nextSteps: [],
+        degraded: true,
       });
-      if (resp.status === 429)
-        return makeResult({ answer: "MelaAssist is busy right now — please try again in a moment.", actions: [], nextSteps: [], degraded: true });
-      if (resp.status === 402)
-        return makeResult({ answer: "MelaAssist is temporarily paused on this workspace. Please contact your admin.", actions: [], nextSteps: [], degraded: true });
-      if (!resp.ok)
-        return makeResult({ answer: "MelaAssist couldn't reach the planning engine. Please try again.", actions: [], nextSteps: [], degraded: true });
+    }
 
-      const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-      const raw = (json.choices?.[0]?.message?.content ?? "").trim();
+    const raw = aiResult.text;
 
-      const parsed = extractJsonBlock(raw) as
+    const parsed = extractJsonBlock(raw) as
         | { answer?: string; actions?: unknown[]; nextSteps?: unknown[] }
         | null;
+
+      if (!parsed || typeof parsed.answer !== "string" || !parsed.answer.trim()) {
+        return makeResult({
+          answer: "MelaAssist returned an incomplete response. Please try again.",
+          actions: [],
+          nextSteps: [],
+          degraded: true,
+        });
+      }
 
       let answer = parsed?.answer;
       if (!answer) {
@@ -322,20 +350,12 @@ Rules:
         if (nextSteps.length >= 6) break;
       }
 
-      return makeResult({
-        answer: answer || "I don't have a good answer for that yet — try rephrasing.",
-        actions,
-        nextSteps,
-        degraded: false,
-      });
-    } catch {
-      return makeResult({
-        answer: "MelaAssist couldn't reach the planning engine. Please try again.",
-        actions: [],
-        nextSteps: [],
-        degraded: true,
-      });
-    }
+    return makeResult({
+      answer: answer || "I don't have a good answer for that yet — try rephrasing.",
+      actions,
+      nextSteps,
+      degraded: false,
+    });
   });
 
 /**
@@ -358,7 +378,7 @@ const ExecInput = z.object({
 
 export const executeMelaAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => ExecInput.parse(input))
+  .validator((input: unknown) => ExecInput.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context as SupabaseCtx;
     const p = data.payload as Record<string, unknown>;

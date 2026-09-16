@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getEventTemplate, getShoppingTemplate, getInvitationGuidance, type EventTemplate, type ShoppingTemplate } from "./event-templates";
+import { callAi } from "@/lib/ai-client.server";
 
 /**
  * AI-first event bootstrap.
@@ -169,9 +170,6 @@ async function callAI(
   shopping: ShoppingTemplate[],
   invitationGuidance: string,
 ): Promise<BootstrapPlan | null> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) return null;
-
   const system = `You are MelaAssist, MelaBridge's AI event planner.
 Given an event's basics AND a deterministic starter template, return a COMPLETE plan tailored to this specific event.
 Return ONLY JSON with this exact shape:
@@ -194,31 +192,36 @@ Rules:
 - Never omit any array or field.
 - No markdown. No emojis. Plain concise language.`;
 
+  const response = await callAi(
+    [
+      { role: "system", content: system },
+      {
+        role: "user",
+        content: JSON.stringify({
+          event: eventContext,
+          starter_template: templateToPlan(template, totalBudget, shopping, invitationGuidance),
+        }),
+      },
+    ],
+    {
+      jsonMode: true,
+      isAcceptable: (text) => {
+        try {
+          const parsed = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim());
+          return Boolean(parsed && typeof parsed === "object");
+        } catch {
+          return false;
+        }
+      },
+    },
+  );
+  if (!response.ok) return null;
+
   try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
-      body: JSON.stringify({
-        model: "google/gemini-3.5-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: system },
-          {
-            role: "user",
-            content: JSON.stringify({
-              event: eventContext,
-              starter_template: templateToPlan(template, totalBudget, shopping, invitationGuidance),
-            }),
-          },
-        ],
-      }),
-    });
-    if (!resp.ok) return null;
-    const json = (await resp.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const content = json.choices?.[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(content) as unknown;
+    const parsed = JSON.parse(response.text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim());
     return BootstrapSchema.parse(parsed);
-  } catch {
+  } catch (error) {
+    console.error("[MelaAssist] event bootstrap response validation failed:", error instanceof Error ? error.message : "unknown error");
     return null;
   }
 }
@@ -226,7 +229,7 @@ Rules:
 
 export const bootstrapEventPlan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => Input.parse(input))
+  .validator((input: unknown) => Input.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -401,7 +404,7 @@ export const bootstrapEventPlan = createServerFn({ method: "POST" })
  */
 export const regenerateRunsheet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ event_id: z.string().uuid() }).parse(input))
+  .validator((input: unknown) => z.object({ event_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 

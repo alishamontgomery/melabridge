@@ -6,11 +6,11 @@ import { AppShell, PageHeader } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Search, Inbox, LayoutDashboard, Settings2 } from "lucide-react";
 import { listEvents } from "@/lib/calendar.functions";
+import { useRole } from "@/lib/use-role";
 
 export const Route = createFileRoute("/_authenticated/calendar/")({
   head: () => ({
@@ -48,10 +48,12 @@ function startOfWeek(d: Date) { const x = new Date(d); x.setDate(d.getDate() - d
 
 function CalendarPage() {
   const load = useServerFn(listEvents);
+  const { role } = useRole();
+  const showBookingWorkflow = role === "vendor";
   const [cursor, setCursor] = useState(new Date());
   const [status, setStatus] = useState<string>("all");
   const [q, setQ] = useState("");
-  const [view, setView] = useState<"month" | "week" | "day" | "agenda">("month");
+  const [view, setView] = useState<"month" | "agenda">("month");
 
   const range = useMemo(() => {
     if (view === "month") {
@@ -59,14 +61,6 @@ function CalendarPage() {
       const gridStart = startOfWeek(s);
       const gridEnd = new Date(gridStart); gridEnd.setDate(gridStart.getDate() + 41); gridEnd.setHours(23,59,59);
       return { from: gridStart.toISOString(), to: gridEnd.toISOString(), gridStart };
-    }
-    if (view === "week") {
-      const s = startOfWeek(cursor); const e = new Date(s); e.setDate(s.getDate() + 6); e.setHours(23,59,59);
-      return { from: s.toISOString(), to: e.toISOString(), gridStart: s };
-    }
-    if (view === "day") {
-      const s = new Date(cursor); s.setHours(0,0,0,0); const e = new Date(cursor); e.setHours(23,59,59);
-      return { from: s.toISOString(), to: e.toISOString(), gridStart: s };
     }
     const s = new Date(cursor); s.setHours(0,0,0,0); const e = new Date(s); e.setDate(s.getDate() + 30);
     return { from: s.toISOString(), to: e.toISOString(), gridStart: s };
@@ -90,13 +84,13 @@ function CalendarPage() {
       <PageHeader
         eyebrow="MelaBridge Calendar"
         icon={CalendarIcon}
-        title={<>Your schedule, <span className="text-gradient">under control</span>.</>}
-        description="Availability, bookings, requests, and revenue — no external accounts required."
+        title={<>Your schedule, <span className="text-gradient">at a glance</span>.</>}
+        description={showBookingWorkflow ? "Manage availability and incoming event requests." : "See your event dates and upcoming plans in one place."}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline"><Link to="/calendar/dashboard"><LayoutDashboard className="mr-1.5 h-4 w-4" />Dashboard</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link to="/calendar/requests"><Inbox className="mr-1.5 h-4 w-4" />Requests</Link></Button>
-            <Button asChild size="sm" variant="outline"><Link to="/calendar/settings"><Settings2 className="mr-1.5 h-4 w-4" />Availability</Link></Button>
+            {showBookingWorkflow && <Button asChild size="sm" variant="outline"><Link to="/calendar/dashboard"><LayoutDashboard className="mr-1.5 h-4 w-4" />Dashboard</Link></Button>}
+            {showBookingWorkflow && <Button asChild size="sm" variant="outline"><Link to="/calendar/requests"><Inbox className="mr-1.5 h-4 w-4" />Requests</Link></Button>}
+            {showBookingWorkflow && <Button asChild size="sm" variant="outline"><Link to="/calendar/settings"><Settings2 className="mr-1.5 h-4 w-4" />Availability</Link></Button>}
             <Button asChild size="sm" variant="hero"><Link to="/events/new"><Plus className="mr-1.5 h-4 w-4" />New event</Link></Button>
           </div>
         }
@@ -104,19 +98,15 @@ function CalendarPage() {
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <Button size="icon" variant="outline" onClick={() => setCursor(view === "month" ? addMonths(cursor, -1) : new Date(cursor.getTime() - (view === "week" ? 7 : 1) * 86400000))}>
+          <Button size="icon" variant="outline" onClick={() => setCursor(view === "month" ? addMonths(cursor, -1) : new Date(cursor.getTime() - 30 * 86400000))}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-[180px] text-center font-display text-lg font-semibold">
             {view === "month"
               ? cursor.toLocaleDateString(undefined, { month: "long", year: "numeric" })
-              : view === "week"
-              ? `Week of ${startOfWeek(cursor).toLocaleDateString()}`
-              : view === "day"
-              ? cursor.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
               : "Next 30 days"}
           </div>
-          <Button size="icon" variant="outline" onClick={() => setCursor(view === "month" ? addMonths(cursor, 1) : new Date(cursor.getTime() + (view === "week" ? 7 : 1) * 86400000))}>
+          <Button size="icon" variant="outline" onClick={() => setCursor(view === "month" ? addMonths(cursor, 1) : new Date(cursor.getTime() + 30 * 86400000))}>
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setCursor(new Date())}>Today</Button>
@@ -126,7 +116,7 @@ function CalendarPage() {
             <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search events" className="h-9 w-[180px] pl-7" />
           </div>
-          <Select value={status} onValueChange={setStatus}>
+          {showBookingWorkflow && <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="h-9 w-[150px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
@@ -136,37 +126,29 @@ function CalendarPage() {
               <SelectItem value="completed">Completed</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>}
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+      {showBookingWorkflow && <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
         {Object.keys(STATUS_DOT).map((s) => (
           <span key={s} className="inline-flex items-center gap-1.5">
             <span className={`h-2 w-2 rounded-full ${STATUS_DOT[s]}`} /> {s}
           </span>
         ))}
-      </div>
+      </div>}
 
-      <Tabs value={view} onValueChange={(v) => setView(v as any)} className="mt-4">
-        <TabsList>
+      <Tabs value={view} onValueChange={(v) => setView(v as "month" | "agenda")} className="mt-4">
+        <TabsList className="w-full max-w-xs">
           <TabsTrigger value="month">Month</TabsTrigger>
-          <TabsTrigger value="week">Week</TabsTrigger>
-          <TabsTrigger value="day">Day</TabsTrigger>
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
         </TabsList>
 
         <TabsContent value="month" className="mt-4">
-          <MonthGrid gridStart={range.gridStart} events={events.data ?? []} cursorMonth={cursor.getMonth()} />
-        </TabsContent>
-        <TabsContent value="week" className="mt-4">
-          <WeekGrid start={range.gridStart} events={events.data ?? []} />
-        </TabsContent>
-        <TabsContent value="day" className="mt-4">
-          <DayList date={range.gridStart} events={events.data ?? []} />
+          <MonthGrid gridStart={range.gridStart} events={events.data ?? []} cursorMonth={cursor.getMonth()} showStatus={showBookingWorkflow} />
         </TabsContent>
         <TabsContent value="agenda" className="mt-4">
-          <AgendaList events={events.data ?? []} />
+          <AgendaList events={events.data ?? []} showStatus={showBookingWorkflow} />
         </TabsContent>
       </Tabs>
     </AppShell>
@@ -175,7 +157,7 @@ function CalendarPage() {
 
 type Evt = { id: string; event_name: string; starts_at: string; ends_at: string; status: string; venue_name: string | null };
 
-function MonthGrid({ gridStart, events, cursorMonth }: { gridStart: Date; events: Evt[]; cursorMonth: number }) {
+function MonthGrid({ gridStart, events, cursorMonth, showStatus }: { gridStart: Date; events: Evt[]; cursorMonth: number; showStatus: boolean }) {
   const days = Array.from({ length: 42 }, (_, i) => {
     const d = new Date(gridStart); d.setDate(gridStart.getDate() + i); return d;
   });
@@ -205,7 +187,7 @@ function MonthGrid({ gridStart, events, cursorMonth }: { gridStart: Date; events
               </div>
               <div className="space-y-0.5">
                 {list.slice(0, 3).map((e) => (
-                  <Link key={e.id} to="/calendar/events/$id" params={{ id: e.id }} className={`block truncate rounded px-1 py-0.5 text-[10px] ${STATUS_COLORS[e.status] ?? "bg-accent"}`}>
+                  <Link key={e.id} to="/calendar/events/$id" params={{ id: e.id }} className={`block truncate rounded px-1 py-0.5 text-[10px] ${showStatus ? STATUS_COLORS[e.status] ?? "bg-accent" : "bg-primary/10 text-primary"}`}>
                     {new Date(e.starts_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} {e.event_name}
                   </Link>
                 ))}
@@ -219,39 +201,7 @@ function MonthGrid({ gridStart, events, cursorMonth }: { gridStart: Date; events
   );
 }
 
-function WeekGrid({ start, events }: { start: Date; events: Evt[] }) {
-  const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); return d; });
-  return (
-    <div className="grid gap-3 md:grid-cols-7">
-      {days.map((d) => {
-        const list = events.filter((e) => new Date(e.starts_at).toDateString() === d.toDateString());
-        return (
-          <Card key={d.toISOString()} className="p-3">
-            <div className="mb-2 text-xs font-medium text-muted-foreground">
-              {d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-            </div>
-            <div className="space-y-1.5">
-              {list.length === 0 && <p className="text-xs text-muted-foreground">—</p>}
-              {list.map((e) => (
-                <Link key={e.id} to="/calendar/events/$id" params={{ id: e.id }} className={`block rounded px-2 py-1 text-xs ${STATUS_COLORS[e.status]}`}>
-                  <div className="font-medium">{e.event_name}</div>
-                  <div className="opacity-75">{new Date(e.starts_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
-                </Link>
-              ))}
-            </div>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-function DayList({ date, events }: { date: Date; events: Evt[] }) {
-  const list = events.filter((e) => new Date(e.starts_at).toDateString() === date.toDateString());
-  return <AgendaList events={list} />;
-}
-
-function AgendaList({ events }: { events: Evt[] }) {
+function AgendaList({ events, showStatus }: { events: Evt[]; showStatus: boolean }) {
   if (events.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
@@ -270,7 +220,7 @@ function AgendaList({ events }: { events: Evt[] }) {
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[e.status]}`} />
+              <span className={`h-2 w-2 shrink-0 rounded-full ${showStatus ? STATUS_DOT[e.status] : "bg-primary"}`} />
               <p className="truncate font-medium">{e.event_name}</p>
             </div>
             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -278,7 +228,7 @@ function AgendaList({ events }: { events: Evt[] }) {
               {e.venue_name && ` · ${e.venue_name}`}
             </p>
           </div>
-          <Badge className={STATUS_COLORS[e.status] ?? ""}>{e.status}</Badge>
+          {showStatus && <Badge className={STATUS_COLORS[e.status] ?? ""}>{e.status}</Badge>}
         </Link>
       ))}
     </div>

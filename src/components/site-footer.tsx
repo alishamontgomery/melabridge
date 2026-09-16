@@ -1,8 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { Instagram, Facebook, Mail, ArrowRight, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Instagram, Facebook, Mail } from "lucide-react";
 
 type FooterLink = { label: string; to?: string; href?: string };
 type FooterColumn = { title: string; links: FooterLink[] };
@@ -16,7 +13,7 @@ const COLUMNS: FooterColumn[] = [
       { label: "Pricing", to: "/pricing" },
       { label: "Marketplace", to: "/marketplace" },
       { label: "AI Planning", to: "/ai-planning" },
-      { label: "Vendors", to: "/vendors" },
+      { label: "Vendors", to: "/marketplace" },
     ],
   },
   {
@@ -37,8 +34,14 @@ const COLUMNS: FooterColumn[] = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy", to: "/privacy" },
       { label: "Terms of Service", to: "/terms" },
+      { label: "Privacy Policy", to: "/privacy" },
+      { label: "Refund Policy", to: "/refund" },
+      { label: "Cancellation Policy", to: "/cancellation" },
+      { label: "Vendor Terms", to: "/vendor-terms" },
+      { label: "Organizer Terms", to: "/organizer-terms" },
+      { label: "Ticketing Terms", to: "/ticketing-terms" },
+      { label: "Payment Terms", to: "/payment-terms" },
       { label: "Cookie Policy", to: "/cookies" },
       { label: "Accessibility Statement", to: "/accessibility" },
     ],
@@ -51,17 +54,6 @@ function FooterLogo() {
 }
 
 export function SiteFooter() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  function handleSubscribe(e: FormEvent) {
-    e.preventDefault();
-    if (!email) return;
-    setSubmitted(true);
-    setEmail("");
-    setTimeout(() => setSubmitted(false), 4000);
-  }
-
   return (
     <footer className="relative border-t border-border/70 bg-background" aria-labelledby="site-footer-heading">
       <h2 id="site-footer-heading" className="sr-only">
@@ -103,40 +95,12 @@ export function SiteFooter() {
                 straight to your inbox.
               </p>
 
-              <form
-                onSubmit={handleSubscribe}
-                className="mt-5 flex flex-col gap-2 sm:flex-row"
-                aria-label="Subscribe to the MelaBridge newsletter"
+              <p
+                className="mt-5 rounded-2xl border border-border/70 bg-background/70 px-4 py-3 text-sm text-muted-foreground"
+                role="status"
               >
-                <label htmlFor="footer-email" className="sr-only">
-                  Email address
-                </label>
-                <Input
-                  id="footer-email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 flex-1 rounded-full border-border/80 bg-background px-4 text-sm"
-                />
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-11 rounded-full bg-gradient-to-r from-primary to-primary-glow px-5 text-sm font-medium text-primary-foreground shadow-soft transition hover:shadow-elegant"
-                >
-                  {submitted ? (
-                    <>
-                      <Check className="mr-1.5 h-4 w-4" /> Subscribed
-                    </>
-                  ) : (
-                    <>
-                      Subscribe <ArrowRight className="ml-1.5 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                Email updates are coming soon. No email address is collected yet.
+              </p>
               <p className="mt-3 text-xs text-muted-foreground">
                 No spam. Unsubscribe anytime.
               </p>
@@ -222,17 +186,11 @@ export function SiteFooter() {
         </div>
 
         {/* Contact info */}
-        <div className="mt-10 grid gap-4 border-t border-border/60 pt-8 text-sm text-muted-foreground sm:grid-cols-2">
+        <div className="mt-10 border-t border-border/60 pt-8 text-sm text-muted-foreground">
           <p>
             <span className="mr-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/70">Email</span>
             <a href="mailto:hello@melabridge.com" className="text-foreground hover:text-primary">
               hello@melabridge.com
-            </a>
-          </p>
-          <p className="sm:text-right">
-            <span className="mr-2 text-[11px] font-semibold uppercase tracking-widest text-foreground/70">Phone</span>
-            <a href="tel:+12567848427" className="text-foreground hover:text-primary">
-              +1 (256) 784-8427
             </a>
           </p>
         </div>

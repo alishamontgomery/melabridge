@@ -8,35 +8,26 @@ const getEnv = (key: string): string => {
 
 export type StripeEnv = "sandbox" | "live";
 
-const GATEWAY_STRIPE_BASE = "https://connector-gateway.lovable.dev/stripe";
-
-export function getConnectionApiKey(env: StripeEnv): string {
-  return env === "sandbox"
-    ? getEnv("STRIPE_SANDBOX_API_KEY")
-    : getEnv("STRIPE_LIVE_API_KEY");
-}
-
 export function createStripeClient(env: StripeEnv): Stripe {
-  const connectionApiKey = getConnectionApiKey(env);
-  const lovableApiKey = getEnv("LOVABLE_API_KEY");
+  // Stripe is accessed directly. Keep the explicit environment-specific keys,
+  // while preserving the existing sandbox fallback to STRIPE_SECRET_KEY used
+  // by the current Replit test environment. Never use a sandbox key for live
+  // requests implicitly.
+  const directKey =
+    env === "sandbox"
+      ? process.env.STRIPE_SANDBOX_SECRET_KEY ?? process.env.STRIPE_SECRET_KEY
+      : process.env.STRIPE_LIVE_SECRET_KEY;
+  if (directKey) {
+    return new Stripe(directKey, {
+      apiVersion: "2026-03-25.dahlia",
+    });
+  }
 
-  return new Stripe(connectionApiKey, {
-    apiVersion: "2026-03-25.dahlia",
-    httpClient: Stripe.createFetchHttpClient((input, init) => {
-      const stripeUrl = input instanceof Request ? input.url : input.toString();
-      const gatewayUrl = stripeUrl.replace("https://api.stripe.com", GATEWAY_STRIPE_BASE);
-      return fetch(gatewayUrl, {
-        ...init,
-        headers: {
-          ...Object.fromEntries(
-            new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined)).entries(),
-          ),
-          "X-Connection-Api-Key": connectionApiKey,
-          "Lovable-API-Key": lovableApiKey,
-        },
-      });
-    }),
-  });
+  throw new Error(
+    env === "sandbox"
+      ? "Stripe sandbox credentials are not configured. Add STRIPE_SANDBOX_SECRET_KEY or STRIPE_SECRET_KEY in Replit Secrets."
+      : "Stripe live credentials are not configured. Add STRIPE_LIVE_SECRET_KEY in Replit Secrets.",
+  );
 }
 
 export function getStripeErrorMessage(error: unknown): string {

@@ -62,11 +62,6 @@ export const ACTION_REGISTRY: Record<MelaAssistActionKind, ActionMeta> = {
     executable: false,
     approvalCopy: "Preview only — review these vendor ideas.",
   },
-  draft_message: {
-    label: "Draft message",
-    executable: false,
-    approvalCopy: "Preview only — copy this message.",
-  },
   create_event_draft: {
     label: "Create event",
     executable: true,

@@ -5,7 +5,7 @@ export const Route = createFileRoute("/features")({
   head: () => ({
     meta: [
       { title: "Features — MelaBridge" },
-      { name: "description", content: "AI planning, guests, vendors, budgets, timelines, tickets, fundraising, and messaging — every event tool in one calm workspace." },
+      { name: "description", content: "AI-assisted planning, guest lists, vendor discovery, budgets, timelines, tickets, files, and event pages in one workspace." },
       { property: "og:title", content: "Features — MelaBridge" },
       { property: "og:description", content: "Every planning tool, quietly intelligent." },
     ],
@@ -14,38 +14,38 @@ export const Route = createFileRoute("/features")({
     <MarketingPage
       eyebrow="Features"
       title={<>Every planning tool, <span className="text-gradient">quietly intelligent.</span></>}
-      description="MelaBridge brings AI planning, guest management, vendor discovery, budgeting, tickets, fundraising, and messaging into one calm workspace — so you can spend time on the moments, not the spreadsheets."
+      description="MelaBridge brings AI-assisted planning, guest lists, vendor discovery, budgeting, tickets, files, and event pages into one calm workspace."
     >
       <h2>AI Planning</h2>
-      <p>Describe your event in a sentence — MelaBridge drafts a timeline, guest list strategy, vendor shortlist, and budget. You review and approve before anything is created. MelaAssist stays with you as your event evolves, catching risks early and suggesting the next best step.</p>
+      <p>Describe your event and MelaBridge can draft editable tasks, budget categories, a day-of runsheet, vendor needs, and event details. You review and edit the results before using them.</p>
 
       <h2>Guests &amp; RSVPs</h2>
-      <p>Unlimited guests. Smart RSVPs with dietary preferences, plus-ones, and seating suggestions. Send beautiful invitations, track responses in real time, and export to CSV anytime. <em>QR check-in and seating charts coming soon.</em></p>
+      <p>Organize guest names, RSVP status, plus-ones, meal choices, and notes. Export guest records to CSV. Guests can confirm Yes or No through secure invitation links; guest self-service details, dietary forms, and seating charts are not available.</p>
 
       <h2>Vendor Marketplace</h2>
-      <p>Discover, compare, and book vendors from a concierge inbox. Save favorites, request quotes, compare proposals side-by-side, and track quote and contract status in one place. Add off-platform vendors manually to keep every booking together.</p>
+      <p>Discover and evaluate vendors from a beautiful marketplace. Search by category, location, and budget. View full profiles, portfolios, and packages. Save favorites to your account. Contact vendors directly by phone, email, or website — their information is right on their profile. Add any vendor manually to track files and notes in one place.</p>
 
       <h2>Budgets &amp; Payments</h2>
-      <p>Live budget tracking with category forecasting and drift alerts so overspend never surprises you. Secure milestone payments and vendor payouts powered by Stripe — deposits, balances, and receipts reconciled automatically with your budget.</p>
+      <p>Track a budget target, categories, planned costs, paid amounts, and the amount remaining. MelaBridge warns you when planned expenses exceed the target. MelaBridge does not process vendor deposits or milestone payments.</p>
 
       <h2>Timelines &amp; Tasks</h2>
-      <p>Multi-view planning across Kanban, list, and calendar. Auto-generated timelines you can edit, with prompts as key milestones approach. Every task is tied to your Event Health Score™ so you always know what's on track and what needs attention.</p>
+      <p>Multi-view planning across Kanban, list, and calendar. Create editable timelines and review planning readiness as key milestones approach.</p>
 
-      <h2>Tickets &amp; Fundraising</h2>
-      <p>Sell tickets with tiered pricing for community and corporate events. Run donation campaigns for weddings, celebrations, and causes with 0% platform fee. <em>Silent auctions coming soon.</em></p>
+      <h2>Tickets &amp; Check-in</h2>
+      <p>Eligible paid plans can create free or paid ticket types, set quantities and sale windows, track orders, and use QR check-in.</p>
 
-      <h2>Messaging &amp; Collaboration</h2>
-      <p>One inbox for guests, vendors, family, and team. Threaded conversations, message templates, and AI-drafted replies — with your approval before anything sends. Co-plan with granular permissions so the right people see the right things.</p>
+      <h2>Guest Lists &amp; Team Access</h2>
+      <p>Keep guest names, RSVP status, plus-ones, meal choices, and notes organized in one place. Invite collaborators with event-member permissions and share files with your planning team.</p>
 
       <h2>Files &amp; Contracts</h2>
-      <p>Every contract, invoice, receipt, and photo lives in BridgeVault™ — searchable, versioned, and shared with the right people. Never dig through email chains again.</p>
+      <p>The File Center lets you upload, rename, download, and remove documents and images. <em>Event-linked folders, version history, and the expanded BridgeVault™ archive are coming soon.</em></p>
 
       <h2>Who it's for</h2>
       <ul>
         <li><strong>Hosts &amp; families</strong> — plan your own wedding, birthday, anniversary, or reunion, free forever.</li>
         <li><strong>Professional planners</strong> — run every client and every event from one cockpit.</li>
-        <li><strong>Vendors</strong> — get discovered, win more bookings, and manage your calendar in one place.</li>
-        <li><strong>Community organizers &amp; nonprofits</strong> — sell tickets, raise funds, and coordinate volunteers.</li>
+        <li><strong>Vendors</strong> — get discovered, showcase portfolios and packages, and keep your public profile current.</li>
+        <li><strong>Community organizers &amp; nonprofits</strong> — sign up as a Host to sell tickets, manage guests, and coordinate event details.</li>
       </ul>
     </MarketingPage>
   ),

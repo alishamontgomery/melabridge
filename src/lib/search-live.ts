@@ -3,6 +3,7 @@ import {
   Calendar, Users, Store, ClipboardList, FolderOpen, Wallet,
   type LucideIcon,
 } from "lucide-react";
+import { getVendorCategories } from "@/lib/vendor-categories";
 
 export type LiveKind =
   | "event" | "guest" | "vendor" | "task" | "file" | "budget";
@@ -39,7 +40,7 @@ export async function liveSearch(query: string, perKind = 5): Promise<LiveHit[]>
       .or(`full_name.ilike.${p},email.ilike.${p}`)
       .limit(perKind),
     supabase.from("vendor_profiles_public")
-      .select("id,business_name,business_category,city")
+      .select("id,business_name,business_category,business_categories,city")
       .or(`business_name.ilike.${p},business_category.ilike.${p},city.ilike.${p}`)
       .limit(perKind),
     supabase.from("tasks")
@@ -70,8 +71,8 @@ export async function liveSearch(query: string, perKind = 5): Promise<LiveHit[]>
   }));
   (vendors.data ?? []).forEach((v: any) => out.push({
     id: `vendor-${v.id}`, kind: "vendor", title: v.business_name,
-    subtitle: [v.business_category, v.city].filter(Boolean).join(" · "),
-    to: "/vendors", icon: ICONS.vendor,
+    subtitle: [getVendorCategories(v).join(", "), v.city].filter(Boolean).join(" · "),
+    to: "/marketplace", icon: ICONS.vendor,
   }));
   (tasks.data ?? []).forEach((t: any) => out.push({
     id: `task-${t.id}`, kind: "task", title: t.title,

@@ -35,7 +35,7 @@ export function BookingProgressTracker({ currentStage, compact = false, waitingF
           "flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible",
           compact && "gap-1.5",
         )}
-        aria-label="Booking progress"
+        aria-label="Lead progress"
       >
         {TRACKER_STAGES.map((key, i) => {
           const status = stageStatus(key, currentStage, timestamps);
@@ -82,7 +82,7 @@ export function BookingProgressTracker({ currentStage, compact = false, waitingF
             {waitingFor ?? currentMeta.label}
           </span>
         </p>
-        <p className="text-muted-foreground">Stages update automatically as actions are completed.</p>
+        <p className="text-muted-foreground">Update stages as your conversation with the client progresses.</p>
       </div>
     </div>
   );

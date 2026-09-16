@@ -8,7 +8,7 @@ export const Route = createFileRoute("/decisions")({
   head: () => ({
     meta: [
       { title: "Decision Center™ — MelaBridge" },
-      { name: "description", content: "Polls, vendor comparisons, and approvals for your event." },
+      { name: "description", content: "Decision Center is not available yet. Use your team workspace to coordinate planning." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -23,14 +23,14 @@ function DecisionsPage() {
           eyebrow="Decision Center™"
           icon={Lightbulb}
           title="Big calls, made together"
-          description="Create polls, compare vendors, and approve budget changes as a team."
+          description="Polls, shared vendor comparisons, and approval workflows are not available yet."
         />
 
         <Card className="p-8 text-center">
           <Sparkles className="mx-auto mb-3 h-10 w-10 text-primary" />
           <h3 className="font-display text-lg font-semibold">Decision Center launching soon</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Polls, vendor comparisons, and MelaAssist™ recommendations are on the way. In the meantime, plan next steps with your team.
+            Decision Center is not available yet. In the meantime, manage team access, guest lists, budgets, tasks, and files using the tools that are live today.
           </p>
           <Button asChild className="mt-4"><Link to="/team">Open team</Link></Button>
         </Card>

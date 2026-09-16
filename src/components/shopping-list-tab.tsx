@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sparkles, Trash2, Plus, ShoppingBag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export function ShoppingListTab({ eventId }: { eventId: string }) {
   const [draft, setDraft] = useState({ item: "", quantity: "", category: "General" });
   const bootstrap = useServerFn(bootstrapEventPlan);
 
-  async function load() {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from("event_shopping_items")
       .select("*")
@@ -28,8 +28,10 @@ export function ShoppingListTab({ eventId }: { eventId: string }) {
       .order("sort_order", { ascending: true });
     if (error) toast.error(error.message);
     setItems(data ?? []);
-  }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [eventId]);
+  }, [eventId]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function generate() {
     setBusy(true);

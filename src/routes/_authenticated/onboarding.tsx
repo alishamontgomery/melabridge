@@ -4,7 +4,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import {
   Sparkles, ArrowRight, ArrowLeft, CalendarIcon, PartyPopper, Store,
-  Check, Upload, Building2,
+  Check, Upload, Building2, Loader2, X, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +23,21 @@ import { useAuth } from "@/lib/auth";
 import { useServerFn } from "@tanstack/react-start";
 import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
 import { seedSampleWorkspace } from "@/lib/sample-workspace.functions";
+import { generateVendorProfileDraft } from "@/lib/vendor-ai.functions";
+import { recheckVendorDemandForCurrentVendor } from "@/lib/vendor-sourcing.functions";
+import { upsertVendorPackage } from "@/lib/vendor-packages.functions";
+import { ProfileTypeChoices } from "@/components/profile-type-choices";
+import {
+  legacyToPublicProfileType,
+  publicToLegacyProfileType,
+  type PublicProfileType,
+} from "@/lib/profile-types";
+import { VENDOR_OFFER_CATEGORIES } from "@/lib/vendor-categories";
 
-type AccountType = "personal" | "organization" | "vendor";
+type AccountType = PublicProfileType;
 
 const searchSchema = z.object({
-  type: z.enum(["personal", "organization", "vendor"]).optional(),
+  type: z.enum(["host", "planner", "vendor", "personal", "organization"]).optional(),
 });
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -43,44 +53,64 @@ const EVENT_TYPES = [
   "Sports Event", "Concert", "Other",
 ];
 
-const VENDOR_CATEGORIES = [
-  "Venue", "Photographer", "Photo Booth", "DJ", "Caterer", "Florist", "Baker",
-  "Event Planner", "Decor", "Rentals", "Bartender", "Hair Stylist", "Makeup Artist",
-  "Transportation", "Videographer", "Officiant", "Entertainment", "Travel",
-  "Security", "Cleaning", "Other",
-];
-
 function OnboardingPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/onboarding" });
   const { user } = useAuth();
-  const [accountType, setAccountType] = useState<AccountType | null>(search.type ?? null);
+  const [accountType, setAccountType] = useState<AccountType | null>(
+    search.type ? legacyToPublicProfileType(search.type) : null,
+  );
   const [checked, setChecked] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("account_type, onboarding_completed")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.onboarding_completed) {
-          if (data.account_type === "vendor") navigate({ to: "/vendor" });
-          else navigate({ to: "/events" });
-          return;
-        }
-        if (!accountType && data?.account_type) {
-          setAccountType(data.account_type as AccountType);
-        }
-        setChecked(true);
-      });
-  }, [user, navigate, accountType]);
+    setLoadError(null);
+    Promise.all([
+      supabase.from("profiles").select("account_type, onboarding_completed").eq("id", user.id).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", user.id),
+    ]).then(([profileResult, rolesResult]) => {
+      if (profileResult.error || rolesResult.error) {
+        throw new Error("We couldn't load your account setup.");
+      }
+      const data = profileResult.data;
+      const roles = rolesResult.data;
+      if (data?.onboarding_completed) {
+        const userRoles = (roles ?? []).map((r) => r.role as string);
+        if (userRoles.includes("admin")) navigate({ to: "/admin" });
+        else if (data.account_type === "vendor") navigate({ to: "/vendor" });
+        else navigate({ to: "/dashboard" });
+        return;
+      }
+      if (!accountType && data?.account_type) {
+        setAccountType(legacyToPublicProfileType(data.account_type));
+      }
+      setChecked(true);
+    }).catch((error) => {
+      setLoadError(error instanceof Error ? error.message : "We couldn't load your account setup.");
+      setChecked(true);
+    });
+  }, [user, navigate, accountType, loadAttempt]);
 
   if (!checked) {
     return (
       <div className="grid min-h-screen place-items-center bg-hero-radial">
         <Sparkles className="h-6 w-6 animate-pulse text-primary" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-hero-radial px-4">
+        <Card className="w-full max-w-md space-y-4 p-6 text-center shadow-soft">
+          <h1 className="font-display text-xl font-semibold">Account setup couldn&apos;t load</h1>
+          <p className="text-sm text-muted-foreground">{loadError} Check your connection and try again.</p>
+          <Button onClick={() => { setChecked(false); setLoadAttempt((value) => value + 1); }}>
+            Try again
+          </Button>
+        </Card>
       </div>
     );
   }
@@ -150,35 +180,14 @@ function MelaAssistCard() {
 }
 
 function AccountTypePicker({ onSelect }: { onSelect: (t: AccountType) => void }) {
-  const options: Array<{ type: AccountType; icon: typeof PartyPopper; title: string; sub: string }> = [
-    { type: "personal", icon: PartyPopper, title: "Plan a Personal Event", sub: "Weddings, birthdays, celebrations — just me and my collaborators." },
-    { type: "organization", icon: Building2, title: "Plan for an Organization", sub: "Company events, conferences, fundraisers — with a team." },
-    { type: "vendor", icon: Store, title: "Join as a Vendor", sub: "I provide products or services for events." },
-  ];
   return (
     <div className="space-y-4">
       <MelaAssistCard />
       <Card className="border-border/60 p-6 shadow-soft">
-        <h2 className="font-display text-lg font-semibold">How will you use MelaBridge?</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Pick one — you can always add another role later.</p>
-        <div className="mt-5 grid gap-3">
-          {options.map(({ type, icon: Icon, title, sub }) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => onSelect(type)}
-              className="group flex items-center gap-4 rounded-xl border border-border p-4 text-left transition hover:border-primary hover:bg-primary/5"
-            >
-              <div className="grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground">
-                <Icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-medium">{title}</p>
-                <p className="text-xs text-muted-foreground">{sub}</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
-            </button>
-          ))}
+        <h2 className="font-display text-lg font-semibold">What brings you to MelaBridge?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Choose the experience that best matches how you plan to use MelaBridge.</p>
+        <div className="mt-5">
+          <ProfileTypeChoices value={null} onChange={onSelect} />
         </div>
       </Card>
     </div>
@@ -209,9 +218,9 @@ function OptionalLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ============== PLANNER FLOW (Personal + Organization) ============== */
-function PlannerFlow({ accountType, onBack }: { accountType: "personal" | "organization"; onBack: () => void }) {
-  if (accountType === "personal") {
+/* ============== PLANNER FLOW (Host + Planner) ============== */
+function PlannerFlow({ accountType, onBack }: { accountType: "host" | "planner"; onBack: () => void }) {
+  if (accountType === "host") {
     return <WelcomeDashboard onBack={onBack} />;
   }
   return <OrganizationFlow onBack={onBack} />;
@@ -225,16 +234,22 @@ function WelcomeDashboard({ onBack }: { onBack: () => void }) {
 
   async function markOnboarded() {
     if (!user) return;
-    await supabase
-      .from("profiles")
-      .update({ account_type: "personal", onboarding_completed: true })
-      .eq("id", user.id);
+    const { error } = await supabase.from("profiles").upsert(
+        { id: user.id, email: user.email ?? "", account_type: publicToLegacyProfileType("host"), onboarding_completed: true },
+      { onConflict: "id" },
+    );
+    if (error) throw error;
   }
 
   async function handleCreate() {
     setBusy("create");
-    await markOnboarded();
-    navigate({ to: "/events/new" });
+    try {
+      await markOnboarded();
+      navigate({ to: "/events/new" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not finish account setup");
+      setBusy(null);
+    }
   }
 
   async function handleExploreSample(tour: boolean) {
@@ -364,10 +379,10 @@ function OrganizationFlow({ onBack }: { onBack: () => void }) {
     }
     setBusy(true);
     try {
-      const { error: profErr } = await supabase
-        .from("profiles")
-        .update({ account_type: "organization", onboarding_completed: true })
-        .eq("id", user.id);
+      const { error: profErr } = await supabase.from("profiles").upsert(
+        { id: user.id, email: user.email ?? "", account_type: publicToLegacyProfileType("planner"), onboarding_completed: true },
+        { onConflict: "id" },
+      );
       if (profErr) throw profErr;
 
       const { data: created, error: evErr } = await supabase
@@ -382,10 +397,12 @@ function OrganizationFlow({ onBack }: { onBack: () => void }) {
         .single();
       if (evErr) throw evErr;
 
-      toast.success("Your event is ready — MelaAssist™ is drafting your plan");
-      void bootstrap({ data: { event_id: created.id, only_if_empty: true } } as never).catch(() => {
-        /* Silent on failure; user can regenerate from the workspace. */
-      });
+      try {
+        await bootstrap({ data: { event_id: created.id, only_if_empty: true } } as never);
+        toast.success("Your event and planning workspace are ready");
+      } catch {
+        toast.warning("Your event was created, but the starter plan could not be generated. You can retry from the event workspace.");
+      }
       navigate({ to: "/events/$eventId", params: { eventId: created.id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -486,75 +503,137 @@ function OrganizationFlow({ onBack }: { onBack: () => void }) {
 function VendorFlow({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState(1);
+  const generateDraft = useServerFn(generateVendorProfileDraft);
+  const recheckDemand = useServerFn(recheckVendorDemandForCurrentVendor);
+  const createPackage = useServerFn(upsertVendorPackage);
+
+  const [step, setStep] = useState<1 | 2>(1);
   const [busy, setBusy] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
-  // step 1
+  // Step 1
   const [businessName, setBusinessName] = useState("");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [website, setWebsite] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [primaryCategory, setPrimaryCategory] = useState("");
+  const [prompt, setPrompt] = useState("");
 
-  // step 2
+  // Step 2 — AI-generated, editable
+  const [description, setDescription] = useState("");
+  const [services, setServices] = useState<string[]>([]);
+  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([]);
+  const [pkgs, setPkgs] = useState<{ name: string; description: string; price_placeholder: string; inclusions: string[]; duration: string }[]>([]);
+
+  // Step 2 — location & terms
   const [city, setCity] = useState("");
   const [stateVal, setStateVal] = useState("");
-  const [travelRadius, setTravelRadius] = useState("");
-  const [address, setAddress] = useState("");
-  const [mobileService, setMobileService] = useState(false);
-  const [virtualServices, setVirtualServices] = useState("");
-
-  // step 3
-  const [yearsInBusiness, setYearsInBusiness] = useState("");
-  const [startingPrice, setStartingPrice] = useState("");
-  const [businessHours, setBusinessHours] = useState("");
-  const [socialLinks, setSocialLinks] = useState("");
+  const [zipCode, setZipCode] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
 
-  const canNext1 = businessName.trim().length > 0 && category.length > 0;
+  const canNext = categories.length > 0;
 
-  async function finish() {
-    if (!user) return;
-    if (!acceptTerms) {
-      toast.error("Please accept the terms to continue");
-      return;
+  async function runGenerate() {
+    setGenerating(true);
+    setGenError(null);
+    try {
+      const trimmed = prompt.trim();
+      const mode = trimmed.startsWith("http") ? "website"
+        : trimmed.length > 0 ? "description"
+        : "business_name";
+      const input = trimmed.length > 0 ? trimmed : businessName.trim();
+      const result = await generateDraft({ data: { mode, input, category: categories[0] } });
+      if (result.draft) {
+        const d = result.draft;
+        setDescription(d.description || d.short_bio || "");
+        setServices(d.services.slice(0, 6));
+        setFaqs(d.faqs.slice(0, 4));
+        setPkgs(
+          d.packages.slice(0, 3).map((p) => ({
+            name: p.name,
+            description: p.description,
+            price_placeholder: p.price_placeholder,
+            inclusions: p.inclusions,
+            duration: p.duration,
+          }))
+        );
+      } else {
+        setGenError(result.message ?? "MelaAssist couldn't generate a draft — fill in what you'd like below.");
+      }
+    } catch {
+      setGenError("MelaAssist hit an error — you can still launch with your basics.");
+    } finally {
+      setGenerating(false);
     }
+  }
+
+  function handleNext() {
+    setStep(2);
+    runGenerate();
+  }
+
+  async function launch() {
+    if (!user) return;
+    if (!acceptTerms) { toast.error("Please accept the terms to continue"); return; }
     setBusy(true);
     try {
-      const { error: profErr } = await supabase
-        .from("profiles")
-        .update({ account_type: "vendor", onboarding_completed: true, display_name: businessName })
-        .eq("id", user.id);
-      if (profErr) throw profErr;
+      const profileName = businessName.trim() || user.email?.split("@")[0] || "Event services";
+      const servicesJson = services.length > 0
+        ? JSON.stringify({ services, highlights: [] })
+        : null;
 
       const { error: vpErr } = await supabase.from("vendor_profiles").upsert(
         {
           user_id: user.id,
-          business_name: businessName.trim(),
-          business_category: category,
+          business_name: profileName,
+          business_category: primaryCategory || categories[0] || "Other",
+          business_categories: categories,
           business_description: description || null,
-          phone: phone || null,
-          email: email || null,
-          website: website || null,
           city: city || null,
           state: stateVal || null,
-          travel_radius: travelRadius ? Number(travelRadius) : null,
-          business_address: address || null,
-          mobile_service: mobileService,
-          virtual_services: virtualServices || null,
-          years_in_business: yearsInBusiness ? Number(yearsInBusiness) : null,
-          starting_price: startingPrice ? Number(startingPrice) : null,
-          business_hours: businessHours ? { note: businessHours } : null,
-          social_links: socialLinks ? { note: socialLinks } : null,
+           zip_code: zipCode.trim() || null,
+          virtual_services: servicesJson,
+          faqs: (faqs.length > 0 ? faqs : []) as never,
           accepted_terms: true,
-          onboarding_completed: true,
+           // Completing signup creates the private draft. Vendors publish
+           // themselves later from the profile builder once the minimum
+           // listing requirements are met.
+           onboarding_completed: false,
         },
         { onConflict: "user_id" },
       );
       if (vpErr) throw vpErr;
+      await recheckDemand({ data: undefined } as never);
 
-      toast.success("Your vendor workspace is ready");
+      const { error: profErr } = await supabase.from("profiles").upsert(
+        { id: user.id, email: user.email ?? "", account_type: "vendor", onboarding_completed: true, display_name: profileName },
+        { onConflict: "id" },
+      );
+      if (profErr) throw profErr;
+
+      // Create AI-suggested packages (non-blocking — failures are logged, not fatal)
+      for (let i = 0; i < pkgs.length; i++) {
+        const pkg = pkgs[i];
+        try {
+          await createPackage({
+            data: {
+              name: pkg.name,
+              description: pkg.description,
+              price_type: "contact" as const,
+              price_cents: null,
+              inclusions: pkg.inclusions,
+              duration: pkg.duration || "",
+              add_ons: [],
+              is_featured: i === 0,
+              sort_order: i,
+              category_fields: {},
+            },
+          });
+        } catch (pkgErr) {
+          console.warn("[onboarding] package create failed:", pkgErr);
+        }
+      }
+
+      toast.success("Your vendor workspace is ready!");
       navigate({ to: "/vendor" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -568,163 +647,299 @@ function VendorFlow({ onBack }: { onBack: () => void }) {
       <Card className="border-primary/30 bg-primary/5 p-4 shadow-soft">
         <div className="flex items-start gap-3">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
-            <Store className="h-4 w-4" />
+            <Sparkles className="h-4 w-4" />
           </div>
           <div className="text-sm">
-            <p className="font-medium">Let's build your professional business presence.</p>
-            <p className="mt-1 text-muted-foreground">
-              MelaAssist™ will help optimize your profile, respond to inquiries, and grow your bookings.
-            </p>
+            <p className="font-medium">MelaAssist builds your profile — you just review it.</p>
+            <p className="mt-0.5 text-muted-foreground">Takes about 60 seconds.</p>
           </div>
         </div>
       </Card>
 
       <Card className="border-border/60 p-6 shadow-soft">
-        <StepIndicator step={step} total={3} />
+        <StepIndicator step={step} total={2} />
 
+        {/* ── STEP 1: the basics ── */}
         {step === 1 && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-5">
             <div>
-              <h2 className="font-display text-lg font-semibold">Business basics</h2>
-              <p className="text-sm text-muted-foreground">Who you are and how to reach you.</p>
+              <h2 className="font-display text-lg font-semibold">About your business</h2>
+              <p className="text-sm text-muted-foreground">Choose your services. Add your own name or a business name if you have one.</p>
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="biz-name">Business name</Label>
-              <Input id="biz-name" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Your business name" autoFocus />
+                <Label htmlFor="biz-name">Your name or business name <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+              <Input
+                id="biz-name"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                placeholder="e.g., Alisha or Moments by Alisha"
+                autoFocus
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label>Business category</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-                <SelectContent className="max-h-72">
-                  {VENDOR_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="biz-desc"><OptionalLabel>Business description</OptionalLabel></Label>
-              <Textarea id="biz-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What you're known for..." />
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="biz-phone">Phone number</Label>
-                <Input id="biz-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="(555) 555-1234" />
+
+             <div className="space-y-2">
+                <Label>What do you offer? <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">
+                  Select all that apply. One vendor profile can showcase multiple services. Choose one primary service.
+                </p>
+               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto py-0.5">
+                 {VENDOR_OFFER_CATEGORIES.map((cat) => {
+                  const sel = categories.includes(cat);
+                  return (
+                     <div key={cat} className="flex items-center gap-0.5">
+                       <button
+                         type="button"
+                         aria-pressed={sel}
+                         onClick={() => {
+                           setCategories((prev) => {
+                             const next = prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat];
+                             setPrimaryCategory((current) =>
+                               current === cat ? (next[0] ?? "") : current || next[0] || "",
+                             );
+                             return next;
+                           });
+                         }}
+                         className={cn(
+                           "px-3 py-1.5 rounded-full text-xs border transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                           sel
+                             ? "bg-primary text-primary-foreground border-primary"
+                             : "bg-muted/40 text-foreground border-border hover:border-primary/60"
+                         )}
+                       >
+                         {sel && "✓ "}{cat}
+                       </button>
+                       {sel && (
+                         <button
+                           type="button"
+                           aria-label={`Set ${cat} as primary service`}
+                           aria-pressed={primaryCategory === cat}
+                           onClick={() => setPrimaryCategory(cat)}
+                           className={cn(
+                             "grid h-6 w-6 place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                             primaryCategory === cat ? "text-amber-500" : "text-muted-foreground hover:text-amber-500",
+                           )}
+                         >
+                           <Star className="h-3.5 w-3.5" fill={primaryCategory === cat ? "currentColor" : "none"} />
+                         </button>
+                       )}
+                     </div>
+                  );
+                })}
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="biz-email">Email</Label>
-                <Input id="biz-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
+              {categories.length > 0 && (
+                 <p className="text-xs font-medium text-primary">
+                   {categories.length} selected · Primary: {primaryCategory || categories[0]}
+                 </p>
+              )}
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="biz-web"><OptionalLabel>Website</OptionalLabel></Label>
-              <Input id="biz-web" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://" />
+              <Label htmlFor="biz-prompt">
+                Website or description{" "}
+                <span className="text-xs font-normal text-muted-foreground">(optional — helps MelaAssist do more)</span>
+              </Label>
+              <Textarea
+                id="biz-prompt"
+                rows={3}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Paste your website URL, or describe your business in a few sentences…"
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label><OptionalLabel>Upload logo</OptionalLabel></Label>
-              <Button type="button" variant="outline" className="w-full" disabled>
-                <Upload className="mr-2 h-4 w-4" /> Add after onboarding
-              </Button>
-            </div>
-            <div className="flex justify-between gap-2 pt-2">
+
+            <div className="flex justify-between gap-2 pt-1">
               <Button variant="ghost" onClick={onBack}>
                 <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
               </Button>
-              <Button onClick={() => setStep(2)} disabled={!canNext1}>
-                Next <ArrowRight className="ml-1.5 h-4 w-4" />
+              <Button onClick={handleNext} disabled={!canNext}>
+                <Sparkles className="mr-1.5 h-4 w-4" /> Build my profile
               </Button>
             </div>
           </div>
         )}
 
+        {/* ── STEP 2: review AI draft + location + terms ── */}
         {step === 2 && (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-5">
             <div>
-              <h2 className="font-display text-lg font-semibold">Service area</h2>
-              <p className="text-sm text-muted-foreground">Where you serve clients.</p>
+              <h2 className="font-display text-lg font-semibold">Review your profile</h2>
+              <p className="text-sm text-muted-foreground">
+                MelaAssist drafted everything — edit anything you'd like to change.
+              </p>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="biz-city">City</Label>
-                <Input id="biz-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Birmingham" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="biz-state">State</Label>
-                <Input id="biz-state" value={stateVal} onChange={(e) => setStateVal(e.target.value)} placeholder="AL" />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="biz-radius">Travel radius (miles)</Label>
-              <Input id="biz-radius" type="number" min="0" value={travelRadius} onChange={(e) => setTravelRadius(e.target.value)} placeholder="50" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="biz-addr"><OptionalLabel>Business address</OptionalLabel></Label>
-              <Input id="biz-addr" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Main St" />
-            </div>
-            <div className="space-y-2">
-              <Label>Mobile service</Label>
-              <RadioGroup value={mobileService ? "yes" : "no"} onValueChange={(v) => setMobileService(v === "yes")} className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="yes" /> Yes</label>
-                <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="no" /> No</label>
-              </RadioGroup>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="biz-virtual"><OptionalLabel>Virtual services</OptionalLabel></Label>
-              <Input id="biz-virtual" value={virtualServices} onChange={(e) => setVirtualServices(e.target.value)} placeholder="Virtual consultations, remote planning..." />
-            </div>
-            <div className="flex justify-between gap-2 pt-2">
-              <Button variant="ghost" onClick={() => setStep(1)}>
-                <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-              </Button>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(3)}>Skip for now</Button>
-                <Button onClick={() => setStep(3)}>Next <ArrowRight className="ml-1.5 h-4 w-4" /></Button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {step === 3 && (
-          <div className="mt-4 space-y-4">
-            <div>
-              <h2 className="font-display text-lg font-semibold">Business profile</h2>
-              <p className="text-sm text-muted-foreground">You can fill in more later — nothing here is required except accepting the terms.</p>
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="biz-years"><OptionalLabel>Years in business</OptionalLabel></Label>
-                <Input id="biz-years" type="number" min="0" value={yearsInBusiness} onChange={(e) => setYearsInBusiness(e.target.value)} placeholder="5" />
+            {/* Loading state */}
+            {generating && (
+              <div className="flex flex-col items-center gap-3 py-12 text-center">
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-primary/10">
+                  <Loader2 className="h-7 w-7 animate-spin text-primary" />
+                </div>
+                <p className="text-sm font-medium">MelaAssist is building your profile…</p>
+                <p className="text-xs text-muted-foreground">Writing your bio, services, FAQs, and package suggestions</p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="biz-price"><OptionalLabel>Starting price ($)</OptionalLabel></Label>
-                <Input id="biz-price" type="number" min="0" value={startingPrice} onChange={(e) => setStartingPrice(e.target.value)} placeholder="500" />
+            )}
+
+            {/* Soft error banner */}
+            {!generating && genError && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                {genError}
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="biz-hours"><OptionalLabel>Business hours</OptionalLabel></Label>
-              <Input id="biz-hours" value={businessHours} onChange={(e) => setBusinessHours(e.target.value)} placeholder="Mon–Fri, 9am–6pm" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="biz-social"><OptionalLabel>Social media links</OptionalLabel></Label>
-              <Input id="biz-social" value={socialLinks} onChange={(e) => setSocialLinks(e.target.value)} placeholder="instagram.com/yourbrand" />
-            </div>
-            <div className="space-y-1.5">
-              <Label><OptionalLabel>Upload portfolio photos</OptionalLabel></Label>
-              <Button type="button" variant="outline" className="w-full" disabled>
-                <Upload className="mr-2 h-4 w-4" /> Add after onboarding
-              </Button>
-            </div>
-            <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm">
-              <Checkbox checked={acceptTerms} onCheckedChange={(v) => setAcceptTerms(Boolean(v))} />
-              <span>I accept MelaBridge's vendor terms of service and marketplace guidelines.</span>
-            </label>
-            <div className="flex justify-between gap-2 pt-2">
-              <Button variant="ghost" onClick={() => setStep(2)} disabled={busy}>
-                <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
-              </Button>
-              <Button onClick={finish} disabled={busy || !acceptTerms}>
-                {busy ? "Setting up…" : "Finish setup"} <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Button>
-            </div>
+            )}
+
+            {/* Editable draft cards */}
+            {!generating && (
+              <>
+                {/* Description */}
+                <div className="space-y-1.5">
+                  <Label>Business description</Label>
+                  <Textarea
+                    aria-label="Business description"
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Tell planners what makes your business unique…"
+                  />
+                </div>
+
+                {/* Services */}
+                {services.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Services</Label>
+                    <div className="space-y-1.5">
+                      {services.map((svc, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Input
+                            aria-label={`Service ${i + 1}`}
+                            value={svc}
+                            onChange={(e) =>
+                              setServices((prev) => prev.map((s, idx) => (idx === i ? e.target.value : s)))
+                            }
+                            className="text-sm"
+                          />
+                          <button
+                            type="button"
+                            aria-label={`Remove service ${i + 1}`}
+                            onClick={() => setServices((prev) => prev.filter((_, idx) => idx !== i))}
+                            className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* FAQs */}
+                {faqs.length > 0 && (
+                  <div className="space-y-3">
+                    <Label>FAQs</Label>
+                    {faqs.map((faq, i) => (
+                      <div key={i} className="rounded-lg border border-border/60 p-3 space-y-2">
+                        <Input
+                          aria-label={`FAQ question ${i + 1}`}
+                          value={faq.question}
+                          onChange={(e) =>
+                            setFaqs((prev) => prev.map((f, idx) => (idx === i ? { ...f, question: e.target.value } : f)))
+                          }
+                          className="text-sm font-medium"
+                          placeholder="Question"
+                        />
+                        <Textarea
+                          aria-label={`FAQ answer ${i + 1}`}
+                          rows={2}
+                          value={faq.answer}
+                          onChange={(e) =>
+                            setFaqs((prev) => prev.map((f, idx) => (idx === i ? { ...f, answer: e.target.value } : f)))
+                          }
+                          className="text-sm"
+                          placeholder="Answer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Package suggestions */}
+                {pkgs.length > 0 && (
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Package suggestions</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Prices are placeholders — set them after you launch.
+                      </p>
+                    </div>
+                    {pkgs.map((pkg, i) => (
+                      <div key={i} className="rounded-lg border border-border/60 p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            aria-label={`Package name ${i + 1}`}
+                            value={pkg.name}
+                            onChange={(e) =>
+                              setPkgs((prev) => prev.map((p, idx) => (idx === i ? { ...p, name: e.target.value } : p)))
+                            }
+                            className="text-sm font-medium"
+                            placeholder="Package name"
+                          />
+                          <button
+                            type="button"
+                            aria-label={`Remove package ${i + 1}`}
+                            onClick={() => setPkgs((prev) => prev.filter((_, idx) => idx !== i))}
+                            className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <Textarea
+                          aria-label={`Package description ${i + 1}`}
+                          rows={2}
+                          value={pkg.description}
+                          onChange={(e) =>
+                            setPkgs((prev) => prev.map((p, idx) => (idx === i ? { ...p, description: e.target.value } : p)))
+                          }
+                          className="text-sm"
+                          placeholder="What's included"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {pkg.price_placeholder || "Price TBD"}
+                          {pkg.duration ? ` · ${pkg.duration}` : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Location */}
+                <div className="space-y-1.5">
+                  <Label>Where are you based? <span className="text-xs font-normal text-muted-foreground">(optional)</span></Label>
+                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                     <Input aria-label="Business city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
+                     <Input aria-label="Business state" value={stateVal} onChange={(e) => setStateVal(e.target.value)} placeholder="State" maxLength={2} />
+                     <Input aria-label="Business ZIP code" value={zipCode} onChange={(e) => setZipCode(e.target.value.replace(/\D/g, "").slice(0, 5))} placeholder="ZIP code" inputMode="numeric" maxLength={5} />
+                  </div>
+                </div>
+
+                {/* Terms */}
+                <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm cursor-pointer">
+                  <Checkbox checked={acceptTerms} onCheckedChange={(v) => setAcceptTerms(Boolean(v))} className="mt-0.5" />
+                  <span>I accept MelaBridge's vendor terms of service and marketplace guidelines.</span>
+                </label>
+
+                <div className="flex justify-between gap-2 pt-1">
+                  <Button variant="ghost" onClick={() => setStep(1)} disabled={busy}>
+                    <ArrowLeft className="mr-1.5 h-4 w-4" /> Back
+                  </Button>
+                  <Button onClick={launch} disabled={busy || !acceptTerms}>
+                    {busy ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Launching…</>
+                    ) : (
+                      <><Check className="mr-2 h-4 w-4" /> Launch my profile</>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </Card>

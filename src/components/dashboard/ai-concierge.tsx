@@ -3,12 +3,12 @@ import { useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Calendar, Store, Users, Wallet, ClipboardList, Loader2, ArrowUp } from "lucide-react";
+import { Sparkles, Calendar, Store, Users, Wallet, ClipboardList, Loader2, ArrowUp, X, RotateCcw } from "lucide-react";
 import { askMelaAssist } from "@/lib/melaassist.functions";
 
 const SHORTCUTS = [
   { to: "/timeline", label: "Runsheet", icon: Calendar },
-  { to: "/vendors", label: "Vendors", icon: Store },
+  { to: "/marketplace", label: "Vendors", icon: Store },
   { to: "/tasks", label: "Tasks", icon: ClipboardList },
   { to: "/guests", label: "Guests", icon: Users },
   { to: "/budget", label: "Budget", icon: Wallet },
@@ -37,7 +37,13 @@ export function AIConcierge({ eventId }: { eventId?: string }) {
     setAnswer(null);
     try {
       const res = await ask({ data: { question: q, eventId } });
-      setAnswer(res.answer);
+      if (res.degraded) {
+        setError(res.answer);
+        setAnswer(null);
+      } else {
+        setAnswer(res.answer);
+        setQuestion("");
+      }
     } catch {
       setError("MelaAssist couldn't respond. Please try again.");
     } finally {
@@ -45,7 +51,7 @@ export function AIConcierge({ eventId }: { eventId?: string }) {
     }
   }
 
-  function usePrompt(p: string) {
+  function applyPrompt(p: string) {
     setQuestion(p);
     setAnswer(null);
     setError(null);
@@ -72,7 +78,7 @@ export function AIConcierge({ eventId }: { eventId?: string }) {
                 void submit();
               }
             }}
-            placeholder="e.g. What are my top three risks this week?"
+            placeholder={answer ? "Ask another planning question…" : "e.g. What are my top three risks this week?"}
             className="min-h-[92px] resize-none pr-14"
             disabled={busy}
             aria-label="Ask MelaAssist"
@@ -95,7 +101,7 @@ export function AIConcierge({ eventId }: { eventId?: string }) {
               <button
                 key={s}
                 type="button"
-                onClick={() => usePrompt(s)}
+                onClick={() => applyPrompt(s)}
                 className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
               >
                 {s}
@@ -112,12 +118,36 @@ export function AIConcierge({ eventId }: { eventId?: string }) {
       )}
 
       {error && (
-        <p className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+          <p>{error}</p>
+          <Button type="button" variant="ghost" size="sm" onClick={() => void submit()} disabled={busy} className="shrink-0 gap-1.5 text-xs text-destructive hover:text-destructive">
+            <RotateCcw className="h-3.5 w-3.5" /> Retry
+          </Button>
+        </div>
       )}
 
       {answer && !busy && (
-        <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-          {answer}
+        <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <p className="min-w-0 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {answer}
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAnswer(null);
+                setQuestion("");
+                setError(null);
+              }}
+              className="shrink-0 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              aria-label="Clear answer and start a new question"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          </div>
         </div>
       )}
 

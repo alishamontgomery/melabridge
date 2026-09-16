@@ -16,6 +16,7 @@ import { PageEmptyState } from "@/components/page-empty-state";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useRole } from "@/lib/use-role";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -36,8 +37,102 @@ export const Route = createFileRoute("/_authenticated/events/")({
   component: EventsListPage,
 });
 
+type RenderEventsBodyArgs = {
+  events: Event[] | null;
+  view: View;
+  isAdmin: boolean;
+  hasReal: boolean;
+  stats: Record<string, EventStats>;
+  restore: (ev: Event) => Promise<void>;
+  unarchive: (ev: Event) => Promise<void>;
+  setConfirmPurge: (ev: Event | null) => void;
+};
+
+function renderEventsBody({ events, view, isAdmin, hasReal, stats, restore, unarchive, setConfirmPurge }: RenderEventsBodyArgs) {
+  if (events === null) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-72 rounded-2xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    if (view !== "active") {
+      return (
+        <Card className="border-dashed border-border/60 p-10 text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
+            {view === "archived" ? <Archive className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
+          </div>
+          <h3 className="mt-3 font-display text-lg font-semibold">
+            {view === "archived" ? "Nothing archived yet" : "Trash is empty"}
+          </h3>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            {view === "archived"
+              ? "Completed events you archive will appear here for future reference."
+              : "Events you delete land here for 30 days before being permanently removed."}
+          </p>
+        </Card>
+      );
+    }
+    if (isAdmin) {
+      return (
+        <PageEmptyState
+          icon={Calendar}
+          title="No events yet"
+          description="Create a test event to explore the platform, enable ticketing, or preview what planners see."
+          primary={{ label: "Create event", to: "/events/new", variant: "hero" }}
+        />
+      );
+    }
+    return (
+      <PageEmptyState
+        icon={Sparkles}
+        title="Your workspace is ready"
+        description="Create your first event to unlock personalized planning tools, or explore the sample workspace to see MelaBridge in action."
+        primary={{ label: "Create your first event", to: "/events/new", variant: "hero" }}
+        secondary={{ label: "Explore sample workspace", to: "/onboarding" }}
+        aiSuggestion="Not sure where to start? Tell MelaAssist™ your event type and I'll draft a complete plan in seconds."
+      />
+    );
+  }
+
+  return (
+    <>
+      {view === "active" && !hasReal && (
+        <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm">
+          <span className="font-medium">Ready when you are.</span>{" "}
+          <span className="text-muted-foreground">
+            These are sample events for you to explore. Create a real event whenever you'd like.
+          </span>
+        </div>
+      )}
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {events.map((ev) => (
+          <div key={ev.id} className="relative">
+            {view === "trash" ? (
+              <TrashCard event={ev} onRestore={() => restore(ev)} onPurge={() => setConfirmPurge(ev)} />
+            ) : (
+              <EventCard
+                event={ev}
+                stats={stats[ev.id]}
+                view={view}
+                onUnarchive={() => unarchive(ev)}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function EventsListPage() {
   const { user } = useAuth();
+  const { role } = useRole();
+  const isAdmin = role === "admin";
   const navigate = useNavigate();
   const [view, setView] = useState<View>("active");
   const [events, setEvents] = useState<Event[] | null>(null);
@@ -95,19 +190,19 @@ function EventsListPage() {
   const hasReal = useMemo(() => (events ?? []).some((e) => !e.is_sample), [events]);
   const reload = () => setReloadKey((k) => k + 1);
 
-  async function restore(ev: Event) {
+  async function restore(ev: Event): Promise<void> {
     const { error } = await supabase
       .from("events")
       .update({ deleted_at: null, status: ev.status === "archived" ? "confirmed" : ev.status })
       .eq("id", ev.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Event restored");
     reload();
   }
 
-  async function unarchive(ev: Event) {
+  async function unarchive(ev: Event): Promise<void> {
     const { error } = await supabase.from("events").update({ status: "confirmed" }).eq("id", ev.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Moved back to Active");
     reload();
   }
@@ -132,10 +227,12 @@ function EventsListPage() {
           icon={Calendar}
           actions={
             <div className="flex flex-wrap gap-1.5">
-              <Button onClick={() => navigate({ to: "/events/ai-new" })} className="gap-1.5" variant="hero">
-                <Sparkles className="h-4 w-4" /> Plan with MelaAssist
-              </Button>
-              <Button onClick={() => navigate({ to: "/events/new" })} className="gap-1.5" variant="outline">
+              {!isAdmin && (
+                <Button onClick={() => navigate({ to: "/events/ai-new" })} className="gap-1.5" variant="hero">
+                  <Sparkles className="h-4 w-4" /> Plan with MelaAssist
+                </Button>
+              )}
+              <Button onClick={() => navigate({ to: "/events/new" })} className="gap-1.5" variant={isAdmin ? "hero" : "outline"}>
                 <Plus className="h-4 w-4" /> New event
               </Button>
             </div>
@@ -162,65 +259,7 @@ function EventsListPage() {
           </Card>
         )}
 
-        {events === null ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[0, 1, 2].map((i) => (
-              <Skeleton key={i} className="h-72 rounded-2xl" />
-            ))}
-          </div>
-        ) : events.length === 0 ? (
-          view === "active" ? (
-            <PageEmptyState
-              icon={Sparkles}
-              title="Your workspace is ready"
-              description="Create your first event to unlock personalized planning tools, or explore the sample workspace to see MelaBridge in action."
-              primary={{ label: "Create your first event", to: "/events/new", variant: "hero" }}
-              secondary={{ label: "Explore sample workspace", to: "/onboarding" }}
-              aiSuggestion="Not sure where to start? Tell MelaAssist™ your event type and I'll draft a complete plan in seconds."
-            />
-          ) : (
-            <Card className="border-dashed border-border/60 p-10 text-center">
-              <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-muted text-muted-foreground">
-                {view === "archived" ? <Archive className="h-5 w-5" /> : <Trash2 className="h-5 w-5" />}
-              </div>
-              <h3 className="mt-3 font-display text-lg font-semibold">
-                {view === "archived" ? "Nothing archived yet" : "Trash is empty"}
-              </h3>
-              <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-                {view === "archived"
-                  ? "Completed events you archive will appear here for future reference."
-                  : "Events you delete land here for 30 days before being permanently removed."}
-              </p>
-            </Card>
-          )
-        ) : (
-          <>
-            {view === "active" && !hasReal && (
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-sm">
-                <span className="font-medium">Ready when you are.</span>{" "}
-                <span className="text-muted-foreground">
-                  These are sample events for you to explore. Create a real event whenever you'd like.
-                </span>
-              </div>
-            )}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {events.map((ev) => (
-                <div key={ev.id} className="relative">
-                  {view === "trash" ? (
-                    <TrashCard event={ev} onRestore={() => restore(ev)} onPurge={() => setConfirmPurge(ev)} />
-                  ) : (
-                    <EventCard
-                      event={ev}
-                      stats={stats[ev.id]}
-                      view={view}
-                      onUnarchive={() => unarchive(ev)}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        {renderEventsBody({ events, view, isAdmin, hasReal, stats, restore, unarchive, setConfirmPurge })}
       </div>
 
       <ConfirmDialog

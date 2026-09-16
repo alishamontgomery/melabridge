@@ -1,0 +1,30 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "rcUBnttYdcGMmqo9Lh9RX"
+uri = "file://previews/ticket-purchase-confirmation.html"
+type = "text"
+title = "Ticket purchase confirmation email"
+description = "Interactive preview of the email a buyer receives after purchase, including ticket details, QR code, organizer contact, cancellation policy, and order reference."
+logical_id = "1adae2e8-4a92-44da-a8f1-e9aed2d65b17"
+content_hash = "sha256:36f082d4bb960603028758664e7a19c763b83c6dab3ee933795d957b9f220665"
+size = 10776
+mtime_ms = 1788910474966
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:cb53c15f-bc83-4ae0-901e-997ace9f0b5d/1adae2e8-4a92-44da-a8f1-e9aed2d65b17/28745058-9e21-47cd-9b41-b3eb7e30bd2d"
+storage_version_token = "1788910569512229"
+content_type = "text/html"
+
+[[outputs]]
+id = "2SFzr2SB90gdseG00nvqy"
+uri = "file://previews/ticket-purchase-confirmation.jpg"
+type = "image"
+title = "Ticket email screenshot"
+description = "Screenshot of the rendered confirmation email for quick visual review."
+logical_id = "f2d3f2ff-9715-44f4-995e-9b9f7211a62d"
+content_hash = "sha256:b4635c138ca93143df911297e1bc12778626ee8ec6a3d82b0e98e9605324d4ae"
+size = 36499
+mtime_ms = 1788910514099
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:cb53c15f-bc83-4ae0-901e-997ace9f0b5d/f2d3f2ff-9715-44f4-995e-9b9f7211a62d/7566f2b0-946c-43e6-a327-6154020a8e87"
+storage_version_token = "1788910570436254"
+content_type = "image/jpeg"

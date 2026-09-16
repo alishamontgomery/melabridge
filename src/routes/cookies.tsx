@@ -25,7 +25,7 @@ export const Route = createFileRoute("/cookies")({
       <h2>Managing cookies</h2>
       <p>Most browsers allow you to block or delete cookies. Disabling essential cookies will prevent MelaBridge from functioning correctly.</p>
       <h2>Contact</h2>
-      <p>Questions? Email <a href="mailto:hello@melabridge.com">hello@melabridge.com</a> or call <a href="tel:+12567848427">+1 (256) 784-8427</a>.</p>
+      <p>Questions? Email <a href="mailto:hello@melabridge.com">hello@melabridge.com</a>.</p>
     </MarketingPage>
   ),
 });

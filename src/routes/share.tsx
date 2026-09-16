@@ -24,7 +24,7 @@ function SharePage() {
         <PageHeader
           eyebrow="Event sharing"
           title="Share thoughtfully. Control precisely."
-          description="Public microsite, private guest portal, vendor-scoped views, and collaborator invites — each with the right level of access."
+          description="Public event pages, secure RSVP links, and collaborator invites — each with the right level of access."
           icon={Share2}
         />
         <Card className="space-y-3 border-border/60 p-5 shadow-soft">
@@ -46,10 +46,9 @@ function SharePage() {
         <ModuleGrid
           features={[
             { icon: Globe2, title: "Public microsite", detail: "Beautiful landing page with story, schedule, and RSVP.", badge: "SEO ready" },
-            { icon: Users, title: "Guest portal link", detail: "Private link with personalized schedules and travel info." },
+            { icon: Users, title: "Secure RSVP link", detail: "Invitation links let guests confirm Yes or No without creating an account." },
             { icon: Lock, title: "Password-protected", detail: "Add a passcode for extra privacy on sensitive events." },
             { icon: Share2, title: "One-tap invites", detail: "WhatsApp, email, SMS, or copy-link with tracked opens." },
-            { icon: LinkIcon, title: "Vendor scoped views", detail: "Vendors see only their brief, deliverables, and payouts." },
             { icon: Users, title: "Collaborator invites", detail: "Add co-hosts and planners with role-based permissions." },
           ]}
         />

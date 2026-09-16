@@ -58,7 +58,7 @@ export function useNotifications(limit = 50) {
   }, [userId, qc]);
 
 
-  const items = query.data ?? [];
+  const items = useMemo(() => query.data ?? [], [query.data]);
   const unreadCount = useMemo(() => items.filter((n) => !n.read_at).length, [items]);
 
   const markRead = useMutation({

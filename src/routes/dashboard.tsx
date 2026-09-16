@@ -93,15 +93,23 @@ function DashboardPage() {
         title={<>Your planning <span className="text-gradient">companion</span>.</>}
         description="A calm, personalized command center — refreshed every time you visit."
         actions={
-          <Button asChild variant="hero">
-            <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />New event</Link>
-          </Button>
+          event ? (
+            <Button asChild variant="hero">
+              <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />New event</Link>
+            </Button>
+          ) : null
         }
       />
 
       <div className="mt-8 space-y-6">
         {!user || loading || dashQ.isLoading ? (
           <DashboardSkeleton />
+        ) : dashQ.isError ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center">
+            <p className="font-semibold text-destructive">Could not load dashboard data</p>
+            <p className="mt-1 text-sm text-muted-foreground">There was a problem connecting to your workspace. Please refresh the page.</p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => dashQ.refetch()}>Try again</Button>
+          </div>
         ) : !event || !derived ? (
           <EmptyDashboard firstName={firstName} />
         ) : (
@@ -118,7 +126,7 @@ function DashboardPage() {
 
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2 space-y-6">
-                <TodaysFocus focus={derived.focus} onCompleted={() => qc.invalidateQueries({ queryKey: ["dashboard-companion", event.id] })} />
+                <TodaysFocus focus={derived.focus} />
                 <TodaysBrief items={derived.brief} />
                 <AIConcierge eventId={event.id} />
               </div>
@@ -181,7 +189,7 @@ function buildDashboardInsights(derived: any, event: { id: string; name?: string
   return out.slice(0, 4);
 }
 
-function EmptyDashboard({ firstName }: { firstName: string }) {
+function EmptyDashboard({ firstName: _ }: { firstName: string }) {
   const seed = useServerFn(seedSampleWorkspace);
   const [busy, setBusy] = useState(false);
 
@@ -198,19 +206,20 @@ function EmptyDashboard({ firstName }: { firstName: string }) {
   }
 
   return (
-    <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center">
-      <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-primary/10 text-primary">
-        <Sparkles className="h-5 w-5" />
+    <div className="rounded-3xl border border-dashed border-border bg-card px-8 py-14 text-center sm:px-12">
+      <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-primary/10 text-primary">
+        <Sparkles className="h-6 w-6" />
       </span>
-      <h2 className="mt-4 font-display text-xl font-semibold">Welcome, {firstName} — let's plan something beautiful</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Create an event and MelaAssist will prepare a personalized brief, focus task, and health score every time you sign in.
+      <h2 className="mt-5 font-display text-2xl font-semibold">No events yet</h2>
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
+        Create your first event to unlock your personalized dashboard — timelines, budgets,
+        vendor recommendations, and MelaAssist planning insights, all in one place.
       </p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <Button asChild variant="hero">
-          <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create an event</Link>
+      <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+        <Button asChild variant="hero" className="w-full sm:w-auto">
+          <Link to="/events/new"><Plus className="mr-2 h-4 w-4" />Create your first event</Link>
         </Button>
-        <Button variant="outline" onClick={trySample} disabled={busy}>
+        <Button variant="outline" onClick={trySample} disabled={busy} className="w-full sm:w-auto">
           <Wand2 className="mr-2 h-4 w-4" />
           {busy ? "Loading sample…" : "Try with sample data"}
         </Button>

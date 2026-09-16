@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "@/lib/auth";
 import { toast } from "sonner";
 
 const IDLE_KEY = "melabridge.auth.lastActivity";
@@ -46,7 +46,7 @@ export function useIdleSignout(enabled: boolean) {
       signingOut = true;
       try {
         window.localStorage.removeItem(IDLE_KEY);
-        await supabase.auth.signOut();
+        await signOut();
         toast.info("Signed out due to inactivity");
       } catch {
         /* ignore */

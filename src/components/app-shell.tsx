@@ -17,25 +17,16 @@ import {
   Crown,
   LifeBuoy,
   ShieldCheck,
-  CreditCard,
-  Briefcase,
   BarChart3,
   FileBarChart,
-  Network,
-  Brain,
   Inbox,
-  ScrollText,
-  Star,
-  Building2,
   Home,
   Flag,
   Boxes,
-  Mail,
-  BellRing,
-  Palette,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useState, useEffect, type ReactNode } from "react";
@@ -48,8 +39,11 @@ import { MelaAssistFloatingButton } from "@/components/melaassist";
 import { SampleBanner } from "@/components/sample-banner";
 import { useAuth, signOut } from "@/lib/auth";
 import { useRole, type AppRole } from "@/lib/use-role";
+import { canRoleAccessPath, roleHome } from "@/lib/role-access";
+import { profileTypeLabel } from "@/lib/profile-types";
 import { useIdleSignout } from "@/hooks/use-idle-signout";
 import { useDisplayName } from "@/lib/use-display-name";
+import { useSubscription } from "@/hooks/use-subscription";
 import { LogOut, Loader2 } from "lucide-react";
 
 
@@ -57,78 +51,105 @@ import { LogOut, Loader2 } from "lucide-react";
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 type NavGroup = { label: string; items: NavItem[] };
 
-const PLANNER_NAV: NavGroup[] = [
+/** Host nav — no Bookings pipeline (vendor discovery replaces it) */
+const HOST_NAV: NavGroup[] = [
   {
-    label: "Dashboard",
+    label: "Home",
     items: [
-      { to: "/dashboard", label: "Home", icon: Home },
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/events", label: "My Events", icon: Calendar },
     ],
   },
   {
-    label: "Planning",
+    label: "Plan",
     items: [
-      { to: "/calendar", label: "Calendar", icon: Calendar },
       { to: "/guests", label: "Guests", icon: Users },
-      { to: "/vendors", label: "Vendors", icon: Store },
-      { to: "/bookings", label: "Bookings", icon: Briefcase },
       { to: "/budget", label: "Budget", icon: Wallet },
-      { to: "/timeline", label: "Timeline", icon: Flag },
       { to: "/tasks", label: "Tasks", icon: ClipboardList },
     ],
   },
   {
-    label: "Team",
+    label: "Discover",
     items: [
-      { to: "/team", label: "Team", icon: Users },
+      { to: "/marketplace", label: "Vendors", icon: Store },
+      { to: "/calendar", label: "Calendar", icon: Calendar },
     ],
   },
   {
-    label: "Resources",
+    label: "More",
     items: [
       { to: "/files", label: "Files", icon: FolderOpen },
-    ],
-  },
-  {
-    label: "Account",
-    items: [
+      { to: "/team", label: "Team", icon: Users },
       { to: "/profile", label: "Profile", icon: User },
       { to: "/subscription", label: "Subscription", icon: Crown },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
-      { to: "/help", label: "Help Center", icon: LifeBuoy },
+      { to: "/help", label: "Help", icon: LifeBuoy },
+    ],
+  },
+];
+
+/** Planner nav — lead generation and event planning only; no booking pipeline. */
+const PLANNER_NAV: NavGroup[] = [
+  {
+    label: "Home",
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/events", label: "My Events", icon: Calendar },
+    ],
+  },
+  {
+    label: "Plan",
+    items: [
+      { to: "/guests", label: "Guests", icon: Users },
+      { to: "/budget", label: "Budget", icon: Wallet },
+      { to: "/tasks", label: "Tasks", icon: ClipboardList },
+      { to: "/timeline", label: "Milestones", icon: Flag },
+    ],
+  },
+  {
+    label: "Connect",
+    items: [
+      { to: "/marketplace", label: "Vendors", icon: Store },
+      { to: "/calendar", label: "Calendar", icon: Calendar },
+    ],
+  },
+  {
+    label: "More",
+    items: [
+      { to: "/files", label: "Files", icon: FolderOpen },
+      { to: "/team", label: "Team", icon: Users },
+      { to: "/profile", label: "Profile", icon: User },
+      { to: "/subscription", label: "Subscription", icon: Crown },
+      { to: "/settings", label: "Settings", icon: SettingsIcon },
+      { to: "/help", label: "Help", icon: LifeBuoy },
     ],
   },
 ];
 
 const VENDOR_NAV: NavGroup[] = [
   {
-    label: "Dashboard",
-    items: [{ to: "/vendor", label: "Home", icon: Home }],
+    label: "Home",
+    items: [
+      { to: "/vendor", label: "Dashboard", icon: LayoutDashboard },
+    ],
   },
   {
     label: "Business",
     items: [
-      { to: "/calendar", label: "Calendar", icon: Calendar },
-      { to: "/calendar/requests", label: "Requests", icon: Inbox },
-      { to: "/vendor-portal", label: "Leads & Contracts", icon: Briefcase },
-      { to: "/bookings", label: "Bookings", icon: Briefcase },
-      { to: "/vendor-settings", label: "Booking Rules", icon: SettingsIcon },
+      { to: "/vendor-settings", label: "Contact & services", icon: SettingsIcon },
     ],
   },
   {
     label: "Marketplace",
     items: [
-      { to: "/profile", label: "Marketplace Listing", icon: Store },
-      { to: "/vendor-profile-builder", label: "Complete with MelaAssist", icon: Sparkles },
+      { to: "/vendor-profile-builder", label: "My Profile", icon: Store },
+      { to: "/vendor-packages", label: "Packages", icon: Boxes },
     ],
   },
   {
-    label: "Resources",
-    items: [{ to: "/files", label: "Files", icon: FolderOpen }],
-  },
-  {
-    label: "Account",
+    label: "More",
     items: [
+      { to: "/files", label: "Files", icon: FolderOpen },
       { to: "/subscription", label: "Subscription", icon: Crown },
       { to: "/settings", label: "Settings", icon: SettingsIcon },
       { to: "/help", label: "Help", icon: LifeBuoy },
@@ -142,49 +163,38 @@ const GUEST_NAV: NavGroup[] = [
     items: [
       { to: "/guest-portal", label: "Event & RSVP", icon: Calendar },
       { to: "/timeline", label: "Schedule", icon: Calendar },
-      { to: "/travel", label: "Travel", icon: Boxes },
     ],
   },
 ];
 
 const ADMIN_NAV: NavGroup[] = [
   {
-    label: "Dashboard",
+    label: "Overview",
     items: [
-      { to: "/admin", label: "AdminOS™", icon: ShieldCheck },
+      { to: "/admin", label: "Dashboard", icon: ShieldCheck },
     ],
   },
   {
-    label: "Platform",
+    label: "Manage",
     items: [
       { to: "/admin/users", label: "Users", icon: Users },
-      { to: "/admin/invite", label: "Invite Users", icon: Users },
-      { to: "/vendors", label: "Vendors", icon: Store },
-      { to: "/events", label: "Events", icon: Calendar },
-      { to: "/marketplace", label: "Marketplace", icon: Store },
+      { to: "/admin/vendors", label: "Vendors", icon: Store },
+      { to: "/admin/sourcing", label: "Vendor Demand", icon: ClipboardList },
+      { to: "/admin/subscriptions", label: "Subscriptions", icon: Crown },
       { to: "/analytics", label: "Analytics", icon: BarChart3 },
-      { to: "/reports", label: "Reports", icon: FileBarChart },
+      { to: "/reports", label: "Exports", icon: FileBarChart },
     ],
   },
   {
-    label: "System",
+    label: "Site",
     items: [
-      { to: "/bridgepilot", label: "AI Command Center", icon: Sparkles },
-      { to: "/ecosystem", label: "Ecosystem Map", icon: Network },
-      { to: "/ai-memory", label: "AI & Memory", icon: Brain },
-    ],
-  },
-  {
-    label: "Settings",
-    items: [
-      { to: "/settings", label: "Platform Settings", icon: SettingsIcon },
-      { to: "/subscription", label: "Subscription Mgmt", icon: Crown },
+      { to: "/marketplace", label: "View Marketplace", icon: Store },
     ],
   },
 ];
 
 export const NAV_BY_ROLE: Record<AppRole, NavGroup[]> = {
-  personal: PLANNER_NAV,
+  personal: HOST_NAV,
   organization: PLANNER_NAV,
   vendor: VENDOR_NAV,
   admin: ADMIN_NAV,
@@ -233,11 +243,11 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="truncate">
           <div className="truncate text-sm font-medium">{displayLabel}</div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">{role}</div>
+            <div className="mt-0.5 text-[10px] uppercase tracking-widest text-muted-foreground">{profileTypeLabel(role)}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => navigate({ to: home as "/dashboard" })}>Home</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>{role === "vendor" ? "Marketplace Listing" : "Profile"}</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate({ to: role === "vendor" ? "/vendor-profile-builder" : "/profile" })}>{role === "vendor" ? "My Profile" : "Profile"}</DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>Settings</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
@@ -245,6 +255,53 @@ function UserMenu() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** Crown icon in the top nav — visible on mobile where the sidebar nudge isn't shown. */
+function UpgradeHeaderButton({ role }: { role: AppRole }) {
+  const { isActive, loading } = useSubscription();
+  if (loading || isActive || role === "admin") return null;
+  const isVendor = role === "vendor";
+  return (
+    <Link
+      to="/subscription"
+      search={isVendor ? { audience: "vendor" } : { audience: "planner" }}
+      className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/8 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/15"
+      aria-label="Upgrade plan"
+    >
+      <Crown className="h-3.5 w-3.5" />
+      Upgrade
+    </Link>
+  );
+}
+
+/** Compact upgrade nudge shown in the desktop sidebar for free-plan users. */
+function UpgradeNudge({ role }: { role: AppRole }) {
+  const { isActive, loading } = useSubscription();
+  // Show for any non-admin free-plan user (planner and vendor starter both benefit)
+  if (loading || isActive || role === "admin") return null;
+  const isVendor = role === "vendor";
+  return (
+    <div className="mt-6 rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-gold/8 p-3 shadow-soft">
+      <div className="flex items-center gap-2 mb-1">
+        <Crown className="h-3.5 w-3.5 text-primary shrink-0" />
+        <p className="text-xs font-semibold text-foreground">Free plan</p>
+      </div>
+      <p className="text-[11px] text-muted-foreground leading-snug mb-1">
+        {isVendor
+          ? "Unlock full profile, analytics, and ticket sales."
+          : "Unlock ticketing, AI tools, and data exports."}
+      </p>
+      <p className="text-[11px] font-medium text-primary mb-2.5">5-day free trial · payment method required</p>
+      <Link
+        to="/subscription"
+        search={isVendor ? { audience: "vendor" } : { audience: "planner" }}
+        className="block w-full rounded-lg bg-primary px-3 py-1.5 text-center text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+      >
+        Start 5-day trial →
+      </Link>
+    </div>
   );
 }
 
@@ -283,32 +340,9 @@ function NavList({ groups, active, onNavigate }: { groups: NavGroup[]; active: s
   );
 }
 
-// Paths that are exclusive to a set of roles. Any signed-in user whose role does
-// not match will be redirected to their own role home.
-const ROLE_EXCLUSIVE: Array<{ prefix: string; allow: AppRole[] }> = [
-  { prefix: "/admin", allow: ["admin"] },
-  { prefix: "/vendor-portal", allow: ["vendor"] },
-  { prefix: "/vendor-settings", allow: ["vendor"] },
-  { prefix: "/vendor-profile-builder", allow: ["vendor"] },
-  { prefix: "/vendor", allow: ["vendor"] }, // matches /vendor and /vendor/*
-  { prefix: "/dashboard", allow: ["personal", "organization", "admin"] },
-  // Planner-only surfaces — vendors must not reach them via direct nav or refresh.
-  { prefix: "/guests", allow: ["personal", "organization", "admin"] },
-  { prefix: "/budget", allow: ["personal", "organization", "admin"] },
-  { prefix: "/timeline", allow: ["personal", "organization", "admin"] },
-  { prefix: "/team", allow: ["personal", "organization", "admin"] },
-  { prefix: "/vendors", allow: ["personal", "organization", "admin"] },
-  { prefix: "/events", allow: ["personal", "organization", "admin"] },
-  { prefix: "/tasks", allow: ["personal", "organization", "admin"] },
-];
-
-function roleHome(role: AppRole): "/dashboard" {
-  return (role === "admin" ? "/admin" : role === "vendor" ? "/vendor" : "/dashboard") as "/dashboard";
-}
-
 export function AppShell({ active, children }: { active: string; children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { role, loading: roleLoading } = useRole();
+  const { role, loading: roleLoading, error: roleError, retry: retryRole } = useRole();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const groups = NAV_BY_ROLE[role];
@@ -331,15 +365,29 @@ export function AppShell({ active, children }: { active: string; children: React
   // Cross-role access block: redirect to the user's own home when they land on
   // a surface that is reserved for a different role.
   useEffect(() => {
-    if (loading || roleLoading || !user) return;
+    if (loading || roleLoading || roleError || !user) return;
     const path = typeof window !== "undefined" ? window.location.pathname : active;
-    const match = ROLE_EXCLUSIVE.find(
-      (r) => path === r.prefix || path.startsWith(`${r.prefix}/`),
-    );
-    if (match && !match.allow.includes(role)) {
+    if (!canRoleAccessPath(role, path)) {
       navigate({ to: roleHome(role), replace: true });
     }
-  }, [loading, roleLoading, user, role, active, navigate]);
+  }, [loading, roleLoading, roleError, user, role, active, navigate]);
+
+  if (roleError) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-background px-4">
+        <Card className="max-w-md p-6 text-center">
+          <ShieldCheck className="mx-auto h-8 w-8 text-destructive" />
+          <h1 className="mt-3 font-display text-lg font-semibold">We could not verify your access</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Nothing has been loaded for this account. Check your connection and try again.
+          </p>
+          <Button className="mt-4" onClick={retryRole}>
+            Try again
+          </Button>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading || roleLoading || !user) {
     return (
@@ -390,7 +438,7 @@ export function AppShell({ active, children }: { active: string; children: React
                 <BrandMark size="md" />
                 <span className="font-display text-lg font-semibold">MelaBridge</span>
                 <Badge variant="secondary" className="ml-1 hidden sm:inline-flex bg-accent text-accent-foreground capitalize">
-                  {role}
+                  {profileTypeLabel(role)}
                 </Badge>
               </Link>
             </div>
@@ -398,6 +446,7 @@ export function AppShell({ active, children }: { active: string; children: React
               <CommandTrigger />
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              <UpgradeHeaderButton role={role} />
               <NotificationsBell />
               <UserMenu />
             </div>
@@ -411,10 +460,11 @@ export function AppShell({ active, children }: { active: string; children: React
           <aside className="hidden w-60 shrink-0 lg:block">
             <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2">
               <NavList groups={groups} active={active} />
+              <UpgradeNudge role={role} />
             </div>
           </aside>
 
-          <main id="main-content" className="min-w-0 flex-1">
+          <main id="main-content" className="min-w-0 flex-1 pb-24 lg:pb-0">
             <SampleBanner />
             {children}
           </main>
@@ -441,7 +491,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-border bg-hero-radial p-5 shadow-soft sm:p-8">
+    <section className="relative rounded-3xl border border-border bg-hero-radial p-5 shadow-soft sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="max-w-3xl">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">

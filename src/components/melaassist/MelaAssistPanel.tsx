@@ -264,7 +264,15 @@ export function MelaAssistPanel() {
     setMessages([]);
     setNextSteps([]);
     setInput("");
+    lastQuestionRef.current = null;
     setMemory({ currentTask: null, currentDraft: null });
+  }
+
+  function clearConversationOnClose() {
+    setMessages([]);
+    setNextSteps([]);
+    setInput("");
+    lastQuestionRef.current = null;
   }
 
   function onSubmit(e: FormEvent) {
@@ -275,7 +283,14 @@ export function MelaAssistPanel() {
   const hasMessages = messages.length > 0;
 
   return (
-    <Sheet open={open} onOpenChange={(v) => (v ? null : closeAssistant())}>
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (v) return;
+        clearConversationOnClose();
+        closeAssistant();
+      }}
+    >
       <SheetContent
         side="right"
         className="flex w-full flex-col gap-0 p-0 sm:max-w-md"

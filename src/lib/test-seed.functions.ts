@@ -28,7 +28,6 @@ export const seedTestData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<SeedResult> => {
     const { supabase, userId } = context;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rpc = supabase.rpc as any;
 
     const { data: isAdmin, error: roleErr } = await rpc("has_role", { _user_id: userId, _role: "admin" });
@@ -76,7 +75,6 @@ export const seedTestData = createServerFn({ method: "POST" })
         { onConflict: "id" },
       );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabaseAdmin.from("user_roles") as any).upsert(
         { user_id: outId, role: ROLE_BY_KEY[acct.key] },
         { onConflict: "user_id,role" },
@@ -88,7 +86,6 @@ export const seedTestData = createServerFn({ method: "POST" })
     const ids = Object.fromEntries(results.map((r) => [r.role, r.id])) as Record<string, string>;
 
     // seed_test_data is service_role only — invoke via admin client.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const adminRpc = supabaseAdmin.rpc as any;
     const { data: seedSummary, error: seedErr } = await adminRpc("seed_test_data", {
       planner_id: ids.planner,
@@ -105,7 +102,6 @@ export const wipeTestData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ ok: boolean; error?: string }> => {
     const { supabase, userId } = context;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rpc = supabase.rpc as any;
     const { data: isAdmin } = await rpc("has_role", { _user_id: userId, _role: "admin" });
     if (!isAdmin) return { ok: false, error: "Admin required." };

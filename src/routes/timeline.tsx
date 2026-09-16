@@ -16,8 +16,8 @@ type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export const Route = createFileRoute("/timeline")({
   head: () => ({
     meta: [
-      { title: "Timeline — MelaBridge" },
-      { name: "description", content: "Milestone timeline for your event." },
+      { title: "Milestones — MelaBridge" },
+      { name: "description", content: "Due-dated planning milestones leading to your event." },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -81,13 +81,13 @@ function TimelinePage() {
   return (
     <AppShell active="/timeline">
       <PageHeader
-        eyebrow="Timeline"
+        eyebrow="Milestones"
         icon={Calendar}
-        title={<>Your path to <span className="text-gradient">event day</span>.</>}
-        description={event ? `${event.name}${event.event_date ? ` · ${new Date(event.event_date).toLocaleDateString()}` : ""}` : "Track every milestone from planning to event day."}
+        title={<>Key dates before <span className="text-gradient">event day</span>.</>}
+        description={event ? `Tasks with due dates for ${event.name}${event.event_date ? ` · event on ${new Date(event.event_date).toLocaleDateString()}` : ""}` : "See only the planning tasks that have due dates, arranged chronologically."}
         actions={event ? (
           <Button variant="hero" asChild>
-            <Link to="/tasks"><Plus className="mr-2 h-4 w-4" />Add milestone</Link>
+            <Link to="/tasks" search={{ highlight: undefined }}><Plus className="mr-2 h-4 w-4" />Add milestone</Link>
           </Button>
         ) : null}
       />
@@ -130,7 +130,7 @@ function TimelinePage() {
             Add tasks with due dates and they'll appear here as milestones on the road to event day.
           </p>
           <Button className="mt-4" asChild>
-            <Link to="/tasks"><Plus className="mr-1.5 h-4 w-4" />Add your first task</Link>
+            <Link to="/tasks" search={{ highlight: undefined }}><Plus className="mr-1.5 h-4 w-4" />Add your first task</Link>
           </Button>
         </Card>
       ) : (
@@ -167,7 +167,17 @@ function TimelinePage() {
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-lg font-medium">{m.title}</p>
+                  {isEventDay ? (
+                    <p className="mt-1 break-words text-lg font-medium">{m.title}</p>
+                  ) : (
+                    <Link
+                      to="/tasks"
+                      search={{ highlight: m.id }}
+                      className="mt-1 block break-words text-lg font-medium hover:text-primary hover:underline transition-colors"
+                    >
+                      {m.title}
+                    </Link>
+                  )}
                 </li>
               );
             })}

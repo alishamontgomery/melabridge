@@ -1,0 +1,357 @@
+BRIDGESTUDIO IS NOT FUNCTIONAL. DO NOT TREAT THIS AS A COSMETIC/UI TASK.
+
+I tested BridgeStudio on the live mobile preview and received this production error:
+
+"Could not find the table 'public.studio_designs' in the schema cache"
+
+The page visually renders, but the actual design system is not functioning. Fix the COMPLETE BridgeStudio feature end-to-end.
+
+CRITICAL RULE:
+Do not simply suppress the error toast, add fallback mock data, hide broken buttons, or make the screen appear functional. The database, editor, persistence, templates, and user actions must actually work.
+
+==================================================
+1. FIX THE DATABASE / SUPABASE FAILURE FIRST
+==================================================
+
+Audit the codebase for every reference to:
+- studio_designs
+- studio templates
+- BridgeStudio
+- design editor
+- saved designs
+
+Determine exactly why the application is requesting public.studio_designs when Supabase cannot find it.
+
+If studio_designs is the intended table:
+- create the required migration
+- apply it to the connected Supabase project
+- confirm it exists in the public schema
+- confirm PostgREST/Supabase recognizes it
+- add all required columns
+- add timestamps
+- add ownership/user relationship
+- add appropriate indexes
+- configure RLS
+- create correct SELECT/INSERT/UPDATE/DELETE policies
+- ensure authenticated users can only manage their own designs unless a design is intentionally public/template data
+- verify the frontend types match the actual database schema
+
+If the table already exists under another name, fix the application to use the correct table instead of creating duplicate architecture.
+
+Do not finish until a real query against the production-connected Supabase database succeeds.
+
+==================================================
+2. AUDIT THE ENTIRE BRIDGESTUDIO DATA MODEL
+==================================================
+
+BridgeStudio needs persistence for actual user-created designs.
+
+A saved design should support, as appropriate:
+- id
+- user_id
+- title/name
+- design type/category
+- canvas width
+- canvas height
+- orientation
+- editor/design JSON
+- thumbnail/preview
+- source template ID if applicable
+- created_at
+- updated_at
+
+Use the architecture that best fits the existing application rather than blindly duplicating fields.
+
+Templates and personal designs should NOT be confused.
+
+Templates are reusable starting points.
+My Designs are individual user-created/saved projects.
+
+==================================================
+3. MAKE ALL THREE ENTRY POINTS ACTUALLY WORK
+==================================================
+
+TEST AND FIX:
+
+A. TEMPLATES
+When I tap "Use this template":
+1. Open the editor.
+2. Create a new editable copy for the current user.
+3. Load the actual template design.
+4. Allow every supported element to be edited.
+5. Saving must persist the new design.
+6. The saved design must appear under My Designs.
+
+B. MY DESIGNS
+This must query the logged-in user's real saved designs.
+
+Users must be able to:
+- open a saved design
+- continue editing
+- save changes
+- rename it
+- duplicate it
+- delete it with confirmation
+
+Refresh the browser and confirm the design still exists.
+
+C. START FROM BLANK
+When the user selects a canvas size such as:
+- 5x7 Invitation
+- 4x6 Card
+and the other available sizes:
+
+Create a REAL blank design and open it in the editor.
+
+Do not leave the user on the selection page.
+
+==================================================
+4. THE EDITOR MUST BE A REAL DESIGN EDITOR
+==================================================
+
+The goal is a Canva-like EVENT DESIGN EXPERIENCE, not a page containing static invitation previews.
+
+A user should be able to create invitations and event collateral without needing design software elsewhere.
+
+The editor needs working controls for the functionality supported by this application, including:
+
+TEXT
+- add text
+- edit text directly
+- font family
+- font size
+- text color
+- bold/italic where supported
+- alignment
+- positioning
+- resizing
+- deletion
+- duplication
+
+ELEMENTS
+- add supported shapes/design elements
+- move
+- resize
+- rotate where supported
+- duplicate
+- delete
+- layer forward/backward where supported
+
+IMAGES
+- upload image
+- add to canvas
+- move
+- resize/crop as supported
+- delete/replace
+
+CANVAS
+- background color
+- correct dimensions
+- visible boundaries
+- responsive editor viewport without altering actual design dimensions
+
+CORE EDITING
+- select element
+- drag
+- resize
+- undo
+- redo
+- save
+- autosave or reliable save-state handling
+- preview
+
+EXPORT/SHARE
+Make the existing promised "download or share" functionality real.
+Do not advertise functionality that does not work.
+
+==================================================
+5. FIX THE TEMPLATE SYSTEM
+==================================================
+
+The screenshots currently look like generic placeholder lines rather than meaningful template previews.
+
+Replace placeholder/skeleton-looking cards with real template previews based on actual editable templates.
+
+Categories currently shown include:
+- Invitations
+- Save the Date
+- RSVP Cards
+- Menus
+- Welcome Signs
+- Social Posts
+- Table Numbers
+- Place Cards
+- Thank You
+- Birthday
+
+Audit each category.
+
+Do not show a category as launch-ready if it contains no usable templates.
+
+Templates need:
+- real thumbnail
+- title
+- category
+- correct dimensions
+- actual editable design data
+
+Clicking a template must load THAT template into the editor.
+
+==================================================
+6. MOBILE EXPERIENCE IS CRITICAL
+==================================================
+
+The screenshots are from iPhone.
+
+The current experience uses a lot of vertical space and the design cards are enormous.
+
+Optimize BridgeStudio for:
+- iPhone/mobile
+- tablet
+- desktop
+
+On mobile:
+- templates should be easy to browse
+- controls must not overlap the canvas
+- toolbars should remain usable
+- no horizontal overflow
+- no cut-off buttons
+- no inaccessible editor controls
+- cards should not require excessive scrolling
+- editor interactions must work with touch
+- modals/panels must fit the viewport
+
+Do NOT accomplish responsiveness by removing major functionality from mobile.
+
+==================================================
+7. ERROR HANDLING
+==================================================
+
+Do not expose raw technical database errors like:
+
+"Could not find the table 'public.studio_designs' in the schema cache"
+
+to normal users.
+
+Log technical details appropriately and show a user-friendly message only when a genuine failure occurs.
+
+However, DO NOT hide this particular error until its root cause has been fixed.
+
+==================================================
+8. TEST PERSISTENCE
+==================================================
+
+Perform this exact test:
+
+1. Log in as a normal Personal user.
+2. Open BridgeStudio.
+3. Open Templates.
+4. Select a template.
+5. Edit text.
+6. Add another text element.
+7. Change styling.
+8. Move an element.
+9. Upload/add an image if supported.
+10. Save.
+11. Leave BridgeStudio.
+12. Return to BridgeStudio.
+13. Open My Designs.
+14. Confirm the saved design appears.
+15. Reopen it.
+16. Confirm every edit is still present.
+17. Edit again and save.
+18. Refresh the browser.
+19. Reopen it and verify persistence.
+20. Duplicate it.
+21. Rename the duplicate.
+22. Delete the duplicate.
+23. Confirm the original remains.
+
+Then test Start from Blank using the same persistence process.
+
+==================================================
+9. TEST AUTHORIZATION
+==================================================
+
+Create/test two separate normal users.
+
+User A must NEVER be able to retrieve, edit, update, or delete User B's private designs by changing URLs, IDs, API requests, or client state.
+
+Verify this at the DATABASE/RLS level, not only in the frontend.
+
+==================================================
+10. CHECK FOR OTHER MISSING DATABASE OBJECTS
+==================================================
+
+The missing studio_designs table makes me concerned that BridgeStudio frontend code was added without all required backend migrations.
+
+Search the entire BridgeStudio implementation for EVERY:
+- Supabase table
+- view
+- RPC/function
+- storage bucket
+- database enum
+- foreign key
+- RLS policy
+- API endpoint
+
+Verify every dependency actually exists in the connected environment.
+
+Do not fix studio_designs and ignore the next missing dependency.
+
+==================================================
+11. REGRESSION TEST THE REST OF MELABRIDGE
+==================================================
+
+Do not break existing MelaBridge functionality while repairing BridgeStudio.
+
+Run the existing build/type/lint/test checks and inspect runtime console/network errors.
+
+Resolve:
+- TypeScript errors
+- failed API requests
+- broken imports
+- database errors
+- uncaught exceptions
+- invalid routes
+- mobile overflow caused by this feature
+
+==================================================
+12. DEFINITION OF DONE
+==================================================
+
+BridgeStudio is NOT done because:
+- the page loads
+- tabs display
+- template cards display
+- an error toast was removed
+- buttons can be clicked
+
+BridgeStudio is done only when a normal user can:
+
+CREATE -> EDIT -> SAVE -> LEAVE -> RETURN -> REOPEN -> EDIT AGAIN -> DOWNLOAD/SHARE
+
+a real design successfully.
+
+Templates must produce editable designs.
+Start from Blank must produce editable designs.
+My Designs must contain persisted user designs.
+Supabase must work without schema errors.
+RLS must protect user designs.
+The feature must work on mobile, tablet, and desktop.
+
+After completing the repair, give me a concise QA report containing:
+
+1. Root cause of the studio_designs error
+2. Database migrations/tables changed
+3. RLS policies created/changed
+4. BridgeStudio files/components changed
+5. Editor functions tested
+6. Template functions tested
+7. My Designs persistence test results
+8. Start from Blank test results
+9. Mobile test results
+10. Desktop test results
+11. Any remaining limitation
+
+DO NOT tell me BridgeStudio is complete unless you personally tested the full create/edit/save/reopen workflow against the connected database.

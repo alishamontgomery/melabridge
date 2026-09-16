@@ -6,8 +6,12 @@ function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
 }
 
+type ClerkTokenProvider = () => Promise<string | null>;
+
+let clerkTokenProvider: ClerkTokenProvider | null = null;
+
 function createSupabaseFetch(supabaseKey: string): typeof fetch {
-  return (input, init) => {
+  return async (input, init) => {
     const headers = new Headers(
       typeof Request !== 'undefined' && input instanceof Request ? input.headers : undefined,
     );
@@ -22,10 +26,21 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
     }
 
     headers.set('apikey', supabaseKey);
+    const clerkAccessToken = await clerkTokenProvider?.();
+    if (clerkAccessToken) {
+      headers.set('Authorization', `Bearer ${clerkAccessToken}`);
+    }
     return fetch(input, { ...init, headers });
   };
 }
 
+/**
+ * Clerk owns browser authentication. Supabase requests ask Clerk for a current
+ * short-lived token rather than caching one that will expire during a session.
+ */
+export function setSupabaseClerkTokenProvider(provider: ClerkTokenProvider | null) {
+  clerkTokenProvider = provider;
+}
 
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
@@ -38,7 +53,7 @@ function createSupabaseClient() {
       ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
       ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
     ];
-    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Connect Supabase in Lovable Cloud.`;
+    const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Configure Supabase in the application environment.`;
     console.error(`[Supabase] ${message}`);
     throw new Error(message);
   }
@@ -48,9 +63,9 @@ function createSupabaseClient() {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
-      storage: typeof window !== 'undefined' ? localStorage : undefined,
-      persistSession: true,
-      autoRefreshToken: true,
+      storage: undefined,
+      persistSession: false,
+      autoRefreshToken: false,
     }
   });
 }

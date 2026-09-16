@@ -45,8 +45,7 @@ export const Route = createFileRoute("/contact")({
         <strong>Email:</strong>{" "}
         <a href="mailto:hello@melabridge.com">hello@melabridge.com</a>
         <br />
-        <strong>Phone:</strong>{" "}
-        <a href="tel:+12567848427">+1 (256) 784-8427</a>
+        We typically reply within one business day.
       </p>
     </MarketingPage>
   ),

@@ -1,4 +1,5 @@
-
+-- RPC concurrency test seed — guarded so it is safe on a fresh project where
+-- the dev user does not exist in auth.users.
 DO $$
 DECLARE
   owner_uid uuid := '102072e4-b1ef-4e8d-8ab4-bfe6d35f929d';
@@ -7,10 +8,16 @@ DECLARE
   paid_type uuid := '00000000-0000-0000-0000-0000cafe0004';
   paid_order uuid := '00000000-0000-0000-0000-0000cafe0005';
 BEGIN
+  -- Always clean up first (idempotent)
   DELETE FROM public.ticket_attendees WHERE event_id = ev_id;
-  DELETE FROM public.ticket_orders WHERE event_id = ev_id;
-  DELETE FROM public.ticket_types WHERE event_id = ev_id;
-  DELETE FROM public.events WHERE id = ev_id;
+  DELETE FROM public.ticket_orders    WHERE event_id = ev_id;
+  DELETE FROM public.ticket_types     WHERE event_id = ev_id;
+  DELETE FROM public.events           WHERE id       = ev_id;
+
+  -- Only seed test data when the dev user exists in this project
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = owner_uid) THEN
+    RETURN;
+  END IF;
 
   INSERT INTO public.events (id, owner_id, name, event_type, event_date, tickets_enabled, status)
   VALUES (ev_id, owner_uid, 'RPC concurrency test', 'Test', CURRENT_DATE + 30, true, 'draft');

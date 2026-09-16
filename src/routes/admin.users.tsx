@@ -7,18 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Users, Search, UserPlus, Lock, ShieldCheck, Ban, RotateCcw,
-  Eye, Pencil, KeyRound, MailCheck, PlayCircle, Trash2, MoreHorizontal, CheckCircle2, XCircle,
+  Eye, Pencil, MailCheck, PlayCircle, Trash2, MoreHorizontal, CheckCircle2, XCircle,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listAdminUsers, setUserRole, setUserBanned, deleteAdminUser,
-  resetAdminUserPassword, resendAdminUserVerification, updateAdminUser,
+  resendAdminUserVerification, updateAdminUser,
   type AdminUserRow,
 } from "@/lib/admin-users.functions";
 import { useRequireAuth } from "@/lib/use-require-auth";
 import { useRole } from "@/lib/use-role";
 import { useAuth } from "@/lib/auth";
+import { profileTypeLabel } from "@/lib/profile-types";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -65,7 +66,7 @@ function RoleBadge({ role }: { role: Role }) {
   return (
     <Badge variant={role === "admin" ? "default" : "secondary"} className="capitalize whitespace-nowrap">
       {role === "admin" && <ShieldCheck className="mr-1 h-3 w-3" />}
-      {role}
+      {profileTypeLabel(role)}
     </Badge>
   );
 }
@@ -87,13 +88,13 @@ function AdminUsersPage() {
   const [viewUser, setViewUser] = useState<AdminUserRow | null>(null);
   const [editUser, setEditUser] = useState<AdminUserRow | null>(null);
   const [deleteUser, setDeleteUser] = useState<AdminUserRow | null>(null);
+  const [suspendUser, setSuspendUser] = useState<AdminUserRow | null>(null);
 
   const qc = useQueryClient();
   const fetchUsers = useServerFn(listAdminUsers);
   const changeRole = useServerFn(setUserRole);
   const changeBan = useServerFn(setUserBanned);
   const removeUser = useServerFn(deleteAdminUser);
-  const resetPw = useServerFn(resetAdminUserPassword);
   const resendVerify = useServerFn(resendAdminUserVerification);
   const editUserFn = useServerFn(updateAdminUser);
 
@@ -134,15 +135,6 @@ function AdminUsersPage() {
       else toast.error(res?.error ?? "Delete failed");
     },
     onError: (e: any) => toast.error(e?.message ?? "Delete failed"),
-  });
-
-  const resetMut = useMutation({
-    mutationFn: (v: { email: string }) => resetPw({ data: v } as never),
-    onSuccess: (res: any) => {
-      if (res?.ok) toast.success("Password reset email sent.");
-      else toast.error(res?.error ?? "Failed");
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
 
   const resendMut = useMutation({
@@ -215,18 +207,12 @@ function AdminUsersPage() {
           <DropdownMenuItem onClick={() => setEditUser(u)}>
             <Pencil className="mr-2 h-4 w-4" />Edit user
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => u.email && resetMut.mutate({ email: u.email })}
-            disabled={!u.email || resetMut.isPending}
-          >
-            <KeyRound className="mr-2 h-4 w-4" />Reset password
-          </DropdownMenuItem>
           {!verified && (
             <DropdownMenuItem
               onClick={() => u.email && resendMut.mutate({ userId: u.id, email: u.email })}
               disabled={!u.email || resendMut.isPending}
             >
-              <MailCheck className="mr-2 h-4 w-4" />Resend verification
+              <MailCheck className="mr-2 h-4 w-4" />Resend Clerk invitation
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
@@ -236,7 +222,7 @@ function AdminUsersPage() {
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
-              onClick={() => banMut.mutate({ userId: u.id, suspend: true })}
+              onClick={() => setSuspendUser(u)}
               disabled={isSelf}
               className="text-destructive focus:text-destructive"
             >
@@ -278,7 +264,7 @@ function AdminUsersPage() {
                 aria-label="Search users"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as any)}>
                 <SelectTrigger className="w-full sm:w-[150px]" aria-label="Filter by role">
                   <SelectValue placeholder="Role" />
@@ -286,8 +272,8 @@ function AdminUsersPage() {
                 <SelectContent>
                   <SelectItem value="all">All roles</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="personal">Personal</SelectItem>
-                  <SelectItem value="organization">Organization</SelectItem>
+                   <SelectItem value="personal">Host</SelectItem>
+                   <SelectItem value="organization">Planner</SelectItem>
                   <SelectItem value="vendor">Vendor</SelectItem>
                 </SelectContent>
               </Select>
@@ -314,7 +300,18 @@ function AdminUsersPage() {
         ) : query.isError ? (
           <Card className="p-10 text-center text-sm text-destructive">Failed to load users.</Card>
         ) : rows.length === 0 ? (
-          <Card className="p-10 text-center text-sm text-muted-foreground">No users match your filters.</Card>
+          <Card className="flex flex-col items-center gap-3 p-10 text-center">
+            <p className="text-sm text-muted-foreground">No users match your filters.</p>
+            {(q || roleFilter !== "all" || statusFilter !== "all") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setQ(""); setRoleFilter("all"); setStatusFilter("all"); }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </Card>
         ) : (
           <>
             {/* Mobile: card list */}
@@ -438,13 +435,55 @@ function AdminUsersPage() {
         selfId={currentAuthUser?.id ?? null}
       />
 
+      {/* Suspend confirmation */}
+      <AlertDialog open={!!suspendUser} onOpenChange={(o) => !o && setSuspendUser(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend this account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {suspendUser && (
+                <>
+                  You are suspending{" "}
+                  <strong>{suspendUser.display_name ?? suspendUser.email ?? "this user"}</strong>
+                  {suspendUser.email && suspendUser.display_name ? ` (${suspendUser.email})` : ""}.
+                  They will be immediately signed out and unable to access MelaBridge until reactivated.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (suspendUser) {
+                  banMut.mutate({ userId: suspendUser.id, suspend: true });
+                  setSuspendUser(null);
+                }
+              }}
+              disabled={banMut.isPending}
+            >
+              <Ban className="mr-1.5 h-4 w-4" />
+              Suspend account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteUser} onOpenChange={(o) => !o && setDeleteUser(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User?</AlertDialogTitle>
+            <AlertDialogTitle>Remove this sign-in identity?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action permanently deletes the user account and all associated test data. This cannot be undone.
+              {deleteUser && (
+                <>
+                  You are removing the Clerk sign-in identity for{" "}
+                  <strong>{deleteUser.display_name ?? deleteUser.email ?? "this user"}</strong>
+                  {deleteUser.email && deleteUser.display_name ? ` (${deleteUser.email})` : ""}.
+                  Their application profile, roles, events, and other records will be retained but inaccessible.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -454,7 +493,7 @@ function AdminUsersPage() {
               onClick={() => deleteUser && deleteMut.mutate({ userId: deleteUser.id })}
               disabled={deleteMut.isPending}
             >
-              {deleteMut.isPending ? "Deleting…" : "Delete User"}
+              {deleteMut.isPending ? "Removing…" : "Remove sign-in identity"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -529,8 +568,8 @@ function EditUserDialog({
                 <Select value={role} onValueChange={(v) => setRole(v as Role)}>
                   <SelectTrigger id="edit-role"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="personal">Personal</SelectItem>
-                    <SelectItem value="organization">Organization</SelectItem>
+                     <SelectItem value="personal">Host</SelectItem>
+                     <SelectItem value="organization">Planner</SelectItem>
                     <SelectItem value="vendor">Vendor</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>

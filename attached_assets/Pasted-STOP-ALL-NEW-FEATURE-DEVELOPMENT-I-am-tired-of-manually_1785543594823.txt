@@ -1,0 +1,742 @@
+STOP ALL NEW FEATURE DEVELOPMENT.
+
+I am tired of manually discovering broken pages, missing data, failed API calls, incorrect role content, empty dashboards, and configuration errors after being told the platform is ready.
+
+Your job now is to perform a COMPLETE PLATFORM-WIDE REPAIR AND VERIFICATION of MelaBridge.
+
+Do not ask me to identify more errors.
+Do not fix only the screenshots I provided.
+Do not return a list of what I should test.
+You must inspect, repair, and test every role, route, page, workflow, API endpoint, database query, and responsive layout yourself.
+
+The platform is NOT complete until the entire application has been audited and every critical workflow works.
+
+==================================================
+1. IMMEDIATE PRODUCT DECISION
+==================================================
+
+REMOVE BRIDGESTUDIO FROM THE ACTIVE PLATFORM.
+
+BridgeStudio is not ready and must not remain visible to users.
+
+Remove or disable:
+
+- BridgeStudio navigation links
+- BridgeStudio dashboard cards
+- Template browser links
+- Start Blank links
+- My Designs links
+- Design editor routes
+- Invitation creator routes
+- Quick actions
+- Marketing references
+- Pricing references
+- Feature descriptions
+- Mobile navigation references
+- Admin references
+
+Do not leave broken links, dead routes, empty cards, redirect loops, or placeholder pages.
+
+Preserve code in a separate disabled feature branch or behind a disabled feature flag only if necessary, but it must be completely inaccessible in the live application.
+
+==================================================
+2. PLATFORM-WIDE ROLE AUDIT
+==================================================
+
+Fully inspect every profile type and make sure each profile loads the correct dashboard and features.
+
+Audit these roles:
+
+- Personal User
+- Professional Planner
+- Vendor
+- Admin
+
+Also inspect:
+
+- New user with an incomplete profile
+- New user with a completed profile
+- Unverified user
+- Verified user
+- Suspended user
+- Vendor applicant
+- Approved vendor
+- Rejected vendor
+- Admin account
+- Users with no events
+- Users with multiple events
+- Users with no saved vendors
+- Users with incomplete records
+
+Each role must:
+
+- Sign in successfully
+- Reach the correct dashboard
+- See only role-appropriate navigation
+- Load its database records
+- Show a proper empty state when no records exist
+- Never show another role’s features
+- Never show an endless loading spinner
+- Never show raw database or environment errors
+- Never crash because optional data is missing
+
+==================================================
+3. PERSONAL USER PROFILE
+==================================================
+
+The Personal dashboard must focus on personal event planning.
+
+It should include only appropriate features such as:
+
+- Events
+- Upcoming deadlines
+- Tasks
+- Reminders
+- Saved vendors
+- Vendor appointments or contact notes
+- Guests
+- Budget
+- Documents
+- MelaAssist
+- Account settings
+
+Remove inappropriate business features from Personal accounts, including:
+
+- Bookings
+- Revenue
+- Business hours
+- Availability management
+- Vendor requests
+- Publish business
+- Vendor package management
+- Vendor analytics
+
+Test every page and action accessible to a Personal user.
+
+==================================================
+4. PROFESSIONAL PLANNER PROFILE
+==================================================
+
+The Planner dashboard must load properly and contain planner-specific tools.
+
+Audit:
+
+- Client events
+- Event switching
+- Tasks
+- Timelines
+- Guests
+- Budgets
+- Documents
+- Vendor discovery
+- Saved vendors
+- Event notes
+- MelaAssist
+- Account settings
+
+Confirm a planner cannot see vendor-only controls or AdminOS controls.
+
+Confirm that empty states work when the planner has no clients or events.
+
+==================================================
+5. VENDOR PROFILE
+==================================================
+
+The Vendor dashboard must load and display the vendor’s business information, not just an email address.
+
+Audit:
+
+- Business name
+- Business category
+- Business description
+- Profile image/logo
+- Gallery/photos
+- Packages
+- Pricing
+- Service area
+- Contact information
+- Availability, only if still part of the approved product
+- Subscription plan
+- Profile completion
+- Marketplace visibility
+- Account settings
+- MelaAssist vendor profile builder
+
+Remove planner-only and personal-event features from Vendor profiles.
+
+Vendors are currently for discovery and external contact. Do not build or display unsupported booking, deposit, or internal messaging workflows unless those features are actually functional and intentionally included.
+
+Confirm that vendors appear correctly in marketplace searches after approval.
+
+==================================================
+6. ADMIN PROFILE AND ADMINOS
+==================================================
+
+The Admin profile is currently broken and must be repaired completely.
+
+The dashboard currently shows:
+
+- Missing totals
+- Failed stats
+- Degraded system status
+- Vendors failing to load
+- Missing Supabase service-role configuration
+
+Fix the root cause, not just the displayed message.
+
+AdminOS must load and function correctly on mobile, tablet, and desktop.
+
+Admin dashboard must include working data for:
+
+- Total users
+- Total vendors
+- Pending vendor applications
+- Approved vendors
+- Active events
+- Suspended users
+- Recent registrations
+- Platform health
+
+No dashboard metric may display “—” because a request failed.
+
+If a legitimate result is zero, display 0.
+
+Audit all Admin pages:
+
+- User management
+- Vendor review
+- Vendor management
+- Event management
+- Reports and moderation
+- Billing/subscriptions
+- Platform settings
+- System health
+- Admin profile/settings
+
+Admin actions must work:
+
+- Search users
+- Filter users
+- View user profile
+- Change role
+- Suspend user
+- Reactivate user
+- Delete user with confirmation
+- Review vendor
+- Approve vendor
+- Reject vendor
+- Verify vendor
+- Remove verification
+- Disable vendor listing
+- View vendor details
+- View event details
+- Archive or remove inappropriate records
+- View relevant platform activity
+
+Use confirmation dialogs for destructive actions.
+
+==================================================
+7. SUPABASE CONFIGURATION
+==================================================
+
+The platform currently reports:
+
+Missing SUPABASE_SERVICE_ROLE_KEY
+
+Fix the configuration correctly.
+
+Verify all required Replit Secrets and server environment variables:
+
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+
+Also audit any frontend-specific environment variables required by the current framework, such as:
+
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_ANON_KEY
+or
+- NEXT_PUBLIC_SUPABASE_URL
+- NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+Use only the naming convention appropriate to the actual project.
+
+Rules:
+
+- The service-role key must remain server-side only.
+- Never expose the service-role key in browser code.
+- Never place it in public environment variables.
+- Never send it to the client.
+- Never log the full key.
+- Validate required variables at server startup.
+- Provide a safe internal configuration error if a variable is missing.
+- Do not expose secret names or stack traces in the public UI.
+
+Restart the application after correcting secrets.
+
+Then verify actual database connectivity from the running deployment.
+
+==================================================
+8. DATABASE AND SCHEMA AUDIT
+==================================================
+
+Inspect the real Supabase database schema and compare it with every query in the application.
+
+Do not assume table names or relationships.
+
+Audit:
+
+- Tables
+- Columns
+- Primary keys
+- Foreign keys
+- Enum values
+- Nullable fields
+- Default values
+- Timestamps
+- Row-level security
+- Policies
+- Triggers
+- Database functions
+- Storage buckets
+
+Find and fix:
+
+- Queries referencing nonexistent columns
+- Queries referencing renamed tables
+- Incorrect foreign-key relationships
+- Improper joins
+- Incorrect user-ID mappings
+- Auth user IDs not matching profile IDs
+- Missing profile rows
+- Duplicate profile rows
+- Invalid role values
+- Records with null required fields
+- Broken RLS policies
+- Admin queries blocked by RLS
+- Vendor queries returning no records
+- Stats queries returning errors
+- Race conditions after sign-up
+
+Create safe migrations where needed.
+
+Do not delete production data merely to make tests pass.
+
+==================================================
+9. AUTHENTICATION AUDIT
+==================================================
+
+Test the entire authentication system:
+
+- Sign up
+- Email verification
+- Verification link delivery
+- Verification link processing
+- Login
+- Logout
+- Password reset request
+- Reset-password page
+- Password update
+- Session persistence
+- Refresh handling
+- Protected routes
+- Role-based redirects
+- Duplicate-email handling
+- Expired links
+- Invalid links
+- Unauthorized access
+- Suspended account handling
+
+Fix the prior issue where verification links were not received or failed to create usable accounts.
+
+Ensure that after verification:
+
+- A profile record exists
+- The correct role is assigned
+- The user is routed to the correct dashboard
+- The user is not shown another profile type
+- Admin records can see the user
+
+==================================================
+10. PROFILE CREATION AND DATA CONSISTENCY
+==================================================
+
+Every authenticated account must have exactly one valid profile record.
+
+Audit existing accounts for:
+
+- Missing profiles
+- Duplicate profiles
+- Invalid roles
+- Null display names
+- Email displayed instead of business/display name
+- Incorrect onboarding completion
+- Missing vendor records
+- Orphaned events
+- Orphaned tasks
+- Orphaned vendor profiles
+
+Create a safe repair process for malformed records.
+
+Do not silently hide corrupted data. Repair it or clearly log it for administrative review.
+
+==================================================
+11. ROUTE-BY-ROUTE INSPECTION
+==================================================
+
+Create an inventory of every application route.
+
+Inspect every top-level route and every authenticated route.
+
+For each route, verify:
+
+- It exists intentionally
+- It renders without crashing
+- It has the correct access control
+- It loads required data
+- It handles zero records
+- It handles malformed records
+- It handles API failure
+- It works after refresh
+- It works from direct URL navigation
+- It works on mobile
+- It has no horizontal overflow
+- It has no broken links
+- It has no dead buttons
+- It has no placeholder data
+- It has no duplicate navigation
+- It has no console errors
+
+Remove obsolete experimental routes, especially unused Bridge-, lab-, demo-, test-, seed-, and prototype routes.
+
+Ensure TestSeedSection and all development-only tools are hidden outside development mode.
+
+==================================================
+12. API AND SERVER AUDIT
+==================================================
+
+Inspect every API endpoint and server action.
+
+For each endpoint, test:
+
+- Authorized request
+- Unauthorized request
+- Missing parameters
+- Invalid parameters
+- Empty result
+- Database error
+- Duplicate submission
+- Server timeout
+- Rate-limit behavior where applicable
+
+Fix:
+
+- 400 errors
+- 401 errors
+- 403 errors
+- 404 errors
+- 409 errors
+- 500 errors
+- Unhandled promise rejections
+- Failed fetches
+- Incorrect response shapes
+- Frontend/backend contract mismatches
+
+The frontend must not assume an API response succeeded before checking status.
+
+==================================================
+13. GLOBAL ERROR HANDLING
+==================================================
+
+Add professional error handling across the application.
+
+Users must never see:
+
+- Raw SQL errors
+- Secret names
+- Stack traces
+- Internal file paths
+- JSON dumps
+- “undefined”
+- “[object Object]”
+- Technical Supabase errors
+- Failed query details
+
+Use:
+
+- Friendly empty states
+- Retry actions
+- Safe error messages
+- Server-side logging
+- Error boundaries
+- Structured API responses
+
+Admin users may receive more useful diagnostic context, but secrets must still never be exposed.
+
+==================================================
+14. NAVIGATION AND ROLE PROTECTION
+==================================================
+
+Audit all navigation menus on:
+
+- Mobile
+- Tablet
+- Desktop
+
+Each role must only see authorized links.
+
+Direct URL access must also be protected server-side or through secure route guards.
+
+Do not rely only on hiding menu links.
+
+Test attempts such as:
+
+- Personal user opening /admin
+- Vendor opening planner pages
+- Planner opening vendor-only pages
+- Unauthenticated user opening protected pages
+- Suspended user opening account pages
+
+Unauthorized access must redirect safely or show an access-denied page.
+
+==================================================
+15. DATA LOADING AND EMPTY STATES
+==================================================
+
+Every data-based page must support:
+
+- Loading
+- Loaded with records
+- Loaded with zero records
+- Error
+- Retry
+
+Do not use an endless spinner.
+
+Do not show “—” when a query fails.
+
+Do not display a blank white page.
+
+Do not show a fake degraded status without the underlying diagnostic being available in server logs.
+
+==================================================
+16. MOBILE AND RESPONSIVE QA
+==================================================
+
+Test every major page at:
+
+- 390px mobile
+- 430px mobile
+- 768px tablet
+- 1024px tablet
+- 1440px desktop
+
+Check:
+
+- Navigation
+- Dashboard cards
+- Tables
+- Filters
+- Search bars
+- Modals
+- Drawers
+- Forms
+- Buttons
+- Long names
+- Long email addresses
+- Empty states
+- Error states
+- Admin tables
+- Vendor profiles
+- Event pages
+- Budget pages
+- Guest lists
+- Documents
+- Account settings
+
+Nothing may overflow the screen.
+
+Nothing may be clipped.
+
+Tables must become responsive cards or horizontally contained components where necessary.
+
+==================================================
+17. AUTOMATED TESTING
+==================================================
+
+Add or repair automated tests.
+
+At minimum, create:
+
+- Route smoke tests
+- Authentication tests
+- Role-permission tests
+- API integration tests
+- Database query tests
+- Dashboard-load tests
+- Admin stats tests
+- Vendor-load tests
+- User-management tests
+- Responsive browser tests
+- Critical end-to-end workflow tests
+
+Use seeded test accounts for each role in the test environment only.
+
+Do not expose test credentials in production.
+
+==================================================
+18. REQUIRED END-TO-END TEST MATRIX
+==================================================
+
+Test these complete flows personally:
+
+PERSONAL USER
+
+Sign up
+→ verify email
+→ complete profile
+→ create event
+→ edit event
+→ add task
+→ complete task
+→ add guest
+→ update RSVP
+→ add budget item
+→ edit budget item
+→ save vendor
+→ view vendor profile
+→ add document
+→ rename document
+→ log out
+→ log back in
+→ confirm data persists
+
+PLANNER
+
+Sign in
+→ open dashboard
+→ create or open client event
+→ manage event
+→ add task
+→ add guest
+→ use vendor discovery
+→ save vendor
+→ update event notes
+→ confirm data persists
+
+VENDOR
+
+Sign up
+→ verify email
+→ complete vendor profile
+→ add business description
+→ upload images
+→ add package
+→ edit package
+→ submit for review
+→ confirm Admin can see application
+→ Admin approves
+→ confirm vendor becomes searchable
+→ confirm vendor profile displays correctly
+
+ADMIN
+
+Sign in
+→ load dashboard
+→ confirm real statistics
+→ open user management
+→ search user
+→ open user
+→ change role where permitted
+→ suspend and reactivate test user
+→ open vendor review
+→ approve test vendor
+→ verify vendor
+→ open event management
+→ inspect event
+→ verify system-health checks
+→ log out
+→ log back in
+→ confirm permissions remain correct
+
+AUTHENTICATION
+
+Request password reset
+→ receive email
+→ open valid link
+→ update password
+→ log in with new password
+
+==================================================
+19. NO FALSE COMPLETION CLAIMS
+==================================================
+
+Do not tell me:
+
+- “Everything is fixed”
+- “Launch ready”
+- “All systems operational”
+- “Fully tested”
+
+unless the tests have actually been run against the deployed application.
+
+Provide evidence in the final report.
+
+The final report must include:
+
+1. Every route inspected
+2. Every issue found
+3. Root cause
+4. Files changed
+5. Database migrations made
+6. RLS policies changed
+7. Environment variables validated
+8. Automated tests added
+9. Test results
+10. Remaining limitations
+11. Screenshots or browser-test evidence for each role
+12. Confirmation that BridgeStudio is no longer accessible
+13. Confirmation that AdminOS loads real users, vendors, events, and statistics
+
+Do not hide failed tests.
+
+If anything remains broken, state exactly what remains broken and continue fixing it.
+
+==================================================
+20. COMPLETION GATE
+==================================================
+
+The work is complete only when all of the following are true:
+
+- BridgeStudio is removed from the active platform
+- Admin profile loads
+- Admin dashboard statistics load
+- Users load
+- Vendors load
+- Events load
+- Vendor review loads
+- Authentication works
+- Verification email flow works
+- Password reset works
+- Every profile reaches the proper dashboard
+- Role permissions are enforced
+- No profile displays another role’s features
+- No missing required environment variables
+- No raw backend errors appear in the UI
+- No critical console errors
+- No failed critical API calls
+- No broken navigation links
+- No dead buttons
+- No blank pages
+- No endless loading states
+- Empty states are handled
+- Mobile layouts work
+- Data persists after refresh and login
+- Automated tests pass
+- End-to-end tests pass
+
+DO NOT ADD NEW FEATURES.
+DO NOT REDESIGN UNRELATED PAGES.
+DO NOT ASK ME TO KEEP FINDING YOUR ERRORS.
+
+Inspect the whole platform, repair the root causes, test every role, and return only after you have verified the deployed application.

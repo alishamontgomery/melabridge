@@ -43,7 +43,7 @@ function DashboardPage() {
         <>
           <section className="mt-6 grid gap-3 md:grid-cols-4">
             <Stat icon={CalendarClock} label="Today" value={String(d.today.length)} sub="events scheduled" />
-            <Stat icon={CalendarClock} label="This month" value={String(d.monthBookingCount)} sub="confirmed bookings" />
+            <Stat icon={CalendarClock} label="This month" value={String(d.monthBookingCount)} sub="confirmed events" />
             <Stat icon={Inbox} label="Pending" value={String(d.pending.length)} sub="approvals needed" />
             <Stat icon={Wallet} label="Revenue (mo)" value={`$${d.monthRevenue.toLocaleString()}`} sub="confirmed + completed" />
           </section>
@@ -93,12 +93,16 @@ function DashboardPage() {
               <div className="mt-3 space-y-2">
                 {d.pending.length === 0 && <p className="text-sm text-muted-foreground">You're all caught up.</p>}
                 {d.pending.slice(0, 5).map((r: any) => (
-                  <div key={r.id} className="rounded-lg border border-border bg-card p-3">
+                  <Link
+                    key={r.id}
+                    to="/calendar/requests"
+                    className="block rounded-lg border border-border bg-card p-3 transition hover:border-primary hover:bg-primary/5"
+                  >
                     <p className="font-medium">{r.event_name}</p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(r.requested_start).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}
                     </p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </Card>

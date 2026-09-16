@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Calendar, Users, Wallet, ClipboardList, Sparkles, Bell,
-  Check, Circle, Store, GitBranch, Vote, Activity, MapPin,
+  Check, Circle, Store, GitBranch, Activity, MapPin,
   TrendingUp, Clock, Heart,
 } from "lucide-react";
 
@@ -24,7 +24,6 @@ export type DashboardData = {
   activity: { who: string; what: string; when: string }[];
   notifications: { title: string; body: string; when: string }[];
   timeline: { date: string; label: string; done: boolean }[];
-  decisions: { title: string; options: number; votes: number }[];
 };
 
 export const DEMO_DASHBOARD: DashboardData = {
@@ -52,7 +51,7 @@ export const DEMO_DASHBOARD: DashboardData = {
   activity: [
     { who: "Lumen Studio", what: "confirmed the shoot date", when: "2m ago" },
     { who: "Estelle Catering", what: "sent a $6,400 quote", when: "1h ago" },
-    { who: "Sarah", what: "voted for Napa Valley venue", when: "3h ago" },
+    { who: "Sarah", what: "reviewed the vendor list", when: "3h ago" },
     { who: "MelaAssist", what: "drafted your welcome note", when: "Yesterday" },
   ],
   notifications: [
@@ -65,10 +64,6 @@ export const DEMO_DASHBOARD: DashboardData = {
     { date: "May", label: "Invitations sent", done: false },
     { date: "Jun", label: "Rehearsal", done: false },
     { date: "Jul", label: "The day", done: false },
-  ],
-  decisions: [
-    { title: "Reception color palette", options: 3, votes: 8 },
-    { title: "Signature cocktail", options: 4, votes: 12 },
   ],
 };
 
@@ -304,22 +299,6 @@ export function EventDashboardPreview({
                     <p><span className="font-medium">{a.who}</span> <span className="text-muted-foreground">{a.what}</span></p>
                     <p className="text-[11px] text-muted-foreground">{a.when}</p>
                   </div>
-                </li>
-              ))}
-            </ul>
-          </Panel>
-
-          {/* Decision Center */}
-          <Panel className="lg:col-span-4" icon={Vote} title="Decision Center™">
-            <ul className="space-y-2">
-                {data.decisions.length === 0 ? (
-                  <li className="rounded-lg border border-border/60 bg-background/60 p-3 text-sm text-muted-foreground">No open decisions yet.</li>
-                ) : data.decisions.map((d) => (
-                <li key={d.title} className="rounded-lg border border-border/60 bg-background/60 p-3">
-                  <p className="text-sm font-medium">{d.title}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {d.options} options · {d.votes} votes
-                  </p>
                 </li>
               ))}
             </ul>
