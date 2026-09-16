@@ -2,6 +2,7 @@
 import { chromium } from "playwright";
 
 const baseUrl = process.env.APP_URL || "http://localhost:5000";
+const productionUrl = process.env.PRODUCTION_URL || "https://melabridge.com";
 const cronSecret = process.env.CRON_SECRET;
 const checks = [];
 
@@ -75,6 +76,106 @@ async function healthCheck() {
       Date.now() - started);
   } catch (error) {
     add("health_endpoint", "degraded", error instanceof Error ? error.message : "health request failed", Date.now() - started);
+  }
+}
+
+async function productionCheck() {
+  const started = Date.now();
+  try {
+    const response = await fetch(new URL("/", productionUrl), {
+      headers: { accept: "text/html" },
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+    });
+    const location = response.headers.get("location") || "";
+    const body = await response.text();
+    const redirectedToWww = /https?:\/\/www\.melabridge\.com/i.test(location);
+    const healthy = response.status === 200 && body.includes("MelaBridge") && !redirectedToWww;
+    add(
+      "production_canonical_host",
+      healthy ? "ok" : "degraded",
+      healthy
+        ? `HTTP ${response.status}; canonical host is ${new URL(productionUrl).hostname}`
+        : `HTTP ${response.status}; production host redirected or missing the app surface${location ? ` (${location})` : ""}`,
+      Date.now() - started,
+    );
+  } catch (error) {
+    add(
+      "production_canonical_host",
+      "degraded",
+      error instanceof Error ? error.message : "production request failed",
+      Date.now() - started,
+    );
+  }
+}
+
+async function productionHealthCheck() {
+  const started = Date.now();
+  try {
+    const response = await fetch(new URL("/api/health", productionUrl), {
+      headers: { accept: "application/json" },
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+    });
+    const payload = await response.json();
+    const hasChecks = payload && typeof payload.checks === "object" && payload.checks !== null;
+    const healthy = response.status === 200 && hasChecks;
+    add(
+      "production_health_endpoint",
+      healthy ? "ok" : "degraded",
+      healthy
+        ? `HTTP ${response.status}; readiness status ${payload.status}`
+        : `HTTP ${response.status}; production health response missing readiness checks`,
+      Date.now() - started,
+    );
+  } catch (error) {
+    add(
+      "production_health_endpoint",
+      "degraded",
+      error instanceof Error ? error.message : "production health request failed",
+      Date.now() - started,
+    );
+  }
+}
+
+async function productionClerkHandshakeCheck() {
+  const started = Date.now();
+  try {
+    const response = await fetch(
+      new URL("/api/__clerk/v1/client/handshake?_clerk_js_version=5.125.0", productionUrl),
+      {
+        headers: { accept: "application/json" },
+        redirect: "manual",
+        signal: AbortSignal.timeout(15_000),
+      },
+    );
+    const body = await response.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(body);
+    } catch {
+      // A non-JSON response is handled as a failed Clerk transport below.
+    }
+    const errors = Array.isArray(payload?.errors) ? payload.errors : [];
+    const hostInvalid = errors.some((error) => error?.code === "host_invalid");
+    const healthy = response.status < 400 && !hostInvalid;
+    add(
+      "production_clerk_handshake",
+      healthy ? "ok" : "degraded",
+      healthy
+        ? `HTTP ${response.status}; Clerk production handshake accepted`
+        : hostInvalid
+          ? "Clerk returned host_invalid for the production domain"
+          : `HTTP ${response.status}; Clerk production handshake was not accepted`,
+      Date.now() - started,
+    );
+  } catch (error) {
+    add(
+      "production_clerk_handshake",
+      "degraded",
+      error instanceof Error ? error.message : "production Clerk handshake failed",
+      Date.now() - started,
+    );
   }
 }
 
@@ -162,6 +263,11 @@ async function browserChecks() {
 }
 
 async function main() {
+  await Promise.all([
+    productionCheck(),
+    productionHealthCheck(),
+    productionClerkHandshakeCheck(),
+  ]);
   await pageCheck("public_homepage", "/", ["MelaBridge"]);
   await pageCheck("public_pricing", "/pricing", ["Planner Pro", "$290/year"]);
   await pageCheck("clerk_auth_surface", "/auth", ["Sign in", "Create account"]);

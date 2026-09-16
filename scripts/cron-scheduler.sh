@@ -8,7 +8,8 @@ set -euo pipefail
 
 APP_URL="${APP_URL:-http://localhost:5000}"
 ENDPOINT="${APP_URL}/api/cron/process-scheduled-messages"
-MONITOR_INTERVAL="${RELIABILITY_MONITOR_INTERVAL_SECONDS:-900}"
+MONITOR_INTERVAL="${RELIABILITY_MONITOR_INTERVAL_SECONDS:-300}"
+PRODUCTION_URL="${PRODUCTION_URL:-https://melabridge.com}"
 MONITOR_ELAPSED=0
 INTERVAL="${CRON_INTERVAL_SECONDS:-300}"  # 5 minutes default
 
@@ -54,7 +55,7 @@ while true; do
   MONITOR_ELAPSED=$((MONITOR_ELAPSED + INTERVAL))
   if [ "$MONITOR_ELAPSED" -ge "$MONITOR_INTERVAL" ]; then
     echo "[cron-scheduler] ${TIMESTAMP} — running non-destructive reliability monitor"
-    APP_URL="$APP_URL" CRON_SECRET="$CRON_SECRET" node scripts/reliability-synthetic.mjs || true
+    APP_URL="$APP_URL" PRODUCTION_URL="$PRODUCTION_URL" CRON_SECRET="$CRON_SECRET" node scripts/reliability-synthetic.mjs || true
     MONITOR_ELAPSED=0
   fi
 done
