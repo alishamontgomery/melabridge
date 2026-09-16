@@ -196,6 +196,9 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [clerkUnavailable, setClerkUnavailable] = useState(false);
+  const isAuthSurface =
+    typeof window !== "undefined" &&
+    (window.location.pathname === "/auth" || window.location.pathname.startsWith("/auth/"));
   const publishableKey =
     typeof window === "undefined"
       ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
@@ -232,20 +235,24 @@ function RootComponent() {
     };
   }, []);
 
-  if (!publishableKey || clerkUnavailable) return <AuthenticationUnavailable />;
+  if (!publishableKey) return <AuthenticationUnavailable />;
 
   return (
     <QueryClientProvider client={queryClient}>
       <ClerkProvider publishableKey={publishableKey} proxyUrl={clerkProxyUrl}>
-        <AuthProvider>
-          <EcosystemProvider>
-            <MelaAssistProvider>
-              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-              <Outlet />
-              <Toaster richColors position="top-right" closeButton />
-            </MelaAssistProvider>
-          </EcosystemProvider>
-        </AuthProvider>
+        {clerkUnavailable && isAuthSurface ? (
+          <AuthenticationUnavailable />
+        ) : (
+          <AuthProvider>
+            <EcosystemProvider>
+              <MelaAssistProvider>
+                {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+                <Outlet />
+                <Toaster richColors position="top-right" closeButton />
+              </MelaAssistProvider>
+            </EcosystemProvider>
+          </AuthProvider>
+        )}
       </ClerkProvider>
     </QueryClientProvider>
   );
