@@ -3,6 +3,7 @@ import { externalClerkOptions } from "@/lib/clerk-config.server";
 import { hasAiProvider } from "@/lib/ai-client.server";
 import { getSyntheticMonitorStatus } from "@/lib/reliability-monitor";
 import { safeErrorMessage } from "@/lib/reliability-logger";
+import { getStripeSecretKey } from "@/lib/stripe.server";
 
 type CheckStatus = "ok" | "degraded" | "unknown";
 
@@ -37,6 +38,9 @@ function providerReadiness(): Record<string, ReadinessCheck> {
   const supabaseConfigured = Boolean(
     process.env.SUPABASE_URL && process.env.service_role,
   );
+  const stripeConfigured = Boolean(
+    getStripeSecretKey("live") ?? getStripeSecretKey("sandbox"),
+  );
   return {
     clerk,
     supabase: {
@@ -45,9 +49,9 @@ function providerReadiness(): Record<string, ReadinessCheck> {
       detail: supabaseConfigured ? undefined : "Supabase server configuration is incomplete",
     },
     stripe: {
-      status: process.env.STRIPE_SECRET_KEY ? "ok" : "degraded",
-      configured: Boolean(process.env.STRIPE_SECRET_KEY),
-      detail: process.env.STRIPE_SECRET_KEY ? undefined : "Stripe server key is not configured",
+      status: stripeConfigured ? "ok" : "degraded",
+      configured: stripeConfigured,
+      detail: stripeConfigured ? undefined : "Stripe server key is not configured",
     },
     gemini: {
       status: hasAiProvider() ? "ok" : "degraded",
