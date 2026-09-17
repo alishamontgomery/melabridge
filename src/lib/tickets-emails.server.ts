@@ -5,6 +5,7 @@
 import QRCode from 'qrcode'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { sendTemplateEmail } from '@/lib/email-templates/send-email'
+import { formatEmailWallDateTime } from '@/lib/email-date'
 
 function money(cents: number, currency = 'usd') {
   try {
@@ -12,14 +13,6 @@ function money(cents: number, currency = 'usd') {
   } catch {
     return `$${((cents ?? 0) / 100).toFixed(2)}`
   }
-}
-
-function fmtDate(date?: string | null, time?: string | null) {
-  if (!date) return null
-  try {
-    const d = new Date(`${date}T${time ?? '00:00'}`)
-    return d.toLocaleString(undefined, { dateStyle: 'full', timeStyle: time ? 'short' : undefined })
-  } catch { return date }
 }
 
 export async function qrDataUrl(code: string) {
@@ -99,10 +92,15 @@ export async function sendOrderConfirmation({ orderId, siteUrl }: SendConfirmati
     supabaseAdmin.from('ticket_attendees').select('qr_code, full_name').eq('order_id', orderId).order('created_at', { ascending: true }),
   ])
   let organizerEmail: string | null = null
+  let eventTimeZone = 'UTC'
   if (ev?.owner_id) {
-    const { data: prof } = await supabaseAdmin.from('profiles').select('email, display_name').eq('id', ev.owner_id).maybeSingle()
+    const [{ data: prof }, { data: settings }] = await Promise.all([
+      supabaseAdmin.from('profiles').select('email, display_name').eq('id', ev.owner_id).maybeSingle(),
+      supabaseAdmin.from('calendar_settings').select('timezone').eq('user_id', ev.owner_id).maybeSingle(),
+    ])
     organizerEmail = ev.ticket_contact_email ?? (prof as any)?.email ?? null
     if (!ev.ticket_contact_name) ev.ticket_contact_name = (prof as any)?.display_name ?? null
+    eventTimeZone = settings?.timezone ?? 'UTC'
   }
 
   const firstQr = attendees?.[0]?.qr_code as string | undefined
@@ -113,7 +111,11 @@ export async function sendOrderConfirmation({ orderId, siteUrl }: SendConfirmati
     templateData: {
       siteName: 'MelaBridge',
       eventName: ev?.name ?? 'Your event',
-      eventDate: fmtDate(ev?.event_date as any, (ev?.start_time ?? ev?.event_time) as any),
+      eventDate: formatEmailWallDateTime(
+        ev?.event_date as string | null | undefined,
+        (ev?.start_time ?? ev?.event_time) as string | null | undefined,
+        eventTimeZone,
+      ),
       eventLocation: ev?.location ?? null,
       buyerName: order.buyer_name,
       ticketName: type?.name ?? 'Admission',
