@@ -22,6 +22,7 @@ import { useAuth } from "@/lib/auth";
 import { profileTypeLabel } from "@/lib/profile-types";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -37,6 +38,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/users")({
+  validateSearch: z.object({
+    q: z.string().optional(),
+  }),
   head: () => ({ meta: [
     { title: "User Management — AdminOS" },
     { name: "robots", content: "noindex" },
@@ -77,11 +81,12 @@ function StatusBadge({ u }: { u: AdminUserRow }) {
 }
 
 function AdminUsersPage() {
+  const { q: initialQ } = Route.useSearch();
   const { user, loading: authLoading } = useRequireAuth();
   const { role, loading: roleLoading } = useRole();
   const { user: currentAuthUser } = useAuth();
   const isAdmin = role === "admin";
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQ ?? "");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended" | "pending">("all");

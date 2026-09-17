@@ -240,7 +240,7 @@ function AdminVendorsPage() {
                   }
                 }}
                 onManageUser={() => {
-                  navigate({ to: "/admin/users" });
+                  navigate({ to: "/admin/users", search: { q: v.email ?? undefined } });
                 }}
               />
             ))}
