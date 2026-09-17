@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type AdminStats = {
   activeUsers: number;
+  activeSubscriptions: number;
   totalVendors: number;
   activeVendors: number;
   totalEvents: number;
@@ -15,6 +16,17 @@ export type AdminStats = {
   /** Not yet tracked — omitted until a billing refunds table is available. */
   pendingRefunds?: number;
 };
+
+export function applyActiveSubscriptionFilters<T extends {
+  in: (column: string, values: string[]) => T;
+  or: (filters: string) => T;
+}>(query: T, nowIso: string): T {
+  // AdminOS defines "Active subscriptions" as current active + trialing rows,
+  // matching the task requirement and the subscription summary categories.
+  return query
+    .in("status", ["active", "trialing"])
+    .or(`current_period_end.is.null,current_period_end.gt.${nowIso}`);
+}
 
 export const getAdminStats = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -34,8 +46,10 @@ export const getAdminStats = createServerFn({ method: "POST" })
     // Load admin client only after authorization
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const nowIso = new Date().toISOString();
     const [
       usersRes,
+      activeSubscriptionsRes,
       totalVendorsRes,
       activeVendorsRes,
       eventsRes,
@@ -45,6 +59,12 @@ export const getAdminStats = createServerFn({ method: "POST" })
       checkedInAttendeesRes,
     ] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      applyActiveSubscriptionFilters(
+        supabaseAdmin
+          .from("subscriptions")
+          .select("id", { count: "exact", head: true }),
+        nowIso,
+      ),
       supabaseAdmin.from("vendor_profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin
         .from("vendor_profiles")
@@ -66,6 +86,7 @@ export const getAdminStats = createServerFn({ method: "POST" })
 
     const dbErrors = [
       usersRes.error,
+      activeSubscriptionsRes.error,
       totalVendorsRes.error,
       activeVendorsRes.error,
       eventsRes.error,
@@ -82,6 +103,7 @@ export const getAdminStats = createServerFn({ method: "POST" })
 
     return {
       activeUsers: usersRes.count ?? 0,
+      activeSubscriptions: activeSubscriptionsRes.count ?? 0,
       totalVendors: totalVendorsRes.count ?? 0,
       activeVendors: activeVendorsRes.count ?? 0,
       totalEvents: eventsRes.count ?? 0,
