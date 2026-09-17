@@ -18,6 +18,13 @@ description: State of Stripe integration — what's built, what's live, what nee
 - **Webhook**: Registered at current dev domain. Covers `customer.subscription.*`, `invoice.payment_failed`, `checkout.session.completed/expired`.
 - **Webhook secret**: `PAYMENTS_SANDBOX_WEBHOOK_SECRET` in secrets (must match the registered webhook — set when webhook was created).
 
+## Ticket organizer payouts
+
+- Paid ticket sales use Stripe Connect Express destination charges with no MelaBridge application fee. Connect accounts are stored separately for sandbox and live environments.
+- Paid ticket publishing and checkout fail closed unless the organizer's connected account has both charges and payouts enabled. Refunds reverse the destination transfer.
+
+**Why:** A platform-owned Checkout Session can collect money without giving the organizer a payout path. Environment separation also prevents a test connected account from receiving a live charge.
+
 ## User-facing checkout path
 
 1. `/pricing` → paid plan CTA → `/subscription` (updated — was `/auth`)

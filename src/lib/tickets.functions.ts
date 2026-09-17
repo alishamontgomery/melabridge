@@ -11,6 +11,201 @@ import { isCheckInEligibleOrderStatus } from "@/lib/ticket-checkin-policy";
 import { isValidTimeInput, normalizeDateInput, normalizeTimeInput, trimOrNull } from "@/lib/event-input-normalization";
 
 const uuid = z.string().uuid();
+const StripeEnvironment = z.enum(["sandbox", "live"]);
+type TicketStripeEnvironment = z.infer<typeof StripeEnvironment>;
+
+function defaultTicketStripeEnvironment(): TicketStripeEnvironment {
+  return process.env.NODE_ENV === "production" ? "live" : "sandbox";
+}
+
+type ConnectAccountState = {
+  user_id: string;
+  environment: TicketStripeEnvironment;
+  stripe_account_id: string;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
+  currently_due: string[];
+  disabled_reason: string | null;
+  last_synced_at: string | null;
+};
+
+type TicketPayoutStatus = ConnectAccountState & {
+  ready: boolean;
+  state: "not_started" | "pending" | "action_required" | "ready" | "disabled";
+};
+
+type StripeConnectedAccount = {
+  id: string;
+  charges_enabled?: boolean;
+  payouts_enabled?: boolean;
+  details_submitted?: boolean;
+  requirements?: {
+    currently_due?: string[];
+    disabled_reason?: string | null;
+  } | null;
+};
+
+function payoutState(account: {
+  charges_enabled?: boolean;
+  payouts_enabled?: boolean;
+  details_submitted?: boolean;
+  currently_due?: string[];
+  disabled_reason?: string | null;
+} | null): TicketPayoutStatus["state"] {
+  if (!account) return "not_started";
+  if (account.disabled_reason) return "disabled";
+  if (account.charges_enabled && account.payouts_enabled) return "ready";
+  if ((account.currently_due?.length ?? 0) > 0) return "action_required";
+  return "pending";
+}
+
+function readConnectAccount(row: any): TicketPayoutStatus {
+  const account = row as ConnectAccountState;
+  const state = payoutState(account);
+  return { ...account, ready: state === "ready", state };
+}
+
+async function getConnectAccountRow(userId: string, environment: TicketStripeEnvironment): Promise<ConnectAccountState | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await (supabaseAdmin as any)
+    .from("stripe_connect_accounts")
+    .select("user_id, environment, stripe_account_id, charges_enabled, payouts_enabled, details_submitted, currently_due, disabled_reason, last_synced_at")
+    .eq("user_id", userId)
+    .eq("environment", environment)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as ConnectAccountState | null;
+}
+
+async function requireTicketPayoutsReady(userId: string, environment: TicketStripeEnvironment) {
+  const account = await getConnectAccountRow(userId, environment);
+  if (!account || payoutState(account) !== "ready") {
+    throw new Error("Complete Stripe payout setup before publishing or selling paid tickets.");
+  }
+  return account;
+}
+
+function connectAccountStatus(account: StripeConnectedAccount): Pick<ConnectAccountState, "charges_enabled" | "payouts_enabled" | "details_submitted" | "currently_due" | "disabled_reason"> {
+  return {
+    charges_enabled: account.charges_enabled === true,
+    payouts_enabled: account.payouts_enabled === true,
+    details_submitted: account.details_submitted === true,
+    currently_due: account.requirements?.currently_due ?? [],
+    disabled_reason: account.requirements?.disabled_reason ?? null,
+  };
+}
+
+// ---------- Owner: Stripe Connect payout setup ----------
+const PayoutEnvironmentInput = z.object({ environment: StripeEnvironment.optional() });
+
+export const getTicketPayoutStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => PayoutEnvironmentInput.parse(d ?? {}))
+  .handler(async ({ data, context }): Promise<TicketPayoutStatus> => {
+    const environment = data.environment ?? defaultTicketStripeEnvironment();
+    const existing = await getConnectAccountRow(context.userId, environment);
+    if (!existing) {
+      return {
+        user_id: context.userId,
+        environment,
+        stripe_account_id: "",
+        charges_enabled: false,
+        payouts_enabled: false,
+        details_submitted: false,
+        currently_due: [],
+        disabled_reason: null,
+        last_synced_at: null,
+        ready: false,
+        state: "not_started",
+      };
+    }
+
+    const stripe = createStripeClient(environment);
+    try {
+      const account = (await stripe.accounts.retrieve(existing.stripe_account_id)) as unknown as StripeConnectedAccount;
+      const synced = connectAccountStatus(account);
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { error } = await (supabaseAdmin as any)
+        .from("stripe_connect_accounts")
+        .update({ ...synced, last_synced_at: new Date().toISOString() })
+        .eq("user_id", context.userId)
+        .eq("environment", environment);
+      if (error) throw new Error(error.message);
+      return readConnectAccount({ ...existing, ...synced, last_synced_at: new Date().toISOString() });
+    } catch (error) {
+      throw new Error(getStripeErrorMessage(error));
+    }
+  });
+
+export const createTicketPayoutOnboardingLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => PayoutEnvironmentInput.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const environment = data.environment ?? defaultTicketStripeEnvironment();
+    const stripe = createStripeClient(environment);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    const { data: profile, error: profileError } = await db
+      .from("profiles")
+      .select("email, display_name")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+    if (!profile?.email) throw new Error("Add an email address to your profile before setting up payouts.");
+
+    let existing = await getConnectAccountRow(context.userId, environment);
+    let account: StripeConnectedAccount;
+    if (existing) {
+      account = (await stripe.accounts.retrieve(existing.stripe_account_id)) as unknown as StripeConnectedAccount;
+    } else {
+      account = (await stripe.accounts.create({
+        type: "express",
+        country: "US",
+        email: profile.email,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        business_profile: { name: profile.display_name || undefined },
+        metadata: { melaUserId: context.userId },
+      })) as unknown as StripeConnectedAccount;
+      const { error: insertError } = await db.from("stripe_connect_accounts").insert({
+        user_id: context.userId,
+        environment,
+        stripe_account_id: account.id,
+        ...connectAccountStatus(account),
+        last_synced_at: new Date().toISOString(),
+      });
+      if (insertError) {
+        // A retry after a network race can discover the row and continue.
+        existing = await getConnectAccountRow(context.userId, environment);
+        if (!existing) throw new Error(insertError.message);
+        account = (await stripe.accounts.retrieve(existing.stripe_account_id)) as unknown as StripeConnectedAccount;
+      }
+    }
+
+    const siteUrl = getCanonicalTicketSiteUrl(process.env);
+    const link = await stripe.accountLinks.create({
+      account: account.id,
+      refresh_url: `${siteUrl}/settings?payments=refresh`,
+      return_url: `${siteUrl}/settings?payments=return`,
+      type: "account_onboarding",
+    });
+    return { url: link.url };
+  });
+
+export const createTicketPayoutDashboardLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((d: unknown) => PayoutEnvironmentInput.parse(d ?? {}))
+  .handler(async ({ data, context }) => {
+    const environment = data.environment ?? defaultTicketStripeEnvironment();
+    const existing = await getConnectAccountRow(context.userId, environment);
+    if (!existing) throw new Error("Complete payout setup first.");
+    const stripe = createStripeClient(environment);
+    const link = await stripe.accounts.createLoginLink(existing.stripe_account_id);
+    return { url: link.url };
+  });
 
 // ---------- Owner: list ticket types ----------
 export const listTicketTypes = createServerFn({ method: "GET" })
@@ -82,6 +277,7 @@ const CreateType = z.object({
   promo_discount_percent: z.number().int().min(1).max(100).nullable().optional(),
   early_bird_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   early_bird_ends_at: z.string().datetime().nullable().optional(),
+  environment: StripeEnvironment.optional(),
 });
 export const createTicketType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -99,6 +295,9 @@ export const createTicketType = createServerFn({ method: "POST" })
       throw new Error("Could not verify access to this event");
     }
     if (!event) throw new Error("Only the event owner can publish tickets");
+    if (data.price_cents > 0) {
+      await requireTicketPayoutsReady(userId, data.environment ?? defaultTicketStripeEnvironment());
+    }
 
     const { data: row, error } = await supabase
       .from("ticket_types")
@@ -143,12 +342,25 @@ const UpdateType = z.object({
   promo_discount_percent: z.number().int().min(1).max(100).nullable().optional(),
   early_bird_price_cents: z.number().int().min(0).max(10_000_000).nullable().optional(),
   early_bird_ends_at: z.string().datetime().nullable().optional(),
+  environment: StripeEnvironment.optional(),
 });
 export const updateTicketType = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((d: unknown) => UpdateType.parse(d))
   .handler(async ({ data, context }) => {
-    const { id, ...patch } = data;
+    const { id, environment, ...patch } = data;
+    if (patch.price_cents !== undefined || patch.is_active === true) {
+      const { data: current, error: currentError } = await context.supabase
+        .from("ticket_types")
+        .select("price_cents, event_id")
+        .eq("id", id)
+        .maybeSingle();
+      if (currentError) throw new Error(currentError.message);
+      const willBePaid = (patch.price_cents ?? current?.price_cents ?? 0) > 0;
+      if (willBePaid && (patch.is_active !== false)) {
+        await requireTicketPayoutsReady(context.userId, environment ?? defaultTicketStripeEnvironment());
+      }
+    }
     const { data: updated, error } = await context.supabase
       .from("ticket_types")
       .update(patch)
@@ -169,6 +381,9 @@ export const duplicateTicketType = createServerFn({ method: "POST" })
     const { data: src, error } = await supabase
       .from("ticket_types").select("*").eq("id", data.id).single();
     if (error || !src) throw new Error(error?.message ?? "Not found");
+    if (src.price_cents > 0) {
+      await requireTicketPayoutsReady(userId, defaultTicketStripeEnvironment());
+    }
     const { data: row, error: e2 } = await supabase
       .from("ticket_types")
       .insert({
@@ -409,6 +624,7 @@ export const refundTicketOrder = createServerFn({ method: "POST" })
           payment_intent: order.stripe_payment_intent,
           amount: requested,
           reason: "requested_by_customer",
+           reverse_transfer: true,
           metadata: { orderId: order.id, note: data.reason ?? "" },
         });
       } catch (e) {
@@ -499,7 +715,9 @@ export const getPublicEventTickets = createServerFn({ method: "GET" })
       .eq("id", data.eventId)
       .maybeSingle();
     if (e1) throw new Error(e1.message);
-    if (!event || !event.tickets_enabled) return { event: null, types: [] as never[], organizer: null };
+    if (!event || !event.tickets_enabled) {
+      return { event: null, types: [] as never[], organizer: null, ticketSalesUnavailable: false };
+    }
 
     const { data: types, error: e2 } = await supabaseAdmin
       .from("ticket_types")
@@ -510,13 +728,28 @@ export const getPublicEventTickets = createServerFn({ method: "GET" })
       .order("sort_order", { ascending: true });
     if (e2) throw new Error(e2.message);
 
+    const paidTypes = (types ?? []).filter((type) => type.price_cents > 0);
+    let ticketSalesUnavailable = false;
+    if (paidTypes.length > 0 && event.owner_id) {
+      // The public page and checkout use the same environment selected by the
+      // deployment. Never expose paid inventory in an environment that cannot
+      // route the resulting charge to the organizer.
+      const account = await getConnectAccountRow(event.owner_id, defaultTicketStripeEnvironment());
+      ticketSalesUnavailable = !account || payoutState(account) !== "ready";
+    }
+
     let organizer: { display_name: string | null } | null = null;
     if (event.owner_id) {
       const { data: prof } = await supabaseAdmin
         .from("profiles").select("display_name").eq("id", event.owner_id).maybeSingle();
       organizer = prof ?? null;
     }
-    return { event, types: types ?? [], organizer };
+    return {
+      event,
+      types: ticketSalesUnavailable ? (types ?? []).filter((type) => type.price_cents === 0) : (types ?? []),
+      organizer,
+      ticketSalesUnavailable,
+    };
   });
 
 export const validateTicketCoupon = createServerFn({ method: "POST" })
@@ -618,6 +851,24 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
         ? Math.max(0, Math.round(baseUnitAmount * (100 - t.promo_discount_percent) / 100))
         : baseUnitAmount;
 
+      let payoutAccountId: string | null = null;
+      if (unitAmount > 0) {
+        const eventResult = await supabaseAdmin
+          .from("events")
+          .select("owner_id")
+          .eq("id", t.event_id)
+          .maybeSingle();
+        if (eventResult.error || !eventResult.data?.owner_id) {
+          return { error: "This event is not ready to accept paid tickets." };
+        }
+        try {
+          const payoutAccount = await requireTicketPayoutsReady(eventResult.data.owner_id, data.environment);
+          payoutAccountId = payoutAccount.stripe_account_id;
+        } catch {
+          return { error: "Ticket sales are temporarily unavailable while the organizer finishes payout setup." };
+        }
+      }
+
       // Free tickets: atomic RPC
       if (unitAmount === 0) {
         const { data: newOrderId, error: rpcErr } = await supabaseAdmin.rpc("claim_free_tickets", {
@@ -682,7 +933,13 @@ export const createTicketCheckout = createServerFn({ method: "POST" })
         success_url: successUrl,
         cancel_url: cancelUrl,
         customer_email: data.buyerEmail,
-        payment_intent_data: { description: `Ticket: ${t.name}` },
+         payment_intent_data: {
+           description: `Ticket: ${t.name}`,
+           // Destination charge with no application fee: MelaBridge does not
+           // take a ticketing platform fee, and the connected organizer
+           // receives the full ticket amount.
+           transfer_data: { destination: payoutAccountId! },
+         },
         metadata: { orderId: order.id, ticketTypeId: t.id, eventId: t.event_id },
       });
 

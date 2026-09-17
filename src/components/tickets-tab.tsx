@@ -34,14 +34,19 @@ import {
   checkInAttendee, undoCheckInAttendee,
   addComplimentaryGuest,
   refundTicketOrder,
+  getTicketPayoutStatus,
+  createTicketPayoutOnboardingLink,
+  createTicketPayoutDashboardLink,
   generateCheckinToken, listCheckinTokens, revokeCheckinToken,
   updateTicketPageDetails,
 } from "@/lib/tickets.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 // ---- types ----
 type TicketType = Awaited<ReturnType<typeof listTicketTypes>>[number];
 type Order = Awaited<ReturnType<typeof listTicketOrders>>[number];
 type Attendee = Awaited<ReturnType<typeof listAttendees>>[number];
+type PayoutStatus = Awaited<ReturnType<typeof getTicketPayoutStatus>>;
 
 interface TicketsTabProps {
   eventId: string;
@@ -61,6 +66,14 @@ function ticketErrorMessage(error: unknown, fallback: string) {
     return `${fallback}. Please try again.`;
   }
   return message.length > 240 ? `${fallback}. Please try again.` : message;
+}
+
+function ticketStripeEnvironment(): "sandbox" | "live" {
+  try {
+    return getStripeEnvironment();
+  } catch {
+    return import.meta.env.PROD ? "live" : "sandbox";
+  }
 }
 
 function localDateTimeToIso(value: string) {
@@ -133,6 +146,95 @@ export function TicketsTab({ eventId, ticketsEnabled, onEventUpdated }: TicketsT
   return <TicketsManager eventId={eventId} onEventUpdated={onEventUpdated} />;
 }
 
+function TicketPayoutCard({
+  status,
+  environment,
+  onStatusChange,
+}: {
+  status: PayoutStatus | null;
+  environment: "sandbox" | "live";
+  onStatusChange: (status: PayoutStatus) => void;
+}) {
+  const onboardingFn = useServerFn(createTicketPayoutOnboardingLink);
+  const dashboardFn = useServerFn(createTicketPayoutDashboardLink);
+  const [busy, setBusy] = useState<"onboarding" | "dashboard" | null>(null);
+
+  async function openOnboarding() {
+    setBusy("onboarding");
+    try {
+      const result = await onboardingFn({ data: { environment } });
+      window.location.assign(result.url);
+    } catch (error) {
+      toast.error(ticketErrorMessage(error, "Could not open payout setup"));
+      setBusy(null);
+    }
+  }
+
+  async function openDashboard() {
+    setBusy("dashboard");
+    try {
+      const result = await dashboardFn({ data: { environment } });
+      window.location.assign(result.url);
+    } catch (error) {
+      toast.error(ticketErrorMessage(error, "Could not open payout dashboard"));
+      setBusy(null);
+    }
+  }
+
+  if (!status) {
+    return (
+      <Card className="border-border/60 p-4 shadow-soft">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Checking payout readiness…
+        </div>
+      </Card>
+    );
+  }
+
+  const ready = status.state === "ready";
+  const actionRequired = status.state === "action_required" || status.state === "disabled";
+  return (
+    <Card className={`border-border/60 p-4 shadow-soft ${ready ? "bg-emerald-500/5" : "bg-primary/5"}`}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          {ready ? (
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          ) : (
+            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          )}
+          <div>
+            <p className="font-semibold">{ready ? "Payouts are ready" : "Finish payout setup before selling paid tickets"}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {ready
+                ? "Paid ticket funds route directly to your connected Stripe account. MelaBridge adds no ticketing fee."
+                : actionRequired
+                  ? "Stripe needs more information before paid ticket charges can be routed to you."
+                  : "Connect Stripe to receive paid ticket funds directly in your own account."}
+            </p>
+            {status.disabled_reason && (
+              <p className="mt-1 text-xs text-destructive">Stripe status: {status.disabled_reason}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {ready ? (
+            <Button type="button" variant="outline" size="sm" onClick={() => void openDashboard()} disabled={busy !== null} className="gap-1.5">
+              {busy === "dashboard" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Manage payouts
+            </Button>
+          ) : (
+            <Button type="button" size="sm" onClick={() => void openOnboarding()} disabled={busy !== null} className="gap-1.5">
+              {busy === "onboarding" && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {status.state === "not_started" ? "Set up payouts" : "Continue setup"}
+            </Button>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 // ---- Main manager (once tickets are enabled) ----
 function TicketsManager({ eventId, onEventUpdated }: { eventId: string; onEventUpdated: () => Promise<void> }) {
   const [types, setTypes] = useState<TicketType[]>([]);
@@ -143,28 +245,33 @@ function TicketsManager({ eventId, onEventUpdated }: { eventId: string; onEventU
   const [section, setSection] = useState("types");
   const [createRequest, setCreateRequest] = useState(0);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [payoutStatus, setPayoutStatus] = useState<PayoutStatus | null>(null);
 
   const listTypesFn = useServerFn(listTicketTypes);
   const listOrdersFn = useServerFn(listTicketOrders);
   const listAttendeesFn = useServerFn(listAttendees);
+  const payoutStatusFn = useServerFn(getTicketPayoutStatus);
+  const payoutEnvironment = ticketStripeEnvironment();
 
   const load = useCallback(async () => {
     setLoadError(null);
     try {
-      const [t, o, a] = await Promise.all([
+      const [t, o, a, payout] = await Promise.all([
         listTypesFn({ data: { eventId } }),
         listOrdersFn({ data: { eventId } }),
         listAttendeesFn({ data: { eventId } }),
+        payoutStatusFn({ data: { environment: payoutEnvironment } }),
       ]);
       setTypes(t);
       setOrders(o);
       setAttendees(a);
+      setPayoutStatus(payout);
     } catch (e) {
       setLoadError(ticketErrorMessage(e, "Could not load ticket data"));
     } finally {
       setLoading(false);
     }
-  }, [eventId, listTypesFn, listOrdersFn, listAttendeesFn]);
+  }, [eventId, listTypesFn, listOrdersFn, listAttendeesFn, payoutStatusFn, payoutEnvironment]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -263,6 +370,12 @@ function TicketsManager({ eventId, onEventUpdated }: { eventId: string; onEventU
         </Button>
       </div>
 
+      <TicketPayoutCard
+        status={payoutStatus}
+        environment={payoutEnvironment}
+        onStatusChange={setPayoutStatus}
+      />
+
       {/* Metrics strip */}
       {(metrics.sold > 0 || orders.length > 0 || metrics.checkedIn > 0) && (
         <div className="grid grid-cols-2 divide-x divide-y overflow-hidden rounded-xl border border-border/70 bg-muted/20 sm:grid-cols-4 sm:divide-y-0">
@@ -297,7 +410,7 @@ function TicketsManager({ eventId, onEventUpdated }: { eventId: string; onEventU
 
         <TabsContent value="types" className="mt-4 space-y-5">
           <PublicPagePanel eventId={eventId} onEventUpdated={onEventUpdated} />
-          <TicketTypesPanel eventId={eventId} types={types} reload={load} createRequest={createRequest} />
+          <TicketTypesPanel eventId={eventId} types={types} reload={load} createRequest={createRequest} environment={payoutEnvironment} />
         </TabsContent>
         <TabsContent value="orders" className="mt-4">
           <OrdersPanel eventId={eventId} orders={orders} reload={load} />
@@ -326,7 +439,7 @@ function MetricCard({ icon: Icon, label, value }: { icon: React.ComponentType<{ 
 }
 
 // --- TICKET TYPES PANEL ---
-function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: string; types: TicketType[]; reload: () => Promise<void>; createRequest: number }) {
+function TicketTypesPanel({ eventId, types, reload, createRequest, environment }: { eventId: string; types: TicketType[]; reload: () => Promise<void>; createRequest: number; environment: "sandbox" | "live" }) {
   const [showBuilder, setShowBuilder] = useState(types.length === 0);
   const [rows, setRows] = useState<BuilderRow[]>([blankRow()]);
   const [submitting, setSubmitting] = useState(false);
@@ -388,6 +501,7 @@ function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: 
         await createFn({
           data: {
             eventId,
+            environment,
             name: r.name.trim(),
             price_cents: Math.round(price * 100),
             quantity,
@@ -417,7 +531,7 @@ function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: 
   async function handleArchive(t: TicketType) {
     setArchiveBusyId(t.id);
     try {
-      await updateFn({ data: { id: t.id, is_active: false } });
+      await updateFn({ data: { id: t.id, is_active: false, environment } });
       toast.success(`"${t.name}" archived`);
       await reload();
     } catch (err) {
@@ -428,7 +542,7 @@ function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: 
   async function handleRestore(t: TicketType) {
     setArchiveBusyId(t.id);
     try {
-      await updateFn({ data: { id: t.id, is_active: true } });
+      await updateFn({ data: { id: t.id, is_active: true, environment } });
       toast.success(`"${t.name}" restored`);
       await reload();
     } catch (err) {
@@ -469,6 +583,7 @@ function TicketTypesPanel({ eventId, types, reload, createRequest }: { eventId: 
       await updateFn({
         data: {
           id: editType.id,
+          environment,
           name: fd.get("name") as string,
           price_cents: Math.round(price * 100),
           quantity: fd.get("quantity") ? parseInt(fd.get("quantity") as string, 10) : null,
