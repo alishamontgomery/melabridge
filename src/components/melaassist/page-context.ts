@@ -1,5 +1,11 @@
 import type { MelaAssistPrompt, MelaAssistRole } from "./types";
 
+const EVENT_DETAIL_PATH = /^\/events\/([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})(?:\/|$)/i;
+
+export function eventIdFromPathname(pathname: string): string | null {
+  return pathname.match(EVENT_DETAIL_PATH)?.[1] ?? null;
+}
+
 export type PageContextInfo = {
   /** Short surface label used in banners and greetings ("Vendor profile", "Event page"). */
   surface: string;
@@ -90,7 +96,11 @@ const GUEST: MelaAssistPrompt[] = [
 ];
 
 function matches(pathname: string, patterns: (string | RegExp)[]): boolean {
-  return patterns.some((p) => (typeof p === "string" ? pathname === p || pathname.startsWith(p) : p.test(pathname)));
+  return patterns.some((p) => {
+    if (typeof p !== "string") return p.test(pathname);
+    if (p === "/") return pathname === "/";
+    return pathname === p || pathname.startsWith(`${p}/`);
+  });
 }
 
 export function getPageContext(pathname: string, role: MelaAssistRole): PageContextInfo {
@@ -201,14 +211,14 @@ export function getPageContext(pathname: string, role: MelaAssistRole): PageCont
   if (role === "personal" || role === "organization") {
     return {
       surface: "MelaBridge",
-      greeting: "I can help you plan, budget, and run your event — start with a quick prompt below.",
+      greeting: "What would you like help with? I can help you plan, budget, find vendors, or organize event details.",
       suggestions: PLANNER_DASH,
     };
   }
 
   return {
     surface: "MelaBridge",
-    greeting: "Ask me anything about MelaBridge.",
+    greeting: "What would you like help with? Ask me anything about MelaBridge.",
     suggestions: GUEST,
   };
 }

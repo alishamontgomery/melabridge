@@ -16,6 +16,7 @@ import type {
   MelaAssistMemory,
   MelaAssistRole,
 } from "./types";
+import { eventIdFromPathname } from "./page-context";
 
 type MelaAssistState = {
   open: boolean;
@@ -122,12 +123,11 @@ export function MelaAssistProvider({ children }: { children: ReactNode }) {
   }, [pendingActions]);
 
   const context = useMemo<MelaAssistContextInfo>(() => {
-    const eventMatch = pathname.match(/\/events\/([^/]+)/);
     return {
       userId: user?.id ?? null,
       role: (user ? (role as MelaAssistRole) : "guest"),
       pathname,
-      eventId: memory.currentEventId ?? eventMatch?.[1] ?? null,
+      eventId: eventIdFromPathname(pathname) ?? memory.currentEventId ?? null,
       vendorId: memory.currentVendorId ?? null,
       organizationId: null,
     };
