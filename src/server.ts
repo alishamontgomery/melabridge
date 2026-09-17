@@ -124,7 +124,12 @@ function isH3SwallowedErrorBody(body: string): boolean {
 function redirectToCanonicalProductionHost(request: Request): Response | null {
   if (process.env.NODE_ENV !== "production") return null;
   const url = new URL(request.url);
-  if (url.hostname === "melabridge.com") return null;
+  // Replit's deployment health check reaches the process through its local
+  // forwarding address. Never redirect that probe to the public domain: doing
+  // so makes the health check depend on the public network and can cause the
+  // deployment to be repeatedly terminated even while the app is healthy.
+  const internalHealthcheckHosts = new Set(["127.0.0.1", "localhost", "0.0.0.0", "::1"]);
+  if (url.hostname === "melabridge.com" || internalHealthcheckHosts.has(url.hostname)) return null;
 
   url.protocol = "https:";
   url.hostname = "melabridge.com";

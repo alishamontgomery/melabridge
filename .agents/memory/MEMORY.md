@@ -41,3 +41,4 @@
 - [Marketplace postal search](marketplace-postal-search.md) — Completed ZIPs are location intent; wait for five digits and avoid raw numeric Google business queries.
 - [Google service-area search](google-service-area-search.md) — Preserve Google Business results without public addresses; location bias can be sufficient for home-based vendors.
 - [Replit TanStack deployment target](replit-tanstack-deployment-target.md) — Cloud Run publishing needs Nitro's Node server output, not the Lovable wrapper's default Cloudflare module.
+- [Deployment healthcheck host](deployment-healthcheck-canonical-host.md) — internal Replit probes must bypass canonical-host redirects or the deployment can be recycled while the app is healthy.
