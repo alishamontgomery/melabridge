@@ -14,6 +14,59 @@ const uuid = z.string().uuid();
 const StripeEnvironment = z.enum(["sandbox", "live"]);
 type TicketStripeEnvironment = z.infer<typeof StripeEnvironment>;
 
+type PublicTicketRecord = {
+  attendee: {
+    id: string;
+    full_name: string | null;
+    checked_in_at: string | null;
+  };
+  order: {
+    id: string;
+  };
+  event: {
+    id: string;
+    name: string;
+    event_date: string | null;
+    event_time: string | null;
+    end_time: string | null;
+    location: string | null;
+    description: string | null;
+  };
+  type: {
+    id: string;
+    name: string;
+    description: string | null;
+  } | null;
+};
+
+export function buildPublicTicketRecord(
+  attendee: {
+    id: string;
+    full_name: string | null;
+    checked_in_at: string | null;
+  },
+  order: { id: string },
+  event: PublicTicketRecord["event"],
+  type: PublicTicketRecord["type"],
+): PublicTicketRecord {
+  return {
+    attendee: {
+      id: attendee.id,
+      full_name: attendee.full_name,
+      checked_in_at: attendee.checked_in_at,
+    },
+    order: { id: order.id },
+    event,
+    type: type
+      ? {
+          id: type.id,
+          name: type.name,
+          description: type.description,
+        }
+      : null,
+  };
+}
+
 function defaultTicketStripeEnvironment(): TicketStripeEnvironment {
   return process.env.NODE_ENV === "production" ? "live" : "sandbox";
 }
@@ -1012,7 +1065,7 @@ export const getTicketByCode = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: attendee, error: aErr } = await supabaseAdmin
       .from("ticket_attendees")
-      .select("id, order_id, event_id, full_name, email, qr_code, checked_in_at")
+      .select("id, order_id, event_id, full_name, checked_in_at")
       .eq("qr_code", data.ticketCode)
       .maybeSingle();
     if (aErr) throw new Error(aErr.message);
@@ -1020,7 +1073,7 @@ export const getTicketByCode = createServerFn({ method: "GET" })
 
     const [{ data: order }, { data: ev }] = await Promise.all([
       supabaseAdmin.from("ticket_orders")
-        .select("id, ticket_type_id, buyer_name, buyer_email, quantity, amount_cents, currency, status")
+        .select("id, ticket_type_id")
         .eq("id", attendee.order_id).maybeSingle(),
       supabaseAdmin.from("events")
         .select("id, name, event_date, event_time, end_time, location, description")
@@ -1029,9 +1082,9 @@ export const getTicketByCode = createServerFn({ method: "GET" })
     if (!order || !ev) return null;
 
     const { data: type } = await supabaseAdmin
-      .from("ticket_types").select("id, name, description, price_cents").eq("id", order.ticket_type_id).maybeSingle();
+      .from("ticket_types").select("id, name, description").eq("id", order.ticket_type_id).maybeSingle();
 
-    return { attendee, order, event: ev, type };
+    return buildPublicTicketRecord(attendee, order, ev, type);
   });
 
 
@@ -1120,7 +1173,7 @@ export const getPublicTicketPdf = createServerFn({ method: "POST" })
 
     const [{ data: order }, { data: ev }] = await Promise.all([
       supabaseAdmin.from("ticket_orders")
-        .select("id, buyer_name, ticket_type_id").eq("id", attendee.order_id).maybeSingle(),
+        .select("id, ticket_type_id").eq("id", attendee.order_id).maybeSingle(),
       supabaseAdmin.from("events")
         .select("name, event_date, event_time, location").eq("id", attendee.event_id).maybeSingle(),
     ]);
@@ -1141,7 +1194,7 @@ export const getPublicTicketPdf = createServerFn({ method: "POST" })
       eventWhen: when,
       eventLocation: ev?.location ?? null,
       ticketName: type?.name ?? "Admission",
-      attendeeName: attendee.full_name ?? order.buyer_name,
+      attendeeName: attendee.full_name ?? "Guest",
       orderId: order.id,
       attendees: [{ qr_code: attendee.qr_code, full_name: attendee.full_name }],
     });

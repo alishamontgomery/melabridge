@@ -165,7 +165,7 @@ function DigitalTicketPage() {
                 {type?.name ?? "Admission"}
               </DetailRow>
               <DetailRow icon={<User className="h-4 w-4 text-primary" />} label="Attendee">
-                {attendee.full_name ?? order.buyer_name ?? "Guest"}
+                {attendee.full_name ?? "Guest"}
               </DetailRow>
               {event?.event_date && (
                 <DetailRow icon={<Calendar className="h-4 w-4 text-primary" />} label="Date & time">
