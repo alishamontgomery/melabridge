@@ -45,6 +45,7 @@ import { normalizeUrl } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { getVendorCategories, VENDOR_OFFER_CATEGORIES } from "@/lib/vendor-categories";
 import { listVendorPackages } from "@/lib/vendor-packages.functions";
+import { mergeVendorPhotoSources, portfolioUrlsForSave } from "@/lib/vendor-photo-compat";
 type SavePayload = z.infer<typeof SaveInput>;
 
 export type VendorPhoto = {
@@ -124,6 +125,7 @@ function VendorProfileBuilder() {
   const [photos, setPhotos] = useState<VendorPhoto[]>([]);
   // Ref always mirrors photos state — upload handlers read this to avoid stale-closure race conditions
   const photosRef = useRef<VendorPhoto[]>([]);
+  const legacyPortfolioUrlsRef = useRef<Set<string>>(new Set());
   useEffect(() => { photosRef.current = photos; }, [photos]);
   const [coverUploading, setCoverUploading] = useState(false);
   const [portfolioUploading, setPortfolioUploading] = useState(false);
@@ -190,7 +192,12 @@ function VendorProfileBuilder() {
 
     // Photos: only sync on initial load so in-progress uploads aren't wiped by snapshot refetches
     if (!initialized.current.photos) {
-      setPhotos((p.vendor_photos as VendorPhoto[] | null) ?? []);
+      const labeledPhotos = (p.vendor_photos as VendorPhoto[] | null) ?? [];
+      const legacyPortfolio = Array.isArray(p.portfolio_urls)
+        ? (p.portfolio_urls as string[])
+        : [];
+      legacyPortfolioUrlsRef.current = new Set(legacyPortfolio);
+      setPhotos(mergeVendorPhotoSources(labeledPhotos, legacyPortfolio));
       initialized.current.photos = true;
     }
 
@@ -266,7 +273,8 @@ function VendorProfileBuilder() {
       .map(({ _localUrl: _l, _pending: _p, _error: _e, ...rest }) => rest);
     setPhotosSaving(true);
     try {
-      const res = await saveFn({ data: { vendor_photos: clean } });
+      const portfolioUrls = portfolioUrlsForSave(clean, legacyPortfolioUrlsRef.current);
+      const res = await saveFn({ data: { vendor_photos: clean, portfolio_urls: portfolioUrls } });
       if (res.saved) {
         invalidateAll();
         qc.invalidateQueries({ queryKey: ["vendor-portfolio-urls"] });
@@ -318,28 +326,46 @@ function VendorProfileBuilder() {
 
   // ── Portfolio upload ──────────────────────────────────────────────────
   async function handlePortfolioUpload(files: FileList) {
-    const fileArray = Array.from(files);
     if (!user) { toast.error("Not signed in"); return; }
 
     const photosBase = photosRef.current;
-    const localUrls = fileArray.map((f) => URL.createObjectURL(f));
+    const existingCount = photosBase.filter((photo) => photo.type === "portfolio" || photo.type === "both").length;
+    const availableSlots = Math.max(0, 10 - existingCount);
+    if (availableSlots === 0) {
+      toast.error("You can upload up to 10 portfolio photos.");
+      return;
+    }
+    const selectedFiles = Array.from(files);
+    const fileArray = selectedFiles.slice(0, availableSlots);
+    if (selectedFiles.length > availableSlots) {
+      toast.info(`Only ${availableSlots} more photo${availableSlots === 1 ? "" : "s"} can be added. The rest were skipped.`);
+    }
+    const validFiles = fileArray.filter((file) => {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name} is not an image — skipped.`);
+        return false;
+      }
+      if (file.size >= 5 * 1024 * 1024) {
+        toast.error(`${file.name} must be under 5 MB — skipped.`);
+        return false;
+      }
+      return true;
+    });
+    if (validFiles.length === 0) return;
+
+    const localUrls = validFiles.map((f) => URL.createObjectURL(f));
     setPhotos([
       ...photosBase,
-      ...fileArray.map((_, i) => ({
+      ...validFiles.map((_, i) => ({
         url: "", _localUrl: localUrls[i], type: "portfolio" as const, _pending: true,
       })),
     ]);
     setPortfolioUploading(true);
 
     const results = await Promise.all(
-      fileArray.map(async (file, i) => {
-        if (file.size > 5 * 1024 * 1024) {
-          URL.revokeObjectURL(localUrls[i]);
-          toast.error(`${file.name} is over 5 MB — skipped.`);
-          return null;
-        }
+      validFiles.map(async (file, i) => {
         const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-        const path = `photos/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const path = `portfolio/${user.id}/${Date.now()}-${i}-${Math.random().toString(36).slice(2)}.${ext}`;
         const { data: uploaded, error: upErr } = await supabase.storage
           .from("vendor-assets")
           .upload(path, file, { upsert: false, contentType: file.type || `image/${ext}` });
@@ -416,6 +442,9 @@ function VendorProfileBuilder() {
     const next = photos.filter((p) =>
       photo._localUrl ? p._localUrl !== photo._localUrl : !(p.url === photo.url && p.type === photo.type),
     );
+    if (photo.url && (photo.type === "portfolio" || photo.type === "both")) {
+      legacyPortfolioUrlsRef.current.delete(photo.url);
+    }
     setPhotos(next);
     if (!photo._error && photo.url) await savePhotosData(next);
   }
@@ -687,6 +716,18 @@ function VendorProfileBuilder() {
             );
           })}
         </nav>
+        <input
+          ref={portfolioInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          aria-label="Choose portfolio photos"
+          onChange={(event) => {
+            if (event.target.files?.length) void handlePortfolioUpload(event.target.files);
+            event.target.value = "";
+          }}
+        />
 
         {aiError && (
           <div className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-4 text-sm">
@@ -742,6 +783,38 @@ function VendorProfileBuilder() {
                   <Button type="button" variant="outline" size="sm" onClick={() => logoInputRef.current?.click()} disabled={logoUploading}>{logoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}<span className="ml-2">{logoUploading ? "Uploading…" : "Upload"}</span></Button>
                 </div>
               </div>
+            </div>
+            <div className="space-y-3 border-t border-border/60 pt-5">
+              <div>
+                <p className="text-sm font-semibold">Portfolio photos</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Add 1–10 images, each under 5 MB. Your profile check completes when you have at least 3.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {portfolioPhotos.map((photo, index) => (
+                  <div key={photo._localUrl ?? photo.url ?? index} className="group relative aspect-square overflow-hidden rounded-xl border bg-muted">
+                    <img src={photo._localUrl ?? photo.url} alt={`Portfolio ${index + 1}`} className="h-full w-full object-cover" />
+                    {photo._pending && <div className="absolute inset-0 grid place-items-center bg-background/60"><Loader2 className="h-5 w-5 animate-spin" /></div>}
+                    <button
+                      type="button"
+                      onClick={() => void removePhoto(photo)}
+                      disabled={photo._pending || photosSaving}
+                      aria-label={`Remove portfolio photo ${index + 1}`}
+                      className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-background/90 text-foreground shadow hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                {portfolioPhotos.length < 10 && (
+                  <button type="button" onClick={() => portfolioInputRef.current?.click()} disabled={portfolioUploading} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-primary disabled:opacity-60">
+                    {portfolioUploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
+                    {portfolioUploading ? "Uploading…" : "Add photos"}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{portfolioPhotos.length}/10 photos</p>
             </div>
             <StepActions onNext={async () => { await saveBusinessDetails(); setStep(2); }} nextLabel="Save and continue" busy={bizSaving} />
           </Card>
@@ -841,9 +914,8 @@ function VendorProfileBuilder() {
                 <p className="mb-2 text-sm font-semibold">Portfolio photos</p>
                 <p className="mb-4 text-xs text-muted-foreground">Upload photos that represent your work. They save as soon as each upload finishes.</p>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {portfolioPhotos.slice(0, 7).map((photo, index) => <div key={photo._localUrl ?? photo.url ?? index} className="aspect-square overflow-hidden rounded-xl border bg-muted"><img src={photo._localUrl ?? photo.url} alt={`Portfolio ${index + 1}`} className="h-full w-full object-cover" /></div>)}
-                  <input ref={portfolioInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { if (e.target.files?.length) handlePortfolioUpload(e.target.files); e.target.value = ""; }} />
-                  <button type="button" onClick={() => portfolioInputRef.current?.click()} disabled={portfolioUploading} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-primary"><Plus className="h-5 w-5" />{portfolioUploading ? "Uploading…" : "Add photos"}</button>
+                  {portfolioPhotos.map((photo, index) => <div key={photo._localUrl ?? photo.url ?? index} className="group relative aspect-square overflow-hidden rounded-xl border bg-muted"><img src={photo._localUrl ?? photo.url} alt={`Portfolio ${index + 1}`} className="h-full w-full object-cover" /><button type="button" onClick={() => void removePhoto(photo)} disabled={photo._pending || photosSaving} aria-label={`Remove portfolio photo ${index + 1}`} className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-background/90 shadow hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"><X className="h-4 w-4" /></button></div>)}
+                  {portfolioPhotos.length < 10 && <button type="button" onClick={() => portfolioInputRef.current?.click()} disabled={portfolioUploading} className="flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary hover:text-primary"><Plus className="h-5 w-5" />{portfolioUploading ? "Uploading…" : "Add photos"}</button>}
                 </div>
               </div>
               <StepActions onBack={() => setStep(3)} onNext={() => setStep(5)} nextLabel="Continue to preview" />

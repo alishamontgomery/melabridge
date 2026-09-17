@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { callAi, aiErrorMessage, hasAiProvider } from "@/lib/ai-client.server";
+import { countPortfolioPhotos } from "@/lib/vendor-photo-compat";
 
 /**
  * MelaAssist Vendor Profile Builder — draft generation only.
@@ -443,6 +444,7 @@ export const SaveInput = z.object({
   travel_radius: z.number().int().min(0).max(10000).optional(),
   // Media
   logo_url: z.string().trim().max(1000).optional(),
+  portfolio_urls: z.array(z.string().url().max(1000)).max(10).optional(),
   // Photos with labels (portfolio, cover, backdrop, both)
   vendor_photos: z.array(z.object({
     url: z.string().max(1000),
@@ -518,6 +520,7 @@ export const saveVendorProfileDraft = createServerFn({ method: "POST" })
     // JSON
     if (data.social_links != null) updates.social_links = data.social_links;
     if (data.contact_visibility != null) updates.contact_visibility = data.contact_visibility;
+    if (data.portfolio_urls != null) updates.portfolio_urls = data.portfolio_urls;
     if (data.vendor_photos != null) updates.vendor_photos = data.vendor_photos;
     if (data.faqs != null) updates.faqs = data.faqs;
 
@@ -583,9 +586,10 @@ export const getVendorProfileSnapshot = createServerFn({ method: "GET" })
 
     // Determine portfolio count from new vendor_photos system, falling back to legacy portfolio_urls
     const vendorPhotos = (data.vendor_photos as Array<{ url: string; type: string }> | null) ?? [];
-    const portfolioCount = vendorPhotos.length > 0
-      ? vendorPhotos.filter((p) => p.type === "portfolio" || p.type === "both").length
-      : (Array.isArray(data.portfolio_urls) ? (data.portfolio_urls as string[]).length : 0);
+    const portfolioCount = countPortfolioPhotos(
+      vendorPhotos as Array<{ url: string; type: "portfolio" | "cover" | "backdrop" | "both" }>,
+      Array.isArray(data.portfolio_urls) ? (data.portfolio_urls as string[]) : [],
+    );
     const { count: packageCount } = await supabase
       .from("vendor_packages")
       .select("id", { count: "exact", head: true })
@@ -597,7 +601,7 @@ export const getVendorProfileSnapshot = createServerFn({ method: "GET" })
       { key: "business_category",    label: "Category",            ok: !!data.business_category },
       { key: "business_description", label: "Business description", ok: !!data.business_description && data.business_description.length >= 40 },
       { key: "visible_package",      label: "At least one visible package", ok: (packageCount ?? 0) >= 1 },
-      { key: "portfolio_photos",     label: "At least one portfolio photo", ok: portfolioCount >= 1 },
+      { key: "portfolio_photos",     label: "At least 3 portfolio photos", ok: portfolioCount >= 3 },
       { key: "city",                 label: "City",                ok: !!data.city },
     ];
     const total = checks.length;
@@ -630,9 +634,10 @@ export const publishVendorProfile = createServerFn({ method: "POST" })
     if (!profile) throw new Error("Create your vendor profile before publishing.");
 
     const vendorPhotos = (profile.vendor_photos as Array<{ url: string; type: string }> | null) ?? [];
-    const portfolioCount = vendorPhotos.length > 0
-      ? vendorPhotos.filter((p) => p.type === "portfolio" || p.type === "both").length
-      : (Array.isArray(profile.portfolio_urls) ? profile.portfolio_urls.length : 0);
+    const portfolioCount = countPortfolioPhotos(
+      vendorPhotos as Array<{ url: string; type: "portfolio" | "cover" | "backdrop" | "both" }>,
+      Array.isArray(profile.portfolio_urls) ? profile.portfolio_urls : [],
+    );
     const { count: packageCount, error: packageError } = await supabase
       .from("vendor_packages")
       .select("id", { count: "exact", head: true })
@@ -644,7 +649,7 @@ export const publishVendorProfile = createServerFn({ method: "POST" })
       { label: "Category", ok: !!profile.business_category },
       { label: "Business description (40+ characters)", ok: (profile.business_description?.length ?? 0) >= 40 },
       { label: "At least one visible package", ok: (packageCount ?? 0) >= 1 },
-      { label: "At least one portfolio photo", ok: portfolioCount >= 1 },
+      { label: "At least 3 portfolio photos", ok: portfolioCount >= 3 },
       { label: "City", ok: !!profile.city },
     ];
     const missing = checks.filter((check) => !check.ok).map((check) => check.label);
