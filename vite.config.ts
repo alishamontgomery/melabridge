@@ -28,23 +28,6 @@ const EXTERNAL_CLERK_PUBLISHABLE_KEY =
 const CLERK_PUBLISHABLE_KEY =
   process.env.CLERK_PUBLISHABLE_KEY?.trim() || "";
 
-// Pull Supabase credentials from process.env at config-evaluation time so that
-// Replit Secrets (SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) override the stale
-// values in .env that still reference the deleted Supabase project.
-const SUPABASE_URL =
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
-const SUPABASE_PUBLISHABLE_KEY =
-  process.env.SUPABASE_PUBLISHABLE_KEY ||
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "";
-const SUPABASE_PROJECT_ID =
-  process.env.SUPABASE_PROJECT_ID || process.env.VITE_SUPABASE_PROJECT_ID || "";
-
-const EXTERNAL_CLERK_PUBLISHABLE_KEY =
-  process.env.VITE_CLERK_PUBLISHABLE_KEY?.trim() ||
-  process.env.CLERK_PUBLISHABLE_KEY?.trim() ||
-  "";
-
 export default defineConfig({
   plugins: [
     // TanStack Start must run before the React plugin.
