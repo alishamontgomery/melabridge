@@ -2,7 +2,7 @@ import { clerkClient } from "@clerk/tanstack-react-start/server";
 
 export function externalClerkOptions() {
   const publishableKey = process.env.CLERK_PUBLISHABLE_KEY?.trim();
-  // Both values come from the canonical Replit Clerk development-key pair.
+  // MelaBridge uses one external Clerk instance for the canonical site.
   // Never fall back to VITE_* or the obsolete external slot: those values can
   // belong to a different Clerk tenant and create an opaque session mismatch.
   const secretKey = process.env.CLERK_SECRET_KEY?.trim();

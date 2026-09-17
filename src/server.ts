@@ -1,6 +1,5 @@
 import "./lib/error-capture";
 
-import { clerkFrontendApiProxy } from "@clerk/backend/proxy";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { logReliability } from "./lib/reliability-logger";
@@ -139,28 +138,40 @@ function redirectToCanonicalProductionHost(request: Request): Response | null {
   });
 }
 
+function rejectLegacyClerkProxyRequest(request: Request): Response | null {
+  const requestPath = new URL(request.url).pathname;
+  if (requestPath !== "/api/__clerk" && !requestPath.startsWith("/api/__clerk/")) {
+    return null;
+  }
+
+  // This app uses an external Clerk instance directly. The old Replit-style
+  // proxy must never become an application route or a user-facing destination.
+  return new Response(JSON.stringify({ error: "Legacy Clerk proxy route is disabled." }), {
+    status: 404,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const canonicalRedirect = redirectToCanonicalProductionHost(request);
       if (canonicalRedirect) return canonicalRedirect;
 
-      const requestPath = new URL(request.url).pathname;
-      if (requestPath === "/api/__clerk" || requestPath.startsWith("/api/__clerk/")) {
-        return await clerkFrontendApiProxy(request, {
-          proxyPath: "/api/__clerk",
-          publishableKey: process.env.CLERK_PUBLISHABLE_KEY?.trim(),
-          secretKey: process.env.CLERK_SECRET_KEY?.trim(),
-        });
-      }
+      const legacyProxyResponse = rejectLegacyClerkProxyRequest(request);
+      if (legacyProxyResponse) return legacyProxyResponse;
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(request, response);
     } catch (error) {
       const url = new URL(request.url);
       if (
-        (url.pathname === "/auth" || url.pathname === "/auth/callback") &&
-        !url.pathname.includes("/api/__clerk")
+        url.pathname === "/auth" ||
+        url.pathname === "/auth/callback"
       ) {
         return recoverFromInvalidClerkSession(request);
       }
