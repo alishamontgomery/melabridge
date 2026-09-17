@@ -8,7 +8,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { ClerkProvider } from "@clerk/tanstack-react-start";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
 
 import appCss from "../styles.css?url";
 import { reportClientReliabilityError } from "../lib/reliability-client";
@@ -199,20 +198,11 @@ function RootComponent() {
   const isAuthSurface =
     typeof window !== "undefined" &&
     (window.location.pathname === "/auth" || window.location.pathname.startsWith("/auth/"));
-  const publishableKey =
-    typeof window === "undefined"
-      ? import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
-      : publishableKeyFromHost(window.location.hostname, import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
-  const isClerkTestInstance = publishableKey.startsWith("pk_test_");
-  const isLiveMelaBridgeHost =
-    typeof window !== "undefined" && window.location.hostname === "melabridge.com";
-  // Keep the canonical production host on Clerk's direct frontend API path.
-  // The same-origin proxy is only used for other live custom hosts; routing
-  // melabridge.com through it causes Clerk to reject the host before signup.
-  const clerkProxyUrl =
-    import.meta.env.PROD && !isClerkTestInstance && !isLiveMelaBridgeHost
-      ? (import.meta.env.VITE_CLERK_PROXY_URL || "/api/__clerk")
-      : undefined;
+  // MelaBridge has one production origin. Do not derive Clerk configuration
+  // from the current hostname or fall back to a same-origin proxy: either can
+  // send users into an alternate host or the invalid /api/__clerk handshake.
+  const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const clerkProxyUrl = undefined;
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {

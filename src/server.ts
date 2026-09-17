@@ -122,9 +122,29 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+function redirectToCanonicalProductionHost(request: Request): Response | null {
+  if (process.env.NODE_ENV !== "production") return null;
+  const url = new URL(request.url);
+  if (url.hostname === "melabridge.com") return null;
+
+  url.protocol = "https:";
+  url.hostname = "melabridge.com";
+  url.port = "";
+  return new Response(null, {
+    status: 308,
+    headers: {
+      Location: url.toString(),
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      const canonicalRedirect = redirectToCanonicalProductionHost(request);
+      if (canonicalRedirect) return canonicalRedirect;
+
       const requestPath = new URL(request.url).pathname;
       if (requestPath === "/api/__clerk" || requestPath.startsWith("/api/__clerk/")) {
         return await clerkFrontendApiProxy(request, {
