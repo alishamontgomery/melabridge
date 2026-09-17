@@ -5,6 +5,7 @@ import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import { renderErrorPage } from "./lib/error-page";
 import { attachClerkAuth } from "@/integrations/supabase/auth-attacher";
 import { externalClerkOptions } from "@/lib/clerk-config.server";
+import { isBrowserDocumentRequest } from "@/lib/clerk-request-policy";
 import { logReliability } from "@/lib/reliability-logger";
 
 // This app uses an external Clerk instance directly from the canonical
@@ -38,22 +39,20 @@ const csrfMiddleware = createCsrfMiddleware({
 const clerkRequestMiddleware = clerkMiddleware(() => externalClerkOptions());
 
 /**
- * Marketplace is a public HTML surface. Clerk's dev-browser handshake can
- * redirect that document before the route renders, which loses in-progress
- * search input. Keep Clerk on every authenticated/private request and on
- * server functions; public Marketplace HTML and discovery requests bypass it.
+ * Clerk's server middleware can turn an expired browser session into a 307
+ * handshake response. Never allow that response to replace a top-level app
+ * document. The browser Clerk client owns session refresh after the app shell
+ * loads; server functions and non-document requests still use Clerk middleware.
  */
-const publicMarketplaceRequestMiddleware = createMiddleware().server(async (ctx) => {
+const requestAuthMiddleware = createMiddleware().server(async (ctx) => {
   const url = new URL(ctx.request.url);
-  const acceptsHtml = (ctx.request.headers.get("accept") ?? "").includes("text/html");
-  const isMarketplaceDocument =
-    (url.pathname === "/marketplace" || url.pathname === "/vendors") && acceptsHtml;
+  const isBrowserDocument = isBrowserDocumentRequest(ctx.request, ctx.handlerType);
   const isPublicMarketplaceGoogleRequest =
     url.pathname === "/api/public/marketplace/google" && ctx.request.method === "GET";
   const isMarketplaceSessionPresenceRequest =
     url.pathname === "/api/auth/session-presence" && ctx.request.method === "GET";
 
-  if (isMarketplaceDocument || isPublicMarketplaceGoogleRequest || isMarketplaceSessionPresenceRequest) {
+  if (isBrowserDocument || isPublicMarketplaceGoogleRequest || isMarketplaceSessionPresenceRequest) {
     return ctx.next();
   }
 
@@ -62,5 +61,5 @@ const publicMarketplaceRequestMiddleware = createMiddleware().server(async (ctx)
 
 export const startInstance = createStart(() => ({
   functionMiddleware: [attachClerkAuth],
-  requestMiddleware: [publicMarketplaceRequestMiddleware, csrfMiddleware, errorMiddleware],
+  requestMiddleware: [requestAuthMiddleware, csrfMiddleware, errorMiddleware],
 }));
