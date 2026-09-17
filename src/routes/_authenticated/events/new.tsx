@@ -15,6 +15,7 @@ import { parseCurrency } from "@/lib/parse-currency";
 import { AddressAutocomplete } from "@/components/address-autocomplete";
 import { useServerFn } from "@tanstack/react-start";
 import { bootstrapEventPlan } from "@/lib/event-bootstrap.functions";
+import { isValidTimeInput, normalizeDateInput, normalizeTimeInput, trimOrNull } from "@/lib/event-input-normalization";
 
 export const Route = createFileRoute("/_authenticated/events/new")({
   head: () => ({ meta: [{ title: "New event — MelaBridge" }] }),
@@ -182,33 +183,43 @@ function NewEventPage() {
     let eventId: string | null = null;
     try {
       const name = z.string().trim().min(1, "Event name is required").max(120).parse(f.name);
-      if (!f.date) throw new Error("Choose an event date");
-      if (!f.startTime) throw new Error("Choose an event start time");
-      if (!f.addressText.trim()) throw new Error("Add an event location");
-      const eventType = f.type === "Other" ? (f.customType.trim() || "Other") : f.type;
-      if (f.startTime && f.endTime && f.endTime <= f.startTime) {
+      const date = normalizeDateInput(f.date);
+      const startTime = normalizeTimeInput(f.startTime);
+      const endTime = normalizeTimeInput(f.endTime);
+      const addressText = trimOrNull(f.addressText);
+      if (!date) throw new Error("Choose an event date");
+      z.string().date().parse(date);
+      if (!startTime) throw new Error("Choose an event start time");
+      if (!isValidTimeInput(startTime)) throw new Error("Enter a valid event start time");
+      if (endTime && !isValidTimeInput(endTime)) throw new Error("Enter a valid event end time");
+      if (!addressText) throw new Error("Add an event location");
+      const eventType = f.type === "Other" ? (f.customType.trim() || "Other") : f.type.trim();
+      if (startTime && endTime && endTime <= startTime) {
         throw new Error("Event end time must be after the start time");
       }
+      const locationParts = [f.street, f.city, f.state].map((value) => trimOrNull(value)).filter(Boolean);
+      const guestTarget = trimOrNull(f.guests);
+      const budgetTarget = trimOrNull(f.budget);
 
       const { data, error } = await supabase.from("events").insert({
         owner_id: user.id,
         name,
         event_type: eventType,
         custom_event_type: f.type === "Other" ? f.customType.trim() || null : null,
-        event_date: f.date || null,
-        event_time: f.startTime || null,
-        end_time: f.endTime || null,
-        ceremony_start_time: f.startTime || null,
-        location: f.addressText || [f.street, f.city, f.state].filter(Boolean).join(", ") || null,
-        venue_street: f.street || null,
-        venue_city: f.city || null,
-        venue_state: f.state || null,
-        venue_zip: f.zip || null,
+        event_date: date,
+        event_time: startTime,
+        end_time: endTime,
+        ceremony_start_time: startTime,
+        location: addressText || locationParts.join(", ") || null,
+        venue_street: trimOrNull(f.street),
+        venue_city: trimOrNull(f.city),
+        venue_state: trimOrNull(f.state),
+        venue_zip: trimOrNull(f.zip),
         venue_lat: f.lat,
         venue_lng: f.lng,
-        venue_place_id: f.placeId || null,
-        guest_target: f.guests ? parseInt(f.guests, 10) : null,
-        budget_target: parseCurrency(f.budget) ?? null,
+        venue_place_id: trimOrNull(f.placeId),
+        guest_target: guestTarget ? parseInt(guestTarget, 10) : null,
+        budget_target: parseCurrency(budgetTarget ?? "") ?? null,
         status: "confirmed",
       }).select("id").single();
       if (error) throw error;

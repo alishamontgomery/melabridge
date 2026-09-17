@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { parseCurrency } from "@/lib/parse-currency";
+import { normalizeDateInput, normalizeEmailInput, normalizeTimeInput, trimOrNull } from "@/lib/event-input-normalization";
 import {
   listTicketTypes, createTicketType, updateTicketType, deleteTicketType,
   listTicketOrders, listAttendees,
@@ -1203,20 +1204,20 @@ function PublicPagePanel({ eventId, onEventUpdated }: { eventId: string; onEvent
       await saveDetailsFn({
         data: {
           eventId,
-          event_date: eventDetails.event_date || null,
-          start_time: eventDetails.start_time || null,
-          end_time: eventDetails.end_time || null,
-          location: eventDetails.location.trim() || null,
-          cover_image_url: eventDetails.cover_image_url || null,
+          event_date: normalizeDateInput(eventDetails.event_date),
+          start_time: normalizeTimeInput(eventDetails.start_time),
+          end_time: normalizeTimeInput(eventDetails.end_time),
+          location: trimOrNull(eventDetails.location),
+          cover_image_url: trimOrNull(eventDetails.cover_image_url),
           ticket_primary_color: eventDetails.ticket_primary_color,
           ticket_accent_color: eventDetails.ticket_accent_color,
-          ticket_contact_name: eventDetails.ticket_contact_name.trim() || null,
-          ticket_contact_email: eventDetails.ticket_contact_email.trim() || null,
+          ticket_contact_name: trimOrNull(eventDetails.ticket_contact_name),
+          ticket_contact_email: normalizeEmailInput(eventDetails.ticket_contact_email),
           ticket_cancellation_policy: eventDetails.ticket_cancellation_policy as "no_cancellations" | "case_by_case" | "allowed_until",
           ticket_cancellation_window_hours: eventDetails.ticket_cancellation_policy === "allowed_until"
             ? Number(eventDetails.ticket_cancellation_window_hours) * 24
             : null,
-          ticket_cancellation_terms: eventDetails.ticket_cancellation_terms.trim() || null,
+          ticket_cancellation_terms: trimOrNull(eventDetails.ticket_cancellation_terms),
         },
       });
       toast.success("Ticket page details saved");

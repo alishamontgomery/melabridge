@@ -44,9 +44,18 @@ export function InvitationComposer({ open, onClose, eventId, eventName, guests, 
           requestId: crypto.randomUUID(),
         },
       });
-      if (result.sentCount === 0) throw new Error("No invitations could be delivered");
+      if (result.sentCount === 0) {
+        if (result.providerDisabled) {
+          throw new Error("Email delivery is not configured right now. Please try again later.");
+        }
+        if (result.invalidCount > 0 && result.failedCount === 0) {
+          throw new Error("The selected guests do not have valid email addresses.");
+        }
+        throw new Error("Email delivery failed. Please check the selected addresses and try again.");
+      }
       toast.success(`Invitation${result.sentCount === 1 ? "" : "s"} sent to ${result.sentCount} guest${result.sentCount === 1 ? "" : "s"}.`);
       if (result.failedCount > 0) toast.warning(`${result.failedCount} invitation${result.failedCount === 1 ? "" : "s"} could not be delivered.`);
+      if (result.invalidCount > 0) toast.warning(`${result.invalidCount} selected guest${result.invalidCount === 1 ? "" : "s"} had no valid email address.`);
       await onSent();
       onClose();
     } catch (error) {

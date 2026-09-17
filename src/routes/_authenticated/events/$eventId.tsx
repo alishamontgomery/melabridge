@@ -48,6 +48,7 @@ import { useAuth } from "@/lib/auth";
 import { InvitationComposer } from "@/components/invitation-composer";
 import { PremiumUpgradeGate } from "@/components/premium-upgrade-gate";
 import { useFeatureGate } from "@/hooks/use-feature-gate";
+import { isValidTimeInput, normalizeDateInput, normalizeEmailInput, normalizeTimeInput, trimOrNull } from "@/lib/event-input-normalization";
 
 type Event = Database["public"]["Tables"]["events"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
@@ -800,12 +801,13 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
     setBusy(true);
     try {
       const n = z.string().trim().min(1).max(120).parse(name);
-      const em = email ? z.string().trim().email().parse(email) : null;
+      const em = normalizeEmailInput(email);
+      if (em) z.string().email().parse(em);
       const { error } = await supabase.from("guests").insert({
         event_id: eventId,
         full_name: n,
         email: em,
-        household: household || null,
+        household: trimOrNull(household),
       });
       if (error) throw error;
       setName(""); setEmail(""); setHousehold("");
@@ -843,21 +845,29 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
     e.preventDefault();
     if (!editGuest) return;
     setEditBusy(true);
-    const form = e.currentTarget as HTMLFormElement;
-    const fd = new FormData(form);
-    const { error } = await supabase.from("guests").update({
-      full_name: fd.get("full_name") as string,
-      email: (fd.get("email") as string) || null,
-      household: (fd.get("household") as string) || null,
-      rsvp_status: fd.get("rsvp") as Guest["rsvp_status"],
-      plus_ones: parseInt(fd.get("plus_ones") as string, 10) || 0,
-      meal_choice: (fd.get("meal_choice") as string) || null,
-    }).eq("id", editGuest.id);
-    setEditBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Guest updated");
-    setEditGuest(null);
-    await reload();
+    try {
+      const form = e.currentTarget as HTMLFormElement;
+      const fd = new FormData(form);
+      const fullName = z.string().trim().min(1).max(120).parse(String(fd.get("full_name") ?? ""));
+      const email = normalizeEmailInput(String(fd.get("email") ?? ""));
+      if (email) z.string().email().parse(email);
+      const { error } = await supabase.from("guests").update({
+        full_name: fullName,
+        email,
+        household: trimOrNull(String(fd.get("household") ?? "")),
+        rsvp_status: fd.get("rsvp") as Guest["rsvp_status"],
+        plus_ones: parseInt(fd.get("plus_ones") as string, 10) || 0,
+        meal_choice: trimOrNull(String(fd.get("meal_choice") ?? "")),
+      }).eq("id", editGuest.id);
+      if (error) throw error;
+      toast.success("Guest updated");
+      setEditGuest(null);
+      await reload();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update guest");
+    } finally {
+      setEditBusy(false);
+    }
   }
 
   function exportCsv() {
@@ -1076,20 +1086,26 @@ function DetailsTab({ event, onSaved }: { event: Event; onSaved: () => Promise<v
     e.preventDefault();
     setBusy(true);
     try {
-      const name = z.string().trim().min(1).max(120).parse(f.name);
-      if (f.time && f.end_time && f.end_time <= f.time) {
+        const name = z.string().trim().min(1).max(120).parse(f.name);
+        const date = normalizeDateInput(f.date);
+        const time = normalizeTimeInput(f.time);
+        const endTime = normalizeTimeInput(f.end_time);
+        if (date) z.string().date().parse(date);
+        if (time && !isValidTimeInput(time)) throw new Error("Enter a valid event start time");
+        if (endTime && !isValidTimeInput(endTime)) throw new Error("Enter a valid event end time");
+        if (time && endTime && endTime <= time) {
         throw new Error("Event end time must be after the start time");
       }
       const { error } = await supabase.from("events").update({
         name,
-        event_type: f.type || null,
-        event_date: f.date || null,
-        event_time: f.time || null,
-        end_time: f.end_time || null,
-        location: f.location || null,
-        guest_target: f.guest_target ? parseInt(f.guest_target, 10) : null,
-        budget_target: f.budget_target ? Number(f.budget_target) : null,
-        description: f.description || null,
+          event_type: trimOrNull(f.type),
+          event_date: date,
+          event_time: time,
+          end_time: endTime,
+          location: trimOrNull(f.location),
+          guest_target: trimOrNull(f.guest_target) ? parseInt(f.guest_target.trim(), 10) : null,
+          budget_target: trimOrNull(f.budget_target) ? Number(f.budget_target.trim()) : null,
+          description: trimOrNull(f.description),
       }).eq("id", event.id);
       if (error) throw error;
       toast.success("Event updated");

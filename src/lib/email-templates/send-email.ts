@@ -53,7 +53,7 @@ export async function sendTemplateEmail(
 
   // Template-level `to` takes precedence — notification templates always
   // send to their fixed address.
-  const recipient = template.to || to
+  const recipient = (template.to || to).trim()
   if (!recipient) {
     throw new Error('Recipient is required (the template defines no fixed recipient)')
   }

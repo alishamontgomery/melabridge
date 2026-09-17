@@ -8,15 +8,22 @@ const getEnv = (key: string): string => {
 
 export type StripeEnv = "sandbox" | "live";
 
+export function getStripeSecretKey(env: StripeEnv): string | null {
+  if (env === "sandbox") {
+    return process.env.STRIPE_SANDBOX_SECRET_KEY ?? process.env.STRIPE_SECRET_KEY ?? null;
+  }
+
+  // Older deployments stored the live key under the generic name. Reuse it
+  // only when its prefix proves it is a live key; never let a test key service
+  // a production checkout request.
+  const explicitLiveKey = process.env.STRIPE_LIVE_SECRET_KEY;
+  if (explicitLiveKey?.startsWith("sk_live_")) return explicitLiveKey;
+  const genericKey = process.env.STRIPE_SECRET_KEY;
+  return genericKey?.startsWith("sk_live_") ? genericKey : null;
+}
+
 export function createStripeClient(env: StripeEnv): Stripe {
-  // Stripe is accessed directly. Keep the explicit environment-specific keys,
-  // while preserving the existing sandbox fallback to STRIPE_SECRET_KEY used
-  // by the current Replit test environment. Never use a sandbox key for live
-  // requests implicitly.
-  const directKey =
-    env === "sandbox"
-      ? process.env.STRIPE_SANDBOX_SECRET_KEY ?? process.env.STRIPE_SECRET_KEY
-      : process.env.STRIPE_LIVE_SECRET_KEY;
+  const directKey = getStripeSecretKey(env);
   if (directKey) {
     return new Stripe(directKey, {
       apiVersion: "2026-03-25.dahlia",

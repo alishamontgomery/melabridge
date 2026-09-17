@@ -8,6 +8,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { normalizeEmailInput } from "@/lib/event-input-normalization";
 
 const uuid = z.string().uuid();
 
@@ -52,7 +53,18 @@ export const sendGuestInvitations = createServerFn({ method: "POST" })
       .in("id", data.guestIds);
     if (error) throw new Error(error.message);
 
-    const recipients = (guests ?? []).filter((guest) => !!guest.email);
+    const emailSchema = z.string().email();
+    const invalidSelectedCount = data.guestIds.filter((guestId) => {
+      const guest = (guests ?? []).find((candidate) => candidate.id === guestId);
+      const normalized = normalizeEmailInput(guest?.email);
+      return !normalized || !emailSchema.safeParse(normalized).success;
+    }).length;
+    const recipients = (guests ?? []).flatMap((guest) => {
+      const normalized = normalizeEmailInput(guest.email);
+      return normalized && emailSchema.safeParse(normalized).success
+        ? [{ ...guest, email: normalized }]
+        : [];
+    });
     if (recipients.length === 0) throw new Error("Select at least one guest with an email address");
 
     const now = new Date();
@@ -79,6 +91,8 @@ export const sendGuestInvitations = createServerFn({ method: "POST" })
 
     const siteUrl = (process.env.SITE_URL ?? "https://melabridge.com").replace(/\/$/, "");
     const deliveredIds: string[] = [];
+    let providerDisabled = false;
+    let deliveryFailureCount = 0;
     for (let offset = 0; offset < recipients.length; offset += 5) {
       const batch = recipients.slice(offset, offset + 5);
       await Promise.all(batch.map(async (guest) => {
@@ -98,8 +112,14 @@ export const sendGuestInvitations = createServerFn({ method: "POST" })
             },
             idempotencyKey: `invitation-${data.eventId}-${guest.id}-${data.requestId}`,
           });
-          if (delivery.sent) deliveredIds.push(guest.id);
+           if (delivery.sent) {
+             deliveredIds.push(guest.id);
+           } else {
+             deliveryFailureCount += 1;
+             providerDisabled ||= delivery.reason === "provider_disabled";
+           }
         } catch {
+           deliveryFailureCount += 1;
           console.error("[event-comms] Guest invitation delivery failed");
         }
       }));
@@ -114,9 +134,23 @@ export const sendGuestInvitations = createServerFn({ method: "POST" })
       if (updateError) throw new Error("Invitations were delivered, but their sent status could not be saved");
     }
 
+    // Do not lock the planner out for ten minutes when the provider rejected
+    // every message. A successful or partially successful batch keeps the
+    // cooldown to prevent accidental duplicate sends.
+    if (deliveredIds.length === 0) {
+      await supabase
+        .from("events")
+        .update({ invitation_last_sent_at: null })
+        .eq("id", data.eventId)
+        .eq("owner_id", userId)
+        .eq("invitation_last_sent_at", now.toISOString());
+    }
+
     return {
       sentCount: deliveredIds.length,
-      failedCount: data.guestIds.length - deliveredIds.length,
+      failedCount: deliveryFailureCount,
+      invalidCount: invalidSelectedCount,
+      providerDisabled,
       invitedAt,
     };
   });

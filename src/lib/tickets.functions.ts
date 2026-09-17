@@ -8,6 +8,7 @@ import {
   TicketCheckoutInput,
 } from "@/lib/ticket-order-access";
 import { isCheckInEligibleOrderStatus } from "@/lib/ticket-checkin-policy";
+import { isValidTimeInput, normalizeDateInput, normalizeTimeInput, trimOrNull } from "@/lib/event-input-normalization";
 
 const uuid = z.string().uuid();
 
@@ -28,18 +29,18 @@ export const listTicketTypes = createServerFn({ method: "GET" })
 // ---------- Owner: update the details shown on the ticket storefront ----------
 const UpdateTicketPageDetails = z.object({
   eventId: uuid,
-  event_date: z.string().date().nullable(),
-  start_time: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  end_time: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  location: z.string().trim().max(300).nullable(),
-  cover_image_url: z.string().url().max(2_000).nullable(),
+  event_date: z.preprocess((value) => typeof value === "string" ? normalizeDateInput(value) : value, z.string().date().nullable()),
+  start_time: z.preprocess((value) => typeof value === "string" ? normalizeTimeInput(value) : value, z.string().refine(isValidTimeInput, "Enter a valid start time").nullable()),
+  end_time: z.preprocess((value) => typeof value === "string" ? normalizeTimeInput(value) : value, z.string().refine(isValidTimeInput, "Enter a valid end time").nullable()),
+  location: z.preprocess((value) => typeof value === "string" ? trimOrNull(value) : value, z.string().max(300).nullable()),
+  cover_image_url: z.preprocess((value) => typeof value === "string" ? trimOrNull(value) : value, z.string().url().max(2_000).nullable()),
   ticket_primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   ticket_accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
-  ticket_contact_name: z.string().trim().max(120).nullable(),
-  ticket_contact_email: z.string().trim().email().max(255).nullable(),
+  ticket_contact_name: z.preprocess((value) => typeof value === "string" ? trimOrNull(value) : value, z.string().max(120).nullable()),
+  ticket_contact_email: z.preprocess((value) => typeof value === "string" ? trimOrNull(value) : value, z.string().email().max(255).nullable()),
   ticket_cancellation_policy: z.enum(["no_cancellations", "case_by_case", "allowed_until"]),
   ticket_cancellation_window_hours: z.number().int().min(1).max(8760).nullable(),
-  ticket_cancellation_terms: z.string().trim().max(2000).nullable(),
+  ticket_cancellation_terms: z.preprocess((value) => typeof value === "string" ? trimOrNull(value) : value, z.string().max(2000).nullable()),
 });
 export const updateTicketPageDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
