@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth as useClerkAuth, useClerk, useUser } from "@clerk/tanstack-react-start";
+import { useServerFn } from "@tanstack/react-start";
+import { getCalendarSettings, saveTimezone } from "@/lib/calendar.functions";
 import { getCurrentClerkIdentity } from "@/lib/clerk-auth.functions";
 import { setSupabaseClerkTokenProvider } from "@/integrations/supabase/client";
 
@@ -52,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn, userId, getToken } = useClerkAuth();
   const { user: clerkUser } = useUser();
   const { signOut: clerkSignOut } = useClerk();
+  const loadCalendarSettings = useServerFn(getCalendarSettings);
+  const saveDetectedTimezone = useServerFn(saveTimezone);
   const [legacyUserId, setLegacyUserId] = useState<string | null>(null);
   const [mappingLoading, setMappingLoading] = useState(false);
   const [mappingResolved, setMappingResolved] = useState(false);
@@ -92,6 +96,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
     return () => { cancelled = true; };
   }, [getToken, isLoaded, isSignedIn, userId]);
+
+  useEffect(() => {
+    if (!legacyUserId) return;
+
+    void (async () => {
+      try {
+        const settings = await loadCalendarSettings();
+        if (settings.timezone && settings.timezone !== "UTC") return;
+
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timezone) {
+          await saveDetectedTimezone({ data: { timezone } });
+        }
+      } catch {
+        // Timezone detection is best-effort and must not delay or interrupt sign-in.
+      }
+    })();
+  }, [legacyUserId, loadCalendarSettings, saveDetectedTimezone]);
 
   const state = useMemo<AuthState>(() => {
     const metadata = (clerkUser?.unsafeMetadata ?? clerkUser?.publicMetadata ?? {}) as Record<string, unknown>;
