@@ -66,6 +66,10 @@ import {
   type VendorSourcingRequest,
 } from "@/lib/vendor-sourcing.functions";
 import { getKnownPostalLocation, isPostalCode } from "@/lib/marketplace-location";
+import {
+  matchesMarketplaceKeywords,
+  normalizeMarketplaceSearchText,
+} from "@/lib/marketplace-search";
 import { requestExternalVendorClaim } from "@/lib/vendor-claims.functions";
 import { trackEvent } from "@/lib/analytics";
 import { Textarea } from "@/components/ui/textarea";
@@ -181,16 +185,6 @@ function hasGoogleSearchIntent(search: MarketplaceSearchState) {
 
 const MARKETPLACE_VENDOR_SELECT =
   "id, business_name, business_category, business_categories, custom_service_types, business_description, city, state, zip_code, starting_price, logo_url, onboarding_completed, mobile_service, travel_radius, years_in_business, website, portfolio_urls, social_links, business_hours";
-
-function normalizeMarketplaceSearchText(value: string | null | undefined) {
-  return (value ?? "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()
-    .replace(/\s+/g, " ");
-}
 
 async function fetchMarketplaceVendors(signal?: AbortSignal) {
   const query = supabase
@@ -619,20 +613,34 @@ function MarketplacePage() {
     const locationText = normalizeMarketplaceSearchText(locationQuery);
     const requestedZip = postalSearch ? locationQuery.trim().slice(0, 5) : null;
     return vendors.filter((v) => {
-      const name = normalizeMarketplaceSearchText(v.business_name);
-      const cat = normalizeMarketplaceSearchText(getVendorServiceTypes(v).join(" "));
       const city = normalizeMarketplaceSearchText(v.city);
-      const desc = normalizeMarketplaceSearchText(v.business_description);
-      const website = normalizeMarketplaceSearchText(v.website);
-      if (s && !(name.includes(s) || cat.includes(s) || city.includes(s) || desc.includes(s) || website.includes(s))) return false;
+      if (
+        s &&
+        !matchesMarketplaceKeywords(query, [
+          v.business_name,
+          ...getVendorServiceTypes(v),
+          v.city,
+          v.state,
+          v.zip_code,
+          v.business_description,
+          v.website,
+        ])
+      ) return false;
       if (
         postalLocation &&
         v.zip_code?.trim().slice(0, 5) !== requestedZip &&
         !city.includes(normalizeMarketplaceSearchText(postalLocation.label.split(",")[0]))
       ) return false;
-      if (locationText && !postalSearch && !city.includes(locationText)) return false;
+      if (
+        locationText &&
+        !postalSearch &&
+        !matchesMarketplaceKeywords(locationQuery, [v.city, v.state, v.zip_code])
+      ) return false;
       if (filters.category && !vendorOffersCategory(v, filters.category)) return false;
-      if (filters.city && !city.includes(filters.city.trim().toLowerCase())) return false;
+      if (
+        filters.city &&
+        !matchesMarketplaceKeywords(filters.city, [v.city, v.state, v.zip_code])
+      ) return false;
       if (filters.maxPrice > 0 && (v.starting_price ?? 0) > filters.maxPrice) return false;
       if (filters.travelOnly && !v.mobile_service) return false;
       if (filters.completeOnly && !v.onboarding_completed) return false;
@@ -689,17 +697,33 @@ function MarketplacePage() {
       } else if (normalizedName.includes(normalizedQuery)) {
         score += 90;
       }
+      if (
+        matchesMarketplaceKeywords(query, [
+          v.business_name,
+          ...getVendorServiceTypes(v),
+          v.city,
+          v.state,
+          v.zip_code,
+          v.business_description,
+          v.website,
+        ])
+      ) {
+        score += 60;
+      }
     }
 
     if (normalizedLocation) {
       const vendorZip = v.zip_code?.trim().slice(0, 5);
       const requestedZip = isPostalCode(normalizedLocation) ? normalizedLocation.slice(0, 5) : null;
-      const vendorCity = normalizeMarketplaceSearchText(v.city);
+      const vendorLocation = normalizeMarketplaceSearchText([v.city, v.state, v.zip_code].filter(Boolean).join(" "));
       const requestedCity = postalLocation?.label.split(",")[0].trim().toLowerCase() ?? normalizedLocation;
 
       if (requestedZip && vendorZip === requestedZip) score += 300;
-      else if (postalLocation && vendorCity === requestedCity) score += 150;
-      else if (!requestedZip && vendorCity.includes(normalizedLocation)) score += 150;
+      else if (postalLocation && vendorLocation.includes(requestedCity)) score += 150;
+      else if (
+        !requestedZip &&
+        matchesMarketplaceKeywords(locationQuery, [v.city, v.state, v.zip_code])
+      ) score += 150;
     }
 
     return score;
