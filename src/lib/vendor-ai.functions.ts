@@ -425,7 +425,7 @@ export const SaveInput = z.object({
   business_description: z.string().trim().max(4000).optional(),
   // Contact & location
   phone: z.string().trim().max(40).optional(),
-  email: z.string().trim().email().max(200).optional(),
+  email: z.union([z.string().trim().email().max(200), z.literal("")]).optional(),
   website: z.string().trim().max(500).optional(),
   contact_visibility: z.object({
     phone: z.enum(["public", "private"]),
@@ -437,7 +437,7 @@ export const SaveInput = z.object({
   zip_code: z.string().trim().max(20).optional(),
   business_address: z.string().trim().max(400).optional(),
   // Pricing & logistics
-  starting_price: z.number().int().min(0).optional(),
+  starting_price: z.number().int().min(0).nullable().optional(),
   years_in_business: z.number().int().min(0).max(100).optional(),
   mobile_service: z.boolean().optional(),
   travel_radius: z.number().int().min(0).max(10000).optional(),
@@ -466,14 +466,19 @@ export const saveVendorProfileDraft = createServerFn({ method: "POST" })
     const { supabase, userId } = context as { supabase: any; userId: string };
     const updates: Record<string, unknown> = {};
 
-    // Strings
+    // Core strings preserve existing values when callers supply an empty draft.
     for (const k of [
-      "business_name", "business_category", "business_description",
-      "phone", "email", "website", "city", "state", "zip_code", "business_address",
-      "logo_url", "virtual_services",
+      "business_name", "business_category", "business_description", "logo_url", "virtual_services",
     ] as const) {
       const v = (data as Record<string, unknown>)[k];
       if (typeof v === "string" && v.trim().length > 0) updates[k] = v.trim();
+    }
+    // Contact fields are editable settings, so a supplied empty value clears them.
+    for (const k of [
+      "phone", "email", "website", "city", "state", "zip_code", "business_address",
+    ] as const) {
+      const v = (data as Record<string, unknown>)[k];
+      if (typeof v === "string") updates[k] = v.trim() || null;
     }
     // A supplied array is a replacement, including an intentional empty array.
     // Keep the legacy primary column synchronized when callers provide only one
@@ -505,7 +510,7 @@ export const saveVendorProfileDraft = createServerFn({ method: "POST" })
       );
     }
     // Numbers
-    if (data.starting_price != null) updates.starting_price = data.starting_price;
+    if (data.starting_price !== undefined) updates.starting_price = data.starting_price;
     if (data.years_in_business != null) updates.years_in_business = data.years_in_business;
     if (data.travel_radius != null) updates.travel_radius = data.travel_radius;
     // Booleans

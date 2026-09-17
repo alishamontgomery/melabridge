@@ -4,6 +4,7 @@ import { AppShell, PageHeader } from "@/components/app-shell";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getVendorSettings } from "@/lib/bookings.functions";
+import { saveVendorProfileDraft } from "@/lib/vendor-ai.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,16 @@ function VendorSettingsPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ["vendor-settings"], queryFn: () => getFn() });
 
   // Contact info state
-  const [contact, setContact] = useState({ phone: "", email: "", website: "" });
+  const saveProfileFn = useServerFn(saveVendorProfileDraft);
+  const [contact, setContact] = useState({
+    phone: "",
+    email: "",
+    website: "",
+    city: "",
+    state: "",
+    businessAddress: "",
+    startingPrice: "",
+  });
   const [contactLoading, setContactLoading] = useState(true);
   const [contactSaving, setContactSaving] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
@@ -49,7 +59,7 @@ function VendorSettingsPage() {
         if (!user) { setContactLoading(false); return; }
         const { data: vp } = await supabase
           .from("vendor_profiles")
-          .select("phone, email, website, business_category, business_categories")
+          .select("phone, email, website, city, state, business_address, starting_price, business_category, business_categories")
           .eq("user_id", user.id)
           .maybeSingle();
         if (!mounted) return;
@@ -58,6 +68,10 @@ function VendorSettingsPage() {
             phone: vp.phone ?? "",
             email: vp.email ?? "",
             website: vp.website ?? "",
+            city: vp.city ?? "",
+            state: vp.state ?? "",
+            businessAddress: vp.business_address ?? "",
+            startingPrice: vp.starting_price != null ? String(vp.starting_price) : "",
           });
             const selected = getVendorCategories(vp);
             setCategories(selected);
@@ -77,17 +91,28 @@ function VendorSettingsPage() {
     setContactSaving(true);
     try {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase
-        .from("vendor_profiles")
-        .update({
-          phone: contact.phone.trim() || null,
-          email: contact.email.trim() || null,
-          website: normalizeUrl(contact.website) || null,
-        })
-        .eq("user_id", user.id);
-      if (error) throw error;
-      toast.success("Contact info saved");
+      const normalizedWebsite = normalizeUrl(contact.website);
+      const startingPrice = contact.startingPrice.trim() === ""
+        ? null
+        : Number.parseInt(contact.startingPrice, 10);
+      if (startingPrice !== null && (!Number.isFinite(startingPrice) || startingPrice < 0)) {
+        throw new Error("Starting price must be zero or more");
+      }
+      await saveProfileFn({
+        data: {
+          phone: contact.phone,
+          email: contact.email,
+          website: normalizedWebsite ?? "",
+          city: contact.city,
+          state: contact.state,
+          business_address: contact.businessAddress,
+          starting_price: startingPrice,
+        },
+      });
+      setContact((current) => ({ ...current, website: normalizedWebsite ?? "" }));
+      toast.success("Contact and location saved");
       qc.invalidateQueries({ queryKey: ["vendor-profile"] });
+      qc.invalidateQueries({ queryKey: ["vendor-profile-snapshot"] });
     } catch (err: any) {
       toast.error(err?.message ?? "Failed to save contact info");
     } finally {
@@ -165,7 +190,7 @@ function VendorSettingsPage() {
         {/* ── Contact information ── */}
         <Card className="space-y-6 p-6">
           <div>
-            <h2 className="font-display text-base font-semibold">Contact information</h2>
+            <h2 className="font-display text-base font-semibold">Contact &amp; location</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
               This information helps people understand how to contact your business.
               Your phone and email are never shown publicly on your storefront.
@@ -219,11 +244,56 @@ function VendorSettingsPage() {
                   Your website is shown publicly on your vendor storefront.
                 </p>
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="vendor-city">City</Label>
+                  <Input
+                    id="vendor-city"
+                    autoComplete="address-level2"
+                    placeholder="Atlanta"
+                    value={contact.city}
+                    onChange={(e) => setContact((c) => ({ ...c, city: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="vendor-state">State</Label>
+                  <Input
+                    id="vendor-state"
+                    autoComplete="address-level1"
+                    placeholder="Georgia"
+                    value={contact.state}
+                    onChange={(e) => setContact((c) => ({ ...c, state: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="vendor-address">Business address</Label>
+                <Input
+                  id="vendor-address"
+                  autoComplete="street-address"
+                  placeholder="123 Main Street"
+                  value={contact.businessAddress}
+                  onChange={(e) => setContact((c) => ({ ...c, businessAddress: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="vendor-starting-price">Starting price</Label>
+                <Input
+                  id="vendor-starting-price"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  step="1"
+                  placeholder="500"
+                  value={contact.startingPrice}
+                  onChange={(e) => setContact((c) => ({ ...c, startingPrice: e.target.value }))}
+                />
+              </div>
               <Button type="submit" disabled={contactSaving} className="gap-2">
                 {contactSaving ? (
                   <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>
                 ) : (
-                  <><Save className="h-4 w-4" /> Save contact info</>
+                  <><Save className="h-4 w-4" /> Save contact &amp; location</>
                 )}
               </Button>
             </form>
