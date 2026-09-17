@@ -1089,12 +1089,12 @@ export const getTicketByCode = createServerFn({ method: "GET" })
 
 
 // ---------- Buyer capability: fetch order details by orderId + access token ----------
-export const getPublicOrderDetails = createServerFn({ method: "GET" })
-  .validator((d: { orderId: string; accessToken: string }) => ({
-    orderId: uuid.parse(d.orderId),
-    accessToken: uuid.parse(d.accessToken),
-  }))
-  .handler(async ({ data }) => {
+export const PublicOrderAccessInput = z.object({
+  orderId: uuid,
+  accessToken: uuid,
+});
+
+export async function getPublicOrderDetailsHandler(data: z.infer<typeof PublicOrderAccessInput>) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order, error } = await supabaseAdmin
       .from("ticket_orders")
@@ -1117,14 +1117,16 @@ export const getPublicOrderDetails = createServerFn({ method: "GET" })
         .order("created_at", { ascending: true }),
     ]);
     return { order, event: ev, type, attendees: attendees ?? [] };
-  });
+}
 
-export const getPublicOrderTicketsPdf = createServerFn({ method: "POST" })
+export const getPublicOrderDetails = createServerFn({ method: "GET" })
   .validator((d: { orderId: string; accessToken: string }) => ({
     orderId: uuid.parse(d.orderId),
     accessToken: uuid.parse(d.accessToken),
   }))
-  .handler(async ({ data }) => {
+  .handler(({ data }) => getPublicOrderDetailsHandler(data));
+
+export async function getPublicOrderTicketsPdfHandler(data: z.infer<typeof PublicOrderAccessInput>) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order, error } = await supabaseAdmin
       .from("ticket_orders")
@@ -1159,7 +1161,11 @@ export const getPublicOrderTicketsPdf = createServerFn({ method: "POST" })
       base64: Buffer.from(bytes).toString("base64"),
       filename: `tickets-${order.id.slice(0, 8)}.pdf`,
     };
-  });
+}
+
+export const getPublicOrderTicketsPdf = createServerFn({ method: "POST" })
+  .validator((d: { orderId: string; accessToken: string }) => PublicOrderAccessInput.parse(d))
+  .handler(({ data }) => getPublicOrderTicketsPdfHandler(data));
 export const getPublicTicketPdf = createServerFn({ method: "POST" })
   .validator((d: { ticketCode: string }) => ({ ticketCode: z.string().min(8).max(120).parse(d.ticketCode) }))
   .handler(async ({ data }) => {
