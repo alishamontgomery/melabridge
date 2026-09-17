@@ -25,19 +25,6 @@ export function externalClerkOptions() {
   if (publishableMode && secretMode && publishableMode !== secretMode) {
     throw new Error("Clerk publishable and secret keys are from different environments.");
   }
-  const publishableMode = publishableKey.startsWith("pk_test_")
-    ? "test"
-    : publishableKey.startsWith("pk_live_")
-      ? "live"
-      : null;
-  const secretMode = secretKey.startsWith("sk_test_")
-    ? "test"
-    : secretKey.startsWith("sk_live_")
-      ? "live"
-      : null;
-  if (publishableMode && secretMode && publishableMode !== secretMode) {
-    throw new Error("Clerk publishable and secret keys are from different environments.");
-  }
   return { publishableKey, secretKey };
 }
 

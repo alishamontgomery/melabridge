@@ -76,31 +76,40 @@ function hasClerkSessionCookie(request: Request): boolean {
 
 function recoverFromInvalidClerkSession(request: Request): Response {
   const url = new URL(request.url);
-  if (url.searchParams.get("__clerk_reset") === "1") {
-    return new Response(renderErrorPage(), {
-      status: 500,
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
-  }
-
-  url.searchParams.set("__clerk_reset", "1");
-  const response = new Response(null, {
-    status: 303,
-    headers: { Location: url.toString() },
-  });
   const cookieNames = (request.headers.get("cookie") ?? "")
     .split(";")
     .map((part) => part.trim().split("=")[0])
     .filter(Boolean);
-  const namesToClear = cookieNames.length > 0
-    ? cookieNames
-    : ["__session", "__client_uat", "__clerk_db_jwt", "__clerk_handshake", "__clerk_synced"];
+  const recoveryCookie = "melabridge_clerk_recovery";
+  if (cookieNames.includes(recoveryCookie)) {
+    return new Response(renderErrorPage(), {
+      status: 500,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "set-cookie": `${recoveryCookie}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`,
+      },
+    });
+  }
+
+  const isAuthRoute = url.pathname === "/auth" || url.pathname === "/auth/callback";
+  const response = new Response(null, {
+    status: 303,
+    headers: { Location: `${url.origin}${isAuthRoute ? "/auth" : "/"}` },
+  });
+  const namesToClear = cookieNames.filter((name) => name !== recoveryCookie);
+  if (namesToClear.length === 0) {
+    namesToClear.push("__session", "__client_uat", "__clerk_db_jwt", "__clerk_handshake", "__clerk_synced");
+  }
   for (const cookieName of namesToClear) {
     response.headers.append(
       "Set-Cookie",
       `${cookieName}=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`,
     );
   }
+  response.headers.append(
+    "Set-Cookie",
+    `${recoveryCookie}=1; Path=/; Max-Age=10; HttpOnly; SameSite=Lax`,
+  );
   return response;
 }
 
@@ -131,7 +140,7 @@ export default {
       const url = new URL(request.url);
       if (
         (url.pathname === "/auth" || url.pathname === "/auth/callback") &&
-        url.searchParams.get("__clerk_reset") !== "1"
+        !url.pathname.includes("/api/__clerk")
       ) {
         return recoverFromInvalidClerkSession(request);
       }

@@ -795,8 +795,6 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
 
   const fireRsvpFn = useServerFn(fireRsvpBatch);
 
-  const fireRsvpFn = useServerFn(fireRsvpBatch);
-
   async function add(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
