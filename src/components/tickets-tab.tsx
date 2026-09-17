@@ -661,14 +661,12 @@ function TicketTypesPanel({ eventId, types, reload, createRequest, environment }
                             {archiveBusyId === t.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />} Restore
                           </Button>
                         )}
-                        {!t.is_active && (
-                          <div className="mt-1 border-t border-border pt-2">
-                            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-destructive">Danger zone</p>
-                            <Button variant="ghost" size="sm" onClick={() => { setMenuTicketId(null); setDeleteTarget(t); }} disabled={archiveBusyId === t.id} className="w-full justify-start gap-2 text-destructive hover:text-destructive">
-                              <Trash2 className="h-3.5 w-3.5" /> Delete permanently
-                            </Button>
-                          </div>
-                        )}
+                        <div className="mt-1 border-t border-border pt-2">
+                          <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-destructive">Danger zone</p>
+                          <Button variant="ghost" size="sm" onClick={() => { setMenuTicketId(null); setDeleteTarget(t); }} disabled={archiveBusyId === t.id} className="w-full justify-start gap-2 text-destructive hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" /> Delete permanently
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -785,7 +783,7 @@ function TicketTypesPanel({ eventId, types, reload, createRequest, environment }
           <AlertDialogHeader>
             <AlertDialogTitle>Delete “{deleteTarget?.name}” permanently?</AlertDialogTitle>
             <AlertDialogDescription>
-              This cannot be undone. Tickets with order history cannot be deleted and must remain archived.
+              This cannot be undone. Ticket types with order history cannot be deleted and must remain archived.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
