@@ -7,6 +7,13 @@ import { attachClerkAuth } from "@/integrations/supabase/auth-attacher";
 import { externalClerkOptions } from "@/lib/clerk-config.server";
 import { logReliability } from "@/lib/reliability-logger";
 
+// This app has one canonical production origin and uses Clerk's direct
+// frontend API. The Clerk server package otherwise falls back to an
+// environment-provided proxy and serializes it into SSR state, even when the
+// component-level proxyUrl is unset.
+delete process.env.CLERK_PROXY_URL;
+delete process.env.VITE_CLERK_PROXY_URL;
+
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
