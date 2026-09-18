@@ -43,3 +43,4 @@
 - [Replit TanStack deployment target](replit-tanstack-deployment-target.md) — Cloud Run publishing needs Nitro's Node server output, not the Lovable wrapper's default Cloudflare module.
 - [Deployment healthcheck host](deployment-healthcheck-canonical-host.md) — internal Replit probes must bypass canonical-host redirects or the deployment can be recycled while the app is healthy.
 - [Clerk Storage policy evaluation](clerk-storage-policy-evaluation.md) — any Storage policy using auth.uid() can break unrelated paths because Clerk subjects are not UUIDs and all operation policies may evaluate.
+- [Stripe subscription event ordering](stripe-subscription-event-ordering.md) — subscription state and admin alerts must commit atomically under one deterministic event version.

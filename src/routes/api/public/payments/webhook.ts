@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { findPlanByPriceId } from "@/lib/billing-config";
 
 // A verified Stripe event. `verifyWebhook` returns the parsed JSON body, which
 // always carries `id`/`type`; we widen the type here so we can key idempotency
 // off the event id without touching stripe.server.ts.
-type StripeEvent = { id: string; type: string; data: { object: any } };
+type StripeEvent = { id: string; type: string; created?: number; data: { object: any } };
 
 // Thrown to signal a *retryable* failure. The POST handler maps this to a
 // non-2xx response so Stripe re-delivers the event. Duplicate/no-op outcomes
@@ -25,7 +26,13 @@ async function getSupabase(): Promise<any> {
   return _supabaseAdmin;
 }
 
-async function upsertSubscription(subscription: any, env: StripeEnv) {
+export async function upsertSubscription(
+  subscription: any,
+  env: StripeEnv,
+  eventId: string,
+  injectedClient: any = null,
+  eventCreated = Math.floor(Date.now() / 1000),
+) {
   const userId = subscription.metadata?.userId;
   if (!userId) {
     throw new RetryableWebhookError("subscription metadata is missing a user reference");
@@ -39,33 +46,48 @@ async function upsertSubscription(subscription: any, env: StripeEnv) {
   const periodStart = item?.current_period_start ?? subscription.current_period_start;
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
-  const sb = await getSupabase();
-  const { error } = await sb.from("subscriptions").upsert(
-    {
-      user_id: userId,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer,
-      product_id: productId,
-      price_id: priceId,
-      status: subscription.status,
-      current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
-      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
-      cancel_at_period_end: subscription.cancel_at_period_end || false,
-      environment: env,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "stripe_subscription_id" },
-  );
+  const sb = injectedClient ?? await getSupabase();
+  const alertDetails = subscription.status === "past_due"
+    ? await getPastDueAlertDetails(sb, userId, priceId)
+    : { userEmail: null, planName: "Unknown plan" };
+  const { error } = await sb.rpc("sync_subscription_stripe_event", {
+    _user_id: userId,
+    _stripe_subscription_id: subscription.id,
+    _stripe_customer_id: subscription.customer,
+    _product_id: productId,
+    _price_id: priceId,
+    _status: subscription.status,
+    _current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
+    _current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+    _cancel_at_period_end: subscription.cancel_at_period_end || false,
+    _environment: env,
+    _event_created_at: eventCreated,
+    _event_priority: 2,
+    _event_id: eventId,
+    _user_email: alertDetails.userEmail,
+    _plan_name: alertDetails.planName,
+  });
   if (error) throw new RetryableWebhookError(`subscription upsert failed: ${error.message}`);
 }
 
-async function handleDeleted(subscription: any, env: StripeEnv) {
-  const sb = await getSupabase();
-  const { error } = await sb
-    .from("subscriptions")
-    .update({ status: "canceled", updated_at: new Date().toISOString() })
-    .eq("stripe_subscription_id", subscription.id)
-    .eq("environment", env);
+export async function handleDeleted(
+  subscription: any,
+  env: StripeEnv,
+  injectedClient: any = null,
+  eventCreated = Math.floor(Date.now() / 1000),
+  eventId = "subscription-deleted",
+) {
+  const sb = injectedClient ?? await getSupabase();
+  const { error } = await sb.rpc("sync_subscription_status_event", {
+    _stripe_subscription_id: subscription.id,
+    _environment: env,
+    _status: "canceled",
+    _event_created_at: eventCreated,
+    _event_priority: 3,
+    _event_id: eventId,
+    _user_email: null,
+    _plan_name: "Unknown plan",
+  });
   if (error) throw new RetryableWebhookError(`subscription delete failed: ${error.message}`);
 }
 
@@ -79,17 +101,47 @@ export async function handleInvoicePaymentFailed(
   invoice: any,
   env: StripeEnv,
   sb: any = null,
+  eventId = "invoice-payment-failed",
+  eventCreated = Math.floor(Date.now() / 1000),
 ) {
   const subscriptionId = invoiceSubscriptionId(invoice);
   if (!subscriptionId) return;
 
   const client = sb ?? await getSupabase();
-  const { error } = await client
+  const { data: existing, error: readError } = await client
     .from("subscriptions")
-    .update({ status: "past_due", updated_at: new Date().toISOString() })
+    .select("user_id,status,price_id,stripe_customer_id")
     .eq("stripe_subscription_id", subscriptionId)
-    .eq("environment", env);
+    .eq("environment", env)
+    .maybeSingle();
+  if (readError) throw new RetryableWebhookError(`subscription payment failure read failed: ${readError.message}`);
+  if (!existing) return;
+
+  const alertDetails = await getPastDueAlertDetails(client, existing.user_id, existing.price_id);
+  const { error } = await client.rpc("sync_subscription_status_event", {
+    _stripe_subscription_id: subscriptionId,
+    _environment: env,
+    _status: "past_due",
+    _event_created_at: eventCreated,
+    _event_priority: 1,
+    _event_id: eventId,
+    _user_email: alertDetails.userEmail,
+    _plan_name: alertDetails.planName,
+  });
   if (error) throw new RetryableWebhookError(`subscription payment failure update failed: ${error.message}`);
+}
+
+async function getPastDueAlertDetails(client: any, userId: string, priceId: string | null | undefined) {
+  const { data: profile, error } = await client
+    .from("profiles")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) console.error("[webhook] past-due user email lookup failed");
+  return {
+    userEmail: profile?.email ?? null,
+    planName: findPlanByPriceId(priceId)?.name ?? priceId ?? "Unknown plan",
+  };
 }
 
 // -------- Ticketing --------
@@ -248,13 +300,13 @@ export async function dispatch(event: StripeEvent, env: StripeEnv, sb: any = nul
   switch (event.type) {
     case "customer.subscription.created":
     case "customer.subscription.updated":
-      await upsertSubscription(event.data.object, env);
+      await upsertSubscription(event.data.object, env, event.id, sb, event.created);
       break;
     case "customer.subscription.deleted":
-      await handleDeleted(event.data.object, env);
+      await handleDeleted(event.data.object, env, sb, event.created, event.id);
       break;
     case "invoice.payment_failed":
-      await handleInvoicePaymentFailed(event.data.object, env, sb);
+      await handleInvoicePaymentFailed(event.data.object, env, sb, event.id, event.created);
       break;
     case "checkout.session.completed":
       await finalizeTicketOrderFromSession(event.data.object);

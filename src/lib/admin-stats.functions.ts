@@ -4,6 +4,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type AdminStats = {
   activeUsers: number;
   activeSubscriptions: number;
+  pastDueSubscriptions: number;
+  pastDueAlerts: Array<{
+    id: string;
+    userEmail: string | null;
+    planName: string;
+    stripeCustomerId: string | null;
+    createdAt: string;
+  }>;
   totalVendors: number;
   activeVendors: number;
   totalEvents: number;
@@ -50,6 +58,8 @@ export const getAdminStats = createServerFn({ method: "POST" })
     const [
       usersRes,
       activeSubscriptionsRes,
+      pastDueSubscriptionsRes,
+      pastDueAlertsRes,
       totalVendorsRes,
       activeVendorsRes,
       eventsRes,
@@ -65,6 +75,13 @@ export const getAdminStats = createServerFn({ method: "POST" })
           .select("id", { count: "exact", head: true }),
         nowIso,
       ),
+      supabaseAdmin.from("subscriptions").select("id", { count: "exact", head: true }).eq("status", "past_due"),
+      supabaseAdmin
+        .from("subscription_admin_alerts")
+        .select("id,user_email,plan_name,stripe_customer_id,created_at")
+        .is("resolved_at", null)
+        .order("created_at", { ascending: false })
+        .limit(5),
       supabaseAdmin.from("vendor_profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin
         .from("vendor_profiles")
@@ -87,6 +104,8 @@ export const getAdminStats = createServerFn({ method: "POST" })
     const dbErrors = [
       usersRes.error,
       activeSubscriptionsRes.error,
+      pastDueSubscriptionsRes.error,
+      pastDueAlertsRes.error,
       totalVendorsRes.error,
       activeVendorsRes.error,
       eventsRes.error,
@@ -104,6 +123,14 @@ export const getAdminStats = createServerFn({ method: "POST" })
     return {
       activeUsers: usersRes.count ?? 0,
       activeSubscriptions: activeSubscriptionsRes.count ?? 0,
+      pastDueSubscriptions: pastDueSubscriptionsRes.count ?? 0,
+      pastDueAlerts: (pastDueAlertsRes.data ?? []).map((row) => ({
+        id: row.id,
+        userEmail: row.user_email,
+        planName: row.plan_name,
+        stripeCustomerId: row.stripe_customer_id,
+        createdAt: row.created_at,
+      })),
       totalVendors: totalVendorsRes.count ?? 0,
       activeVendors: activeVendorsRes.count ?? 0,
       totalEvents: eventsRes.count ?? 0,

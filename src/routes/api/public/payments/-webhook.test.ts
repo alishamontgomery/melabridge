@@ -1,5 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
-import { dispatch, handleInvoicePaymentFailed, processEvent, RetryableWebhookError } from "./webhook";
+import {
+  dispatch,
+  handleDeleted,
+  handleInvoicePaymentFailed,
+  processEvent,
+  RetryableWebhookError,
+  upsertSubscription,
+} from "./webhook";
 
 // ---------------------------------------------------------------------------
 // The idempotency ledger is a state machine driven by three RPCs:
@@ -174,11 +181,21 @@ describe("processEvent idempotency state machine", () => {
 });
 
 describe("subscription payment failures", () => {
+  function query(result: any) {
+    const builder: any = {};
+    for (const method of ["select", "update", "upsert", "eq", "neq", "in", "is"]) {
+      builder[method] = vi.fn(() => builder);
+    }
+    builder.maybeSingle = vi.fn().mockResolvedValue(result);
+    builder.then = (resolve: (value: any) => void, reject: (reason: any) => void) =>
+      Promise.resolve(result).then(resolve, reject);
+    return builder;
+  }
+
   it("routes invoice.payment_failed events through the webhook dispatcher", async () => {
-    const eq = vi.fn().mockResolvedValue({ error: null });
-    const secondEq = vi.fn(() => ({ eq }));
-    const update = vi.fn(() => ({ eq: secondEq }));
-    const from = vi.fn(() => ({ update }));
+    const existing = query({ data: { status: "past_due" }, error: null });
+    const from = vi.fn(() => existing);
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
 
     await dispatch(
       {
@@ -187,43 +204,143 @@ describe("subscription payment failures", () => {
         data: { object: { parent: { subscription_details: { subscription: "sub_routed" } } } },
       },
       "sandbox",
-      { from },
+      { from, rpc },
     );
 
-    expect(secondEq).toHaveBeenCalledWith("stripe_subscription_id", "sub_routed");
-    expect(eq).toHaveBeenCalledWith("environment", "sandbox");
+    expect(existing.eq).toHaveBeenCalledWith("stripe_subscription_id", "sub_routed");
+    expect(existing.eq).toHaveBeenCalledWith("environment", "sandbox");
   });
 
-  it("marks the matching subscription past due for current Stripe invoice payloads", async () => {
-    const eq = vi.fn().mockResolvedValue({ error: null });
-    const secondEq = vi.fn(() => ({ eq }));
-    const update = vi.fn(() => ({ eq: secondEq }));
-    const from = vi.fn(() => ({ update }));
+  it("stores past-due status before enqueueing one admin alert", async () => {
+    const existing = query({ data: { status: "active" }, error: null });
+    const from = vi.fn(() => existing);
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+    const client = { from, rpc };
 
     await handleInvoicePaymentFailed(
       { parent: { subscription_details: { subscription: "sub_failed" } } },
       "sandbox",
-      { from },
+      client,
+      "evt_failed",
+      200,
     );
 
-    expect(from).toHaveBeenCalledWith("subscriptions");
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({ status: "past_due" }));
-    expect(secondEq).toHaveBeenCalledWith("stripe_subscription_id", "sub_failed");
-    expect(eq).toHaveBeenCalledWith("environment", "sandbox");
+    expect(rpc).toHaveBeenCalledWith("sync_subscription_status_event", expect.objectContaining({
+      _status: "past_due",
+      _event_created_at: 200,
+      _event_priority: 1,
+    }));
+  });
+
+  it("retries the idempotent alert enqueue when status is already past due", async () => {
+    const existing = query({ data: { status: "past_due" }, error: null });
+    const from = vi.fn(() => existing);
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+
+    await handleInvoicePaymentFailed(
+      { subscription: "sub_existing" },
+      "live",
+      { from, rpc },
+      "evt_duplicate",
+      200,
+    );
+
+    expect(rpc).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries when the atomic state-and-alert transaction fails", async () => {
+    const existing = query({ data: { user_id: "user_1", status: "active" }, error: null });
+    const from = vi.fn(() => existing);
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "transaction rolled back" } });
+
+    await expect(handleInvoicePaymentFailed(
+      { subscription: "sub_failed" },
+      "live",
+      { from, rpc },
+      "evt_failed",
+      200,
+    )).rejects.toBeInstanceOf(RetryableWebhookError);
+
+    expect(rpc).toHaveBeenCalledWith("sync_subscription_status_event", expect.objectContaining({
+      _status: "past_due",
+    }));
   });
 
   it("supports legacy invoice payloads and retries database failures", async () => {
-    const eq = vi.fn().mockResolvedValue({ error: { message: "database unavailable" } });
-    const client = {
-      from: vi.fn(() => ({
-        update: vi.fn(() => ({
-          eq: vi.fn(() => ({ eq })),
-        })),
-      })),
-    };
+    const failedRead = query({ data: null, error: { message: "database unavailable" } });
+    const client = { from: vi.fn(() => failedRead) };
 
     await expect(
       handleInvoicePaymentFailed({ subscription: "sub_legacy" }, "live", client),
     ).rejects.toBeInstanceOf(RetryableWebhookError);
+  });
+
+  it("stores and enqueues a customer.subscription.updated past-due transition", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+    const profile = query({ data: { email: "user@example.com" }, error: null });
+    const from = vi.fn(() => profile);
+
+    await upsertSubscription({
+      id: "sub_updated",
+      customer: "cus_updated",
+      status: "past_due",
+      metadata: { userId: "user_updated" },
+      items: { data: [{ price: { lookup_key: "planner_professional", product: "prod_1" } }] },
+    }, "live", "evt_updated", { rpc, from }, 200);
+
+    expect(rpc).toHaveBeenCalledWith("sync_subscription_stripe_event", expect.objectContaining({
+      _status: "past_due",
+      _event_created_at: 200,
+      _event_priority: 2,
+      _user_email: "user@example.com",
+    }));
+  });
+
+  it("retries when an atomic subscription update and alert transaction fails", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { message: "transaction rolled back" } });
+    const profile = query({ data: null, error: null });
+
+    await expect(upsertSubscription({
+      id: "sub_updated",
+      customer: "cus_updated",
+      status: "past_due",
+      metadata: { userId: "user_updated" },
+      items: { data: [{ price: { lookup_key: "planner_professional", product: "prod_1" } }] },
+    }, "live", "evt_updated", { rpc, from: vi.fn(() => profile) }, 200))
+      .rejects.toBeInstanceOf(RetryableWebhookError);
+
+    expect(rpc).toHaveBeenCalledWith("sync_subscription_stripe_event", expect.objectContaining({
+      _status: "past_due",
+    }));
+  });
+
+  it("resolves an open alert when Stripe deletes the subscription", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+
+    await handleDeleted({ id: "sub_canceled" }, "live", { rpc }, 300, "evt_deleted");
+
+    expect(rpc).toHaveBeenCalledWith("sync_subscription_status_event", expect.objectContaining({
+      _status: "canceled",
+      _event_created_at: 300,
+      _event_priority: 3,
+      _event_id: "evt_deleted",
+    }));
+  });
+
+  it("does not reopen past due after a newer recovery event", async () => {
+    const existing = query({ data: { user_id: "user_1", status: "active" }, error: null });
+    const rpc = vi.fn().mockResolvedValue({ data: false, error: null });
+
+    await handleInvoicePaymentFailed(
+      { subscription: "sub_recovered" },
+      "live",
+      { from: vi.fn(() => existing), rpc },
+      "evt_old_failure",
+      100,
+    );
+
+    expect(rpc).toHaveBeenCalledWith("sync_subscription_status_event", expect.objectContaining({
+      _event_created_at: 100,
+    }));
   });
 });

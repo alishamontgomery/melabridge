@@ -1842,6 +1842,45 @@ export type Database = {
           },
         ]
       }
+      subscription_admin_alerts: {
+        Row: {
+          created_at: string
+          environment: string
+          event_id: string
+          id: string
+          plan_name: string
+          resolved_at: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          environment: string
+          event_id: string
+          id?: string
+          plan_name: string
+          resolved_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id: string
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          event_id?: string
+          id?: string
+          plan_name?: string
+          resolved_at?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
@@ -1854,6 +1893,9 @@ export type Database = {
           price_id: string
           product_id: string
           status: string
+          stripe_event_created_at: number | null
+          stripe_event_id: string | null
+          stripe_event_priority: number | null
           stripe_customer_id: string
           stripe_subscription_id: string
           updated_at: string
@@ -1870,6 +1912,9 @@ export type Database = {
           price_id: string
           product_id: string
           status?: string
+          stripe_event_created_at?: number | null
+          stripe_event_id?: string | null
+          stripe_event_priority?: number | null
           stripe_customer_id: string
           stripe_subscription_id: string
           updated_at?: string
@@ -1886,6 +1931,9 @@ export type Database = {
           price_id?: string
           product_id?: string
           status?: string
+          stripe_event_created_at?: number | null
+          stripe_event_id?: string | null
+          stripe_event_priority?: number | null
           stripe_customer_id?: string
           stripe_subscription_id?: string
           updated_at?: string

@@ -79,7 +79,22 @@ function AdminPage() {
 
          <section aria-labelledby="attention-heading"><div className="mb-3"><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">Triage</p><h2 id="attention-heading" className="font-display text-xl font-semibold">Needs attention</h2><p className="text-sm text-muted-foreground">Small queues worth clearing before they become noise.</p></div><div className="grid gap-3 md:grid-cols-3">
            <AttentionCard to="/admin/vendors" label="Incomplete vendor profiles" count={incompleteVendors} detail="Profiles not ready for listing" icon={Store} tone="slate" />
-        </div></section>
+           <AttentionCard to="/admin/subscriptions" search={{ status: "past_due" }} label="Past-due subscriptions" count={data?.pastDueSubscriptions} detail="Customers who need payment outreach" icon={AlertTriangle} tone="amber" />
+        </div>
+        {!!data?.pastDueAlerts.length && (
+          <Card className="mt-3 divide-y border-amber-200/70">
+            {data.pastDueAlerts.map((alert) => (
+              <Link key={alert.id} to="/admin/subscriptions" search={{ status: "past_due" }} className="flex flex-wrap items-center gap-x-4 gap-y-1 p-3 text-sm transition hover:bg-amber-50/60">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                <span className="min-w-0 flex-1 font-medium">{alert.userEmail ?? "Unknown user"}</span>
+                <span className="text-muted-foreground">{alert.planName}</span>
+                <span className="font-mono text-xs text-muted-foreground">{alert.stripeCustomerId ?? "No customer ID"}</span>
+                <ArrowUpRight className="h-4 w-4 text-primary" />
+              </Link>
+            ))}
+          </Card>
+        )}
+        </section>
 
         <section aria-labelledby="management-heading"><div className="mb-3 flex items-end justify-between"><div><p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Workspace</p><h2 id="management-heading" className="font-display text-xl font-semibold">Management</h2></div></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
            <ManagementCard to="/admin/users" icon={Users} label="Users" detail="Roles, status, access" /><ManagementCard to="/admin/invite" icon={Mail} label="Invite" detail="Bring in a teammate" /><ManagementCard to="/admin/vendors" icon={Store} label="Vendors" detail="Profiles and listings" /><ManagementCard to="/admin/sourcing" icon={Layers3} label="Vendor Demand" detail="Aggregate marketplace demand" /><ManagementCard to="/admin/subscriptions" icon={CreditCard} label="Subscriptions" detail="Plans and billing status" />
@@ -93,8 +108,8 @@ function AdminPage() {
   );
 }
 
-function AttentionCard({ to, label, count, detail, icon: Icon, tone }: { to: string; label: string; count?: number; detail: string; icon: React.ComponentType<{ className?: string }>; tone: "amber" | "teal" | "slate" }) {
-  return <Link to={to as "/admin"} className="group flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition hover:border-primary/40 hover:shadow-soft"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${tone === "amber" ? "bg-amber-100 text-amber-700" : tone === "teal" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{label}</span><span className="block text-xs text-muted-foreground">{detail}</span></span><span className="flex items-center gap-1 font-display text-xl font-semibold">{count ?? "—"}<ArrowUpRight className="h-4 w-4 text-primary opacity-0 transition group-hover:opacity-100" /></span></Link>;
+function AttentionCard({ to, search, label, count, detail, icon: Icon, tone }: { to: string; search?: Record<string, string>; label: string; count?: number; detail: string; icon: React.ComponentType<{ className?: string }>; tone: "amber" | "teal" | "slate" }) {
+  return <Link to={to as "/admin"} search={search as any} className="group flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition hover:border-primary/40 hover:shadow-soft"><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${tone === "amber" ? "bg-amber-100 text-amber-700" : tone === "teal" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{label}</span><span className="block text-xs text-muted-foreground">{detail}</span></span><span className="flex items-center gap-1 font-display text-xl font-semibold">{count ?? "—"}<ArrowUpRight className="h-4 w-4 text-primary opacity-0 transition group-hover:opacity-100" /></span></Link>;
 }
 function ManagementCard({ to, icon: Icon, label, detail }: { to: string; icon: React.ComponentType<{ className?: string }>; label: string; detail: string }) { return <Link to={to as "/admin"} className="group rounded-xl border border-border/70 bg-card p-4 transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"><Icon className="h-4 w-4 text-primary" /><p className="mt-3 text-sm font-semibold">{label}</p><p className="mt-0.5 text-xs text-muted-foreground">{detail}</p><ArrowUpRight className="mt-3 h-3.5 w-3.5 text-primary opacity-0 transition group-hover:opacity-100" /></Link>; }
 

@@ -25,7 +25,14 @@ import {
 } from "@/components/ui/select";
 import { findPlanByPriceId } from "@/lib/billing-config";
 
+type StatusFilter = "all" | "active" | "trialing" | "past_due" | "canceled" | "other";
+
 export const Route = createFileRoute("/admin/subscriptions")({
+  validateSearch: (search: Record<string, unknown>): { status?: StatusFilter } => ({
+    status: ["active", "trialing", "past_due", "canceled", "other"].includes(String(search.status))
+      ? search.status as StatusFilter
+      : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Subscriptions — AdminOS" },
@@ -36,8 +43,6 @@ export const Route = createFileRoute("/admin/subscriptions")({
 });
 
 const PAGE_SIZE = 50;
-
-type StatusFilter = "all" | "active" | "trialing" | "past_due" | "canceled" | "other";
 
 function formatDate(v: string | null | undefined) {
   if (!v) return "—";
@@ -107,12 +112,13 @@ function StatusBadge({
 }
 
 function AdminSubscriptionsPage() {
+  const search = Route.useSearch();
   const { user, loading: authLoading } = useRequireAuth();
   const { role, loading: roleLoading } = useRole();
   const isAdmin = role === "admin";
 
   const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(search.status ?? "all");
   const [page, setPage] = useState(1);
   const [openingPortalFor, setOpeningPortalFor] = useState<string | null>(null);
 
