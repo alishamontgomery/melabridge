@@ -447,7 +447,7 @@ const RegisterInput = z.object({
  * cause the handler to throw after cleaning up the auth user.
  */
 export const registerUser = createServerFn({ method: "POST" })
-  .inputValidator((raw: unknown) => RegisterInput.parse(raw))
+  .validator((raw: unknown) => RegisterInput.parse(raw))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

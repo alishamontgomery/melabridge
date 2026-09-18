@@ -10,6 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
+    "check:server-apis": "node scripts/check-deprecated-server-apis.mjs",
+    "validate": "npm run check:server-apis && npm run lint && npm run test",
     "format": "prettier --write ."
   },
   "dependencies": {

@@ -23,6 +23,10 @@ args = "Start application"
 task = "workflow.run"
 args = "Message Scheduler"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "validate"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -45,6 +49,17 @@ args = "bash scripts/cron-scheduler.sh"
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "validate"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run validate"
+
+[workflows.workflow.metadata]
+isValidation = true
 
 [[ports]]
 localPort = 4174
