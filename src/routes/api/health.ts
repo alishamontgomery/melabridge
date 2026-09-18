@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { externalClerkOptions } from "@/lib/clerk-config.server";
+import { checkExternalClerkCredentials } from "@/lib/clerk-config.server";
 import { hasAiProvider } from "@/lib/ai-client.server";
 import { getSyntheticMonitorStatus } from "@/lib/reliability-monitor";
 import { safeErrorMessage } from "@/lib/reliability-logger";
@@ -13,27 +13,18 @@ type ReadinessCheck = {
   detail?: string;
 };
 
-function keyMode(value: string | undefined): "test" | "live" | null {
-  if (value?.startsWith("pk_test_") || value?.startsWith("sk_test_")) return "test";
-  if (value?.startsWith("pk_live_") || value?.startsWith("sk_live_")) return "live";
-  return null;
-}
-
-function providerReadiness(): Record<string, ReadinessCheck> {
-  const publishable = process.env.CLERK_PUBLISHABLE_KEY;
-  const secret = process.env.CLERK_SECRET_KEY;
-  const publishableMode = keyMode(publishable);
-  const secretMode = keyMode(secret);
-  let clerk: ReadinessCheck;
-  try {
-    externalClerkOptions();
-    clerk =
-      publishableMode && secretMode && publishableMode !== secretMode
-        ? { status: "degraded", configured: true, detail: "Clerk key environments do not match" }
-        : { status: "ok", configured: true, detail: "Keys are configured; session handshake is monitored separately" };
-  } catch (error) {
-    clerk = { status: "degraded", configured: false, detail: safeErrorMessage(error) };
-  }
+async function providerReadiness(): Promise<Record<string, ReadinessCheck>> {
+  const clerkCheck = await checkExternalClerkCredentials();
+  const clerk: ReadinessCheck =
+    clerkCheck.issue === "ok"
+      ? { status: "ok", configured: true, detail: clerkCheck.message }
+      : clerkCheck.issue === "unavailable"
+        ? { status: "unknown", configured: true, detail: clerkCheck.message }
+        : {
+            status: "degraded",
+            configured: clerkCheck.issue !== "missing" && clerkCheck.issue !== "malformed",
+            detail: clerkCheck.message,
+          };
 
   const supabaseConfigured = Boolean(
     process.env.SUPABASE_URL && process.env.service_role,
@@ -75,7 +66,7 @@ export const Route = createFileRoute("/api/health")({
     handlers: {
       GET: async () => {
         const checkedAt = new Date().toISOString();
-        const checks = providerReadiness();
+        const checks = await providerReadiness();
         let database: ReadinessCheck;
         const startedAt = Date.now();
         try {

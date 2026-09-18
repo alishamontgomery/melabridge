@@ -1,10 +1,14 @@
 import "@/lib/server-websocket-polyfill";
-import { createStart, createMiddleware, createCsrfMiddleware } from "@tanstack/react-start";
+import {
+  createStart,
+  createMiddleware,
+  createCsrfMiddleware,
+  createServerOnlyFn,
+} from "@tanstack/react-start";
 import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachClerkAuth } from "@/integrations/supabase/auth-attacher";
-import { externalClerkOptions } from "@/lib/clerk-config.server";
 import { isBrowserDocumentRequest } from "@/lib/clerk-request-policy";
 import { logReliability } from "@/lib/reliability-logger";
 
@@ -14,6 +18,21 @@ import { logReliability } from "@/lib/reliability-logger";
 // it is removed before the middleware is initialized.
 delete process.env.CLERK_PROXY_URL;
 delete process.env.VITE_CLERK_PROXY_URL;
+
+const loadExternalClerkOptions = createServerOnlyFn(async () => {
+  const { externalClerkOptions } = await import("@/lib/clerk-config.server");
+  return externalClerkOptions();
+});
+
+const checkExternalClerkCredentials = createServerOnlyFn(async () => {
+  const { checkExternalClerkCredentials: check } = await import("@/lib/clerk-config.server");
+  return check();
+});
+
+void checkExternalClerkCredentials().then((check) => {
+  const level = check.issue === "ok" ? "info" : check.issue === "unavailable" ? "warn" : "error";
+  logReliability(level, `clerk_credentials_${check.issue}`, { detail: check.message });
+});
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -36,7 +55,7 @@ const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
-const clerkRequestMiddleware = clerkMiddleware(() => externalClerkOptions());
+const clerkRequestMiddleware = clerkMiddleware(() => loadExternalClerkOptions());
 
 /**
  * Clerk's server middleware can turn an expired browser session into a 307

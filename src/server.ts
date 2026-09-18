@@ -3,6 +3,7 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 import { logReliability } from "./lib/reliability-logger";
+import { checkExternalClerkCredentials, type ClerkCredentialCheck } from "@/lib/clerk-config.server";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -25,6 +26,8 @@ async function normalizeCatastrophicSsrResponse(request: Request, response: Resp
   if (response.status < 500) return response;
   const requestPath = new URL(request.url).pathname;
   if (requestPath === "/auth" || requestPath === "/auth/callback") {
+    const configurationResponse = await clerkConfigurationResponse(request);
+    if (configurationResponse) return configurationResponse;
     return recoverFromInvalidClerkSession(request);
   }
   const contentType = response.headers.get("content-type") ?? "";
@@ -48,6 +51,29 @@ async function normalizeCatastrophicSsrResponse(request: Request, response: Resp
     status: 500,
     headers: { "content-type": "text/html; charset=utf-8" },
   });
+}
+
+function clerkConfigurationResponseForCheck(check: ClerkCredentialCheck): Response | null {
+  if (check.issue === "ok" || check.issue === "unavailable") return null;
+  return new Response(
+    renderErrorPage({
+      title: "Authentication configuration needs attention",
+      message: `${check.message} After updating the server secret, restart the app and try again.`,
+    }),
+    {
+      status: 503,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "no-store",
+      },
+    },
+  );
+}
+
+async function clerkConfigurationResponse(request: Request): Promise<Response | null> {
+  const pathname = new URL(request.url).pathname;
+  if (pathname !== "/auth" && pathname !== "/auth/callback") return null;
+  return clerkConfigurationResponseForCheck(await checkExternalClerkCredentials());
 }
 
 function errorText(error: unknown): string {
@@ -169,6 +195,9 @@ export default {
       const legacyProxyResponse = rejectLegacyClerkProxyRequest(request);
       if (legacyProxyResponse) return legacyProxyResponse;
 
+      const configurationResponse = await clerkConfigurationResponse(request);
+      if (configurationResponse) return configurationResponse;
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(request, response);
@@ -178,6 +207,10 @@ export default {
         url.pathname === "/auth" ||
         url.pathname === "/auth/callback"
       ) {
+        const configurationResponse = clerkConfigurationResponseForCheck(
+          await checkExternalClerkCredentials(),
+        );
+        if (configurationResponse) return configurationResponse;
         return recoverFromInvalidClerkSession(request);
       }
       logReliability("error", "server_request_error", {
