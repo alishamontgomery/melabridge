@@ -63,6 +63,7 @@ export const Route = createFileRoute("/_authenticated/events/$eventId")({
 function EventDetailPage() {
   const { eventId } = Route.useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [event, setEvent] = useState<Event | null | undefined>(undefined);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [budget, setBudget] = useState<BudgetItem[]>([]);
@@ -174,6 +175,8 @@ function EventDetailPage() {
     );
   }
 
+  const canSendInvitations = event.owner_id === user?.id;
+
   return (
     <AppShell active="/events">
       <div className="space-y-6">
@@ -243,7 +246,7 @@ function EventDetailPage() {
             <BudgetTab eventId={eventId} items={budget} totals={budgetTotals} target={event.budget_target ? Number(event.budget_target) : null} reload={reload} />
           </TabsContent>
           <TabsContent value="guests" className="mt-6">
-            <GuestsTab eventId={eventId} eventName={event.name} guests={guests} reload={reload} />
+            <GuestsTab eventId={eventId} eventName={event.name} guests={guests} reload={reload} canSendInvitations={canSendInvitations} />
           </TabsContent>
           <TabsContent value="runsheet" className="mt-6">
             <RunsheetTab eventId={eventId} />
@@ -264,7 +267,7 @@ function EventDetailPage() {
             </FeatureGate>
           </TabsContent>
           <TabsContent value="invitations" className="mt-6">
-            <InvitationsTab event={event} guests={guests} onSaved={reload} />
+            <InvitationsTab event={event} guests={guests} onSaved={reload} canSendInvitations={canSendInvitations} />
           </TabsContent>
           <TabsContent value="communicate" className="mt-6">
             <PremiumUpgradeGate feature="communication_tools">
@@ -784,7 +787,7 @@ function BudgetTab({ eventId, items, totals, target, reload }: {
 }
 
 // --- GUESTS ---
-function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; eventName: string; guests: Guest[]; reload: () => Promise<void> }) {
+function GuestsTab({ eventId, eventName, guests, reload, canSendInvitations }: { eventId: string; eventName: string; guests: Guest[]; reload: () => Promise<void>; canSendInvitations: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [household, setHousehold] = useState("");
@@ -893,9 +896,11 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
       </Card>
 
       <div className="flex flex-wrap justify-end gap-2">
-        <Button size="sm" className="gap-1.5" onClick={() => setInvitationsOpen(true)} disabled={!guests.some((guest) => guest.email)}>
-          <Mail className="h-4 w-4" /> Send invitations
-        </Button>
+        {canSendInvitations && (
+          <Button size="sm" className="gap-1.5" onClick={() => setInvitationsOpen(true)} disabled={!guests.some((guest) => guest.email)}>
+            <Mail className="h-4 w-4" /> Send invitations
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={exportCsv} disabled={guests.length === 0}>Export CSV</Button>
       </div>
 
@@ -1000,7 +1005,9 @@ function GuestsTab({ eventId, eventName, guests, reload }: { eventId: string; ev
         </>
       )}
 
-      <InvitationComposer open={invitationsOpen} onClose={() => setInvitationsOpen(false)} eventId={eventId} eventName={eventName} guests={guests} onSent={reload} />
+      {canSendInvitations && (
+        <InvitationComposer open={invitationsOpen} onClose={() => setInvitationsOpen(false)} eventId={eventId} eventName={eventName} guests={guests} onSent={reload} />
+      )}
 
       <ConfirmDialog
         open={!!pendingDelete}
@@ -1360,7 +1367,7 @@ function CommunicateTabContent({
 }
 
 // --- INVITATIONS ---
-function InvitationsTab({ event, guests, onSaved }: { event: Event; guests: Guest[]; onSaved: () => Promise<void> }) {
+function InvitationsTab({ event, guests, onSaved, canSendInvitations }: { event: Event; guests: Guest[]; onSaved: () => Promise<void>; canSendInvitations: boolean }) {
   const [guidance, setGuidance] = useState<string>(event.invitation_guidance ?? "");
   const [busy, setBusy] = useState(false);
   const [regen, setRegen] = useState(false);
@@ -1398,9 +1405,11 @@ function InvitationsTab({ event, guests, onSaved }: { event: Event; guests: Gues
             <h2 className="font-display text-xl font-semibold">Invite your guests</h2>
             <p className="text-sm text-muted-foreground">Send a personal email with secure RSVP buttons to selected guests.</p>
           </div>
-          <Button className="gap-2" onClick={() => setInvitationsOpen(true)} disabled={!guests.some((guest) => guest.email)}>
-            <Mail className="h-4 w-4" /> Send invitations
-          </Button>
+          {canSendInvitations && (
+            <Button className="gap-2" onClick={() => setInvitationsOpen(true)} disabled={!guests.some((guest) => guest.email)}>
+              <Mail className="h-4 w-4" /> Send invitations
+            </Button>
+          )}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
           {guests.filter((guest) => guest.invited_at).length} of {guests.filter((guest) => guest.email).length} guests with email invited
@@ -1432,7 +1441,9 @@ function InvitationsTab({ event, guests, onSaved }: { event: Event; guests: Gues
           </Button>
         </div>
       </Card>
-      <InvitationComposer open={invitationsOpen} onClose={() => setInvitationsOpen(false)} eventId={event.id} eventName={event.name} guests={guests} onSent={onSaved} />
+      {canSendInvitations && (
+        <InvitationComposer open={invitationsOpen} onClose={() => setInvitationsOpen(false)} eventId={event.id} eventName={event.name} guests={guests} onSent={onSaved} />
+      )}
 
       <Card className="border-dashed border-border/60 p-6 shadow-soft">
         <h3 className="font-display text-base font-semibold">Manage your guest list</h3>
