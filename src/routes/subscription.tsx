@@ -255,17 +255,23 @@ function SubscriptionPage() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading your plan…
             </div>
-          ) : isActive && currentPlan ? (
+          ) : isActive && subscription ? (
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold text-lg">{currentPlan.name}</p>
-                  {statusBadge(subscription!.status, subscription!.cancel_at_period_end)}
+                  <p className="font-semibold text-lg">{currentPlan?.name ?? "Paid subscription"}</p>
+                  {statusBadge(subscription.status, subscription.cancel_at_period_end)}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {formatPrice(currentPlan).amount}
-                  {formatPrice(currentPlan).period} · billed {currentPlan.interval === "year" ? "yearly" : "monthly"}
-                </p>
+                {currentPlan ? (
+                  <p className="text-sm text-muted-foreground">
+                    {formatPrice(currentPlan).amount}
+                    {formatPrice(currentPlan).period} · billed {currentPlan.interval === "year" ? "yearly" : "monthly"}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Your existing billing terms remain unchanged.
+                  </p>
+                )}
                 {subscription?.cancel_at_period_end ? (
                   <p className="flex items-center gap-1.5 text-sm text-destructive font-medium">
                     <CalendarX className="h-4 w-4 shrink-0" />
@@ -478,7 +484,7 @@ function SubscriptionPage() {
               Cancel subscription?
             </DialogTitle>
             <DialogDescription>
-              Your {currentPlan?.name} plan will not renew. You'll keep full access until{" "}
+              Your {currentPlan?.name ?? "paid"} plan will not renew. You'll keep full access until{" "}
               <strong>{accessEndsDate ?? "the end of your billing period"}</strong>.
             </DialogDescription>
           </DialogHeader>
