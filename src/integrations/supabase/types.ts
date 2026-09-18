@@ -576,6 +576,9 @@ export type Database = {
           buffer_before_minutes: number
           calendar_feed_token: string | null
           created_at: string
+          include_address: boolean
+          include_event_name: boolean
+          include_venue: boolean
           max_events_per_day: number
           timezone: string
           updated_at: string
@@ -589,6 +592,9 @@ export type Database = {
           buffer_before_minutes?: number
           calendar_feed_token?: string | null
           created_at?: string
+          include_address?: boolean
+          include_event_name?: boolean
+          include_venue?: boolean
           max_events_per_day?: number
           timezone?: string
           updated_at?: string
@@ -602,6 +608,9 @@ export type Database = {
           buffer_before_minutes?: number
           calendar_feed_token?: string | null
           created_at?: string
+          include_address?: boolean
+          include_event_name?: boolean
+          include_venue?: boolean
           max_events_per_day?: number
           timezone?: string
           updated_at?: string

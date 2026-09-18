@@ -7,9 +7,23 @@ import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Calendar as CalendarIcon, Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
-import { generateCalendarFeedToken, getCalendarFeedToken } from "@/lib/calendar.functions";
+import { Switch } from "@/components/ui/switch";
+import { AlertTriangle, ArrowLeft, Calendar as CalendarIcon, Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import {
+  generateCalendarFeedToken,
+  getCalendarFeedPreferences,
+  getCalendarFeedToken,
+  updateCalendarFeedPreferences,
+} from "@/lib/calendar.functions";
 import { useAuth } from "@/lib/auth";
+
+const DEFAULT_FEED_PREFERENCES = {
+  include_event_name: false,
+  include_venue: false,
+  include_address: false,
+};
+
+type FeedPreferenceKey = keyof typeof DEFAULT_FEED_PREFERENCES;
 
 export const Route = createFileRoute("/_authenticated/settings/calendar")({
   head: () => ({
@@ -29,14 +43,23 @@ function CalendarSyncPage() {
   const queryClient = useQueryClient();
   const loadToken = useServerFn(getCalendarFeedToken);
   const generateToken = useServerFn(generateCalendarFeedToken);
+  const loadPreferences = useServerFn(getCalendarFeedPreferences);
+  const savePreferences = useServerFn(updateCalendarFeedPreferences);
   const tokenQuery = useQuery({
     queryKey: ["calendar-feed-token", user?.id],
     queryFn: () => loadToken(),
     enabled: Boolean(user?.id),
   });
+  const preferencesQuery = useQuery({
+    queryKey: ["calendar-feed-preferences", user?.id],
+    queryFn: () => loadPreferences(),
+    enabled: Boolean(user?.id),
+  });
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [savingPreference, setSavingPreference] = useState<FeedPreferenceKey | null>(null);
   const token = tokenQuery.data?.token;
+  const preferences = preferencesQuery.data ?? DEFAULT_FEED_PREFERENCES;
   const feedUrl =
     token && typeof window !== "undefined"
       ? `${window.location.origin}/api/public/calendar/${token}`
@@ -98,6 +121,20 @@ function CalendarSyncPage() {
     }
   }
 
+  async function handlePreferenceChange(key: FeedPreferenceKey, value: boolean) {
+    const nextPreferences = { ...preferences, [key]: value };
+    setSavingPreference(key);
+    try {
+      const saved = await savePreferences({ data: nextPreferences });
+      queryClient.setQueryData(["calendar-feed-preferences", user?.id], saved);
+      toast.success("Calendar feed privacy updated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update calendar feed privacy");
+    } finally {
+      setSavingPreference(null);
+    }
+  }
+
   return (
     <AppShell active="/settings">
       <div className="mx-auto max-w-3xl space-y-6">
@@ -131,6 +168,45 @@ function CalendarSyncPage() {
                   <Link to="/calendar">Open calendar</Link>
                 </Button>
               </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-amber-500/10 text-amber-700">
+              <AlertTriangle className="h-5 w-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-semibold">Choose what your feed shows</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Confirmed booking entries are private by default. Turn on only the details you want included in
+                your external calendar.
+              </p>
+              <div className="mt-4 space-y-2">
+                {([
+                  ["include_event_name", "Event names", "Show the name of each confirmed event instead of a generic label."],
+                  ["include_venue", "Venue names", "Show the venue name when one is saved on the event."],
+                  ["include_address", "Addresses", "Show the event address when one is saved on the event."],
+                ] as const).map(([key, label, description]) => (
+                  <div key={key} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-muted/30 p-3">
+                    <div>
+                      <p className="text-sm font-medium">{label}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+                    </div>
+                    <Switch
+                      checked={preferences[key]}
+                      onCheckedChange={(checked) => handlePreferenceChange(key, checked)}
+                      disabled={preferencesQuery.isLoading || savingPreference !== null}
+                      aria-label={`Include ${label.toLowerCase()} in external calendar`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-950 dark:text-amber-100">
+                Anyone with your private feed link can read the details you enable here. Treat the link like a
+                password and reset it if you think it was shared.
+              </p>
             </div>
           </div>
         </Card>

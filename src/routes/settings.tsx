@@ -433,14 +433,14 @@ function SettingsPage() {
           <SettingsCard icon={Globe2} title="Calendar">
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
-                Manage your availability, blocked dates, and lead settings. External sync (Google, Outlook, Apple) is coming soon.
+                Manage your availability, blocked dates, lead settings, and external calendar feed privacy.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link to="/calendar/settings">Availability &amp; rules</Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/settings/calendar">External sync — coming soon</Link>
+                  <Link to="/settings/calendar">External calendar sync</Link>
                 </Button>
               </div>
             </div>

@@ -2,6 +2,9 @@ type CalendarEvent = {
   id: string;
   starts_at: string;
   ends_at: string;
+  event_name?: string | null;
+  venue_name?: string | null;
+  address?: string | null;
   updated_at?: string | null;
 };
 
@@ -56,10 +59,17 @@ function fold(line: string): string {
   return chunks.join("\r\n ");
 }
 
+export type VendorCalendarFeedOptions = {
+  includeEventName?: boolean;
+  includeVenue?: boolean;
+  includeAddress?: boolean;
+};
+
 export function buildVendorCalendar(
   vendorId: string,
   events: CalendarEvent[],
   blockedDates: BlockedDate[],
+  options: VendorCalendarFeedOptions = {},
 ): string {
   const now = new Date().toISOString();
   const lines = [
@@ -73,14 +83,26 @@ export function buildVendorCalendar(
   ];
 
   for (const event of events) {
+    const summary =
+      options.includeEventName && event.event_name?.trim()
+        ? event.event_name.trim()
+        : "Confirmed booking";
+    const location = [
+      options.includeVenue ? event.venue_name?.trim() : null,
+      options.includeAddress ? event.address?.trim() : null,
+    ]
+      .filter((value): value is string => Boolean(value))
+      .join(", ");
+
     lines.push(
       "BEGIN:VEVENT",
       `UID:booking-${event.id}@melabridge.com`,
       `DTSTAMP:${utcDate(event.updated_at ?? event.starts_at)}`,
       `DTSTART:${utcDate(event.starts_at)}`,
       `DTEND:${utcDate(event.ends_at)}`,
-      "SUMMARY:Confirmed booking",
+      `SUMMARY:${escapeText(summary)}`,
     );
+    if (location) lines.push(`LOCATION:${escapeText(location)}`);
     lines.push("STATUS:CONFIRMED", "TRANSP:OPAQUE", "END:VEVENT");
   }
 

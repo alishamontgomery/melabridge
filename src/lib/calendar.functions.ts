@@ -5,7 +5,7 @@ import { z } from "zod";
 /* --- Settings --- */
 
 const CALENDAR_SETTINGS_FIELDS =
-  "user_id,buffer_before_minutes,buffer_after_minutes,max_events_per_day,block_travel_days,vacation_start,vacation_end,timezone,created_at,updated_at";
+  "user_id,buffer_before_minutes,buffer_after_minutes,max_events_per_day,block_travel_days,vacation_start,vacation_end,timezone,include_event_name,include_venue,include_address,created_at,updated_at";
 
 const settingsSchema = z.object({
   buffer_before_minutes: z.number().int().min(0).max(720),
@@ -36,6 +36,9 @@ export const getCalendarSettings = createServerFn({ method: "GET" })
         vacation_start: null,
         vacation_end: null,
         timezone: "UTC",
+        include_event_name: false,
+        include_venue: false,
+        include_address: false,
       }
     );
   });
@@ -97,6 +100,39 @@ export const generateCalendarFeedToken = createServerFn({ method: "POST" })
       );
     if (error) throw new Error(error.message);
     return { token };
+  });
+
+const calendarFeedPreferencesSchema = z.object({
+  include_event_name: z.boolean(),
+  include_venue: z.boolean(),
+  include_address: z.boolean(),
+});
+
+export const getCalendarFeedPreferences = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("calendar_settings")
+      .select("include_event_name,include_venue,include_address")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      include_event_name: data?.include_event_name ?? false,
+      include_venue: data?.include_venue ?? false,
+      include_address: data?.include_address ?? false,
+    };
+  });
+
+export const updateCalendarFeedPreferences = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => calendarFeedPreferencesSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("calendar_settings")
+      .upsert({ user_id: context.userId, ...data }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return data;
   });
 
 /* --- Availability --- */

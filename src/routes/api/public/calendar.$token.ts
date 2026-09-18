@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/calendar/$token")({
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data: settings, error: settingsError } = await supabaseAdmin
             .from("calendar_settings")
-            .select("user_id")
+            .select("user_id,include_event_name,include_venue,include_address")
             .eq("calendar_feed_token", params.token)
             .maybeSingle();
 
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/calendar/$token")({
             await Promise.all([
               supabaseAdmin
                 .from("calendar_events")
-                .select("id,starts_at,ends_at,updated_at")
+                .select("id,starts_at,ends_at,event_name,venue_name,address,updated_at")
                 .eq("vendor_id", settings.user_id)
                 .eq("status", "confirmed")
                 .order("starts_at"),
@@ -38,7 +38,11 @@ export const Route = createFileRoute("/api/public/calendar/$token")({
           if (eventsError) throw eventsError;
           if (blocksError) throw blocksError;
 
-          const calendar = buildVendorCalendar(settings.user_id, events ?? [], blocks ?? []);
+          const calendar = buildVendorCalendar(settings.user_id, events ?? [], blocks ?? [], {
+            includeEventName: settings.include_event_name ?? false,
+            includeVenue: settings.include_venue ?? false,
+            includeAddress: settings.include_address ?? false,
+          });
           return new Response(calendar, {
             headers: {
               "Content-Type": "text/calendar; charset=utf-8",

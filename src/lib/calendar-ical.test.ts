@@ -48,4 +48,48 @@ describe("buildVendorCalendar", () => {
     }
     expect(calendar).toContain("🎉🎉🎉");
   });
+
+  it("includes only the vendor-enabled booking details", () => {
+    const calendar = buildVendorCalendar(
+      "vendor-1",
+      [
+        {
+          id: "event-1",
+          starts_at: "2026-09-12T18:00:00.000Z",
+          ends_at: "2026-09-12T22:00:00.000Z",
+          event_name: "Mela & Sam's Wedding",
+          venue_name: "The Garden",
+          address: "123 Main St, Austin",
+        },
+      ],
+      [],
+      { includeEventName: true, includeVenue: true, includeAddress: false },
+    );
+
+    expect(calendar).toContain("SUMMARY:Mela & Sam's Wedding");
+    expect(calendar).toContain("LOCATION:The Garden");
+    expect(calendar).not.toContain("123 Main St");
+  });
+
+  it("keeps existing feeds privacy-minimized when no options are provided", () => {
+    const calendar = buildVendorCalendar(
+      "vendor-1",
+      [
+        {
+          id: "event-1",
+          starts_at: "2026-09-12T18:00:00.000Z",
+          ends_at: "2026-09-12T22:00:00.000Z",
+          event_name: "Private event name",
+          venue_name: "Private venue",
+          address: "Private address",
+        },
+      ],
+      [],
+    );
+
+    expect(calendar).toContain("SUMMARY:Confirmed booking");
+    expect(calendar).not.toContain("Private event name");
+    expect(calendar).not.toContain("Private venue");
+    expect(calendar).not.toContain("Private address");
+  });
 });
