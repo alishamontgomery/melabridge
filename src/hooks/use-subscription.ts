@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useAuth } from "@/lib/auth";
+import { reconcileSubscription } from "@/utils/payments.functions";
 
 export interface SubscriptionRow {
   id: string;
@@ -20,6 +21,35 @@ export interface SubscriptionRow {
 }
 
 const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
+export const SUBSCRIPTION_RECONCILE_AFTER_MS = 5 * 60 * 1000;
+
+export function isSubscriptionStale(
+  subscription: Pick<SubscriptionRow, "updated_at"> | null,
+  now = Date.now(),
+) {
+  if (!subscription) return false;
+  const updatedAt = new Date(subscription.updated_at).getTime();
+  return !Number.isFinite(updatedAt) || now - updatedAt >= SUBSCRIPTION_RECONCILE_AFTER_MS;
+}
+
+export async function loadSubscriptionWithReconciliation({
+  read,
+  reconcile,
+}: {
+  read: () => Promise<SubscriptionRow | null>;
+  reconcile: () => Promise<{ ok: true; reconciled: boolean } | { error: string }>;
+}) {
+  const local = await read();
+  if (!isSubscriptionStale(local)) return local;
+
+  try {
+    const result = await reconcile();
+    if ("ok" in result && result.reconciled) return await read();
+  } catch (error) {
+    console.warn("[useSubscription] Stripe reconciliation failed; using local status:", error);
+  }
+  return local;
+}
 
 export function useSubscription() {
   const { user } = useAuth();
@@ -41,16 +71,29 @@ export function useSubscription() {
       return;
     }
     setLoading(true);
-    const { data } = await supabase
-      .from("subscriptions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("environment", env)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    setSubscription((data as SubscriptionRow | null) ?? null);
-    setLoading(false);
+    const read = async () => {
+      const { data } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("environment", env)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+      return (data as SubscriptionRow | null) ?? null;
+    };
+    try {
+      const data = await loadSubscriptionWithReconciliation({
+        read,
+        reconcile: () => reconcileSubscription({ data: { environment: env } }),
+      });
+      setSubscription(data);
+    } catch (error) {
+      console.warn("[useSubscription] Subscription load failed:", error);
+      setSubscription(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

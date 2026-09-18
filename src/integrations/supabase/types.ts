@@ -2931,6 +2931,26 @@ export type Database = {
         Args: { admin_id: string; planner_id: string; vendor_id: string }
         Returns: Json
       }
+      sync_subscription_stripe_event: {
+        Args: {
+          _cancel_at_period_end: boolean
+          _current_period_end: string | null
+          _current_period_start: string | null
+          _environment: string
+          _event_created_at: number
+          _event_id: string
+          _event_priority: number
+          _plan_name: string
+          _price_id: string
+          _product_id: string
+          _status: string
+          _stripe_customer_id: string
+          _stripe_subscription_id: string
+          _user_email: string | null
+          _user_id: string
+        }
+        Returns: boolean
+      }
       wipe_test_data: { Args: never; Returns: Json }
     }
     Enums: {

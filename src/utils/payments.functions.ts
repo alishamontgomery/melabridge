@@ -6,6 +6,28 @@ import { billingConfig, findPlanByPriceId } from "@/lib/billing-config";
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
 
+function subscriptionPriceId(subscription: any): string {
+  const price = subscription.items?.data?.[0]?.price;
+  const priceId = price?.lookup_key ?? price?.metadata?.lovable_external_id ?? price?.id;
+  if (!priceId) throw new Error("Stripe subscription is missing price information.");
+  return priceId;
+}
+
+function subscriptionProductId(subscription: any): string {
+  const product = subscription.items?.data?.[0]?.price?.product;
+  const productId = typeof product === "string" ? product : product?.id;
+  if (!productId) throw new Error("Stripe subscription is missing product information.");
+  return productId;
+}
+
+function subscriptionPeriod(subscription: any) {
+  const item = subscription.items?.data?.[0];
+  return {
+    start: item?.current_period_start ?? subscription.current_period_start,
+    end: item?.current_period_end ?? subscription.current_period_end,
+  };
+}
+
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
   options: { email?: string; userId?: string },
@@ -211,6 +233,94 @@ export const reactivateSubscription = createServerFn({ method: "POST" })
   });
 
 /**
+ * Refresh the signed-in user's latest subscription directly from Stripe.
+ *
+ * This is intentionally scoped through the local user-owned row before Stripe
+ * is called, so a client cannot use it to inspect or overwrite another
+ * account's subscription. The transactional RPC shares the webhook's ordering
+ * guard; a reconciliation snapshot therefore cannot be undone by an older,
+ * delayed webhook.
+ */
+export const reconcileSubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: { environment: StripeEnv }) => data)
+  .handler(async ({ data, context }): Promise<{ ok: true; reconciled: boolean } | { error: string }> => {
+    const { data: local, error: readError } = await context.supabase
+      .from("subscriptions")
+      .select("stripe_subscription_id")
+      .eq("user_id", context.userId)
+      .eq("environment", data.environment)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (readError) return { error: "Unable to read subscription status." };
+    if (!local?.stripe_subscription_id) return { ok: true, reconciled: false };
+
+    try {
+      const stripe = createStripeClient(data.environment);
+      const subscription = await stripe.subscriptions.retrieve(local.stripe_subscription_id, {
+        expand: ["items.data.price"],
+      });
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      return await reconcileStripeSubscriptionSnapshot({
+        subscription,
+        supabaseAdmin,
+        userId: context.userId,
+        environment: data.environment,
+      });
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
+
+export async function reconcileStripeSubscriptionSnapshot({
+  subscription,
+  supabaseAdmin,
+  userId,
+  environment,
+  now = Date.now(),
+}: {
+  subscription: any;
+  supabaseAdmin: any;
+  userId: string;
+  environment: StripeEnv;
+  now?: number;
+}): Promise<{ ok: true; reconciled: true } | { error: string }> {
+  if (subscription.metadata?.userId !== userId) {
+    return { error: "Subscription ownership could not be verified." };
+  }
+
+  const priceId = subscriptionPriceId(subscription);
+  const period = subscriptionPeriod(subscription);
+  const reconciledAt = Math.floor(now / 1000);
+  const { data: profile } = subscription.status === "past_due"
+    ? await supabaseAdmin.from("profiles").select("email").eq("id", userId).maybeSingle()
+    : { data: null };
+  const { error } = await supabaseAdmin.rpc("sync_subscription_stripe_event", {
+    _user_id: userId,
+    _stripe_subscription_id: subscription.id,
+    _stripe_customer_id: typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id,
+    _product_id: subscriptionProductId(subscription),
+    _price_id: priceId,
+    _status: subscription.status,
+    _current_period_start: period.start ? new Date(period.start * 1000).toISOString() : null,
+    _current_period_end: period.end ? new Date(period.end * 1000).toISOString() : null,
+    _cancel_at_period_end: subscription.cancel_at_period_end ?? false,
+    _environment: environment,
+    _event_created_at: reconciledAt,
+    _event_priority: 4,
+    _event_id: `reconcile:${subscription.id}:${reconciledAt}`,
+    _user_email: profile?.email ?? null,
+    _plan_name: findPlanByPriceId(priceId)?.name ?? priceId,
+  });
+  if (error) return { error: "Unable to save the latest subscription status." };
+  return { ok: true, reconciled: true };
+}
+
+/**
  * verifyCheckoutSession — webhook-free fulfillment.
  *
  * Called from the checkout return page immediately after Stripe redirects back.
@@ -251,18 +361,9 @@ export const verifyCheckoutSession = createServerFn({ method: "POST" })
       }
       const subUserId = metadataUserId;
 
-      const item = rawSub.items?.data?.[0];
-      const priceId =
-        item?.price?.lookup_key ??
-        // Retain this legacy metadata fallback for subscriptions created before
-        // the direct Stripe integration. It is data compatibility, not a
-        // provider dependency.
-        item?.price?.metadata?.lovable_external_id ??
-        item?.price?.id ??
-        null;
-      const productId = item?.price?.product ?? null;
-      const periodStart = item?.current_period_start ?? rawSub.current_period_start;
-      const periodEnd   = item?.current_period_end   ?? rawSub.current_period_end;
+      const priceId = subscriptionPriceId(rawSub);
+      const productId = subscriptionProductId(rawSub);
+      const period = subscriptionPeriod(rawSub);
 
       // Subscription writes require service_role (RLS denies user-JWT writes).
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -274,8 +375,8 @@ export const verifyCheckoutSession = createServerFn({ method: "POST" })
           product_id: productId,
           price_id: priceId,
           status: rawSub.status,
-          current_period_start: periodStart ? new Date(periodStart * 1000).toISOString() : null,
-          current_period_end:   periodEnd   ? new Date(periodEnd   * 1000).toISOString() : null,
+          current_period_start: period.start ? new Date(period.start * 1000).toISOString() : null,
+          current_period_end:   period.end   ? new Date(period.end   * 1000).toISOString() : null,
           cancel_at_period_end: rawSub.cancel_at_period_end ?? false,
           environment: data.environment,
           updated_at: new Date().toISOString(),
