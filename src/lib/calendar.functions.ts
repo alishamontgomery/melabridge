@@ -512,6 +512,11 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { dispatchNotification } = await import("./notification-delivery.server");
+    const notify = (payload: Parameters<typeof dispatchNotification>[0]) =>
+      dispatchNotification(payload).catch(() => {
+        console.warn("[calendar] Notification delivery failed");
+      });
     const { data: req, error: rErr } = await context.supabase
       .from("calendar_booking_requests")
       .select("*")
@@ -557,8 +562,8 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
         .eq("vendor_id", context.userId);
       if (updateErr) throw new Error(updateErr.message);
 
-      await context.supabase.from("notifications").insert({
-        user_id: req.planner_id,
+      await notify({
+        userId: req.planner_id,
         category: "calendar",
         title: "Booking approved",
         body: `${req.event_name} was confirmed.`,
@@ -589,8 +594,8 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
       if (updateErr) throw new Error(updateErr.message);
 
       const wasConfirmed = req.status === "approved";
-      await context.supabase.from("notifications").insert({
-        user_id: req.planner_id,
+      await notify({
+        userId: req.planner_id,
         category: "calendar",
         title: wasConfirmed ? "Confirmed booking cancelled" : "Booking declined",
         body: wasConfirmed
@@ -614,8 +619,8 @@ export const respondToBookingRequest = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .eq("vendor_id", context.userId);
     if (updateErr) throw new Error(updateErr.message);
-    await context.supabase.from("notifications").insert({
-      user_id: req.planner_id,
+    await notify({
+      userId: req.planner_id,
       category: "calendar",
       title: "Alternate date proposed",
       body: `${req.event_name}: vendor suggested a different time.`,
@@ -647,6 +652,11 @@ export const updateBookingRequestStatus = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { dispatchNotification } = await import("./notification-delivery.server");
+    const notify = (payload: Parameters<typeof dispatchNotification>[0]) =>
+      dispatchNotification(payload).catch(() => {
+        console.warn("[calendar] Notification delivery failed");
+      });
     // Verify this request belongs to the calling vendor.
     const { data: req, error: rErr } = await context.supabase
       .from("calendar_booking_requests")
@@ -676,8 +686,8 @@ export const updateBookingRequestStatus = createServerFn({ method: "POST" })
 
     // Notify the planner when the vendor marks the request as "Responded".
     if (data.status === "alternate_proposed") {
-      await context.supabase.from("notifications").insert({
-        user_id: req.planner_id,
+      await notify({
+        userId: req.planner_id,
         category: "calendar",
         title: "Vendor responded",
         body: `A vendor replied to your inquiry for ${req.event_name}.`,
@@ -686,8 +696,8 @@ export const updateBookingRequestStatus = createServerFn({ method: "POST" })
     }
 
     if (data.status === "cancelled") {
-      await context.supabase.from("notifications").insert({
-        user_id: req.planner_id,
+      await notify({
+        userId: req.planner_id,
         category: "calendar",
         title: "Booking request cancelled",
         body: `The vendor cancelled the request for ${req.event_name}.`,

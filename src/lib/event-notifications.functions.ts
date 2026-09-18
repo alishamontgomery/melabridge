@@ -27,6 +27,7 @@ export const checkBudgetWarning = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { dispatchNotification } = await import("./notification-delivery.server");
 
     // Load event + budget items
     const [{ data: event }, { data: items }] = await Promise.all([
@@ -83,14 +84,15 @@ export const checkBudgetWarning = createServerFn({ method: "POST" })
         ? `Committed spend ($${committed.toLocaleString()}) has exceeded your $${target.toLocaleString()} target. Review your budget to stay on track.`
         : `You've committed $${committed.toLocaleString()} of your $${target.toLocaleString()} target. Consider reviewing before adding more items.`;
 
-    await supabase.from("notifications").insert({
-      user_id: event.owner_id ?? userId,
+    await dispatchNotification({
+      userId: event.owner_id ?? userId,
       category: "budget",
       title,
       body,
       href: `/events/${data.eventId}`,
-      entity_type: "event",
-      entity_id: data.eventId,
+      entityType: "event",
+      entityId: data.eventId,
+      idempotencyKey: `budget:${data.eventId}:${threshold}:${new Date().toISOString().slice(0, 10)}`,
     });
 
     return { ok: true };
@@ -112,6 +114,7 @@ export const fireRsvpBatch = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { dispatchNotification, getNotificationPreference } = await import("./notification-delivery.server");
 
     const { data: event } = await supabase
       .from("events")
@@ -157,22 +160,24 @@ export const fireRsvpBatch = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    if (existing) {
+    const preference = await getNotificationPreference(ownerId, "rsvp");
+    if (existing && preference.in_app_enabled) {
       await supabase
         .from("notifications")
         .update({ title, body, read_at: null })
         .eq("id", existing.id);
-    } else {
-      await supabase.from("notifications").insert({
-        user_id: ownerId,
+    }
+    await dispatchNotification({
+        userId: ownerId,
         category: "rsvp",
         title,
         body,
         href: `/events/${data.eventId}`,
-        entity_type: "event",
-        entity_id: data.eventId,
-      });
-    }
+        entityType: "event",
+        entityId: data.eventId,
+        idempotencyKey: `rsvp:${data.eventId}:${Math.floor(Date.now() / 3_600_000)}`,
+        skipInApp: Boolean(existing),
+    });
 
     return { ok: true };
   });

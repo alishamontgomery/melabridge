@@ -38,8 +38,11 @@ export const Route = createFileRoute("/api/cron/process-scheduled-messages")({
             );
           }
           const result = await processScheduledMessages();
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { processWeeklyEventDigests } = await import("@/lib/notification-digests.server");
+          const digests = await processWeeklyEventDigests(supabaseAdmin);
           console.log(`[cron] Processed scheduled messages:`, result);
-          return Response.json({ ok: true, ...result });
+          return Response.json({ ok: true, ...result, digests });
         } catch (err) {
           console.error("[cron] processScheduledMessages failed:", err);
           return Response.json(

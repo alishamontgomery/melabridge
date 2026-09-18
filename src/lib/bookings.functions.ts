@@ -102,14 +102,16 @@ export const submitInquiry = createServerFn({ method: "POST" })
         .maybeSingle();
       const plannerName =
         planner?.display_name?.trim() || planner?.email?.split("@")[0] || "A planner";
-      await supabase.from("notifications").insert({
-        user_id: vendorUserId,
-        category: "lead",
+      const { dispatchNotification } = await import("./notification-delivery.server");
+      await dispatchNotification({
+        userId: vendorUserId,
+        category: "booking",
         title: `New inquiry from ${plannerName}`,
         body: `${plannerName} sent an inquiry about ${data.eventName}. Review the details and follow up directly.`,
         href: "/vendor",
-        entity_type: "booking",
-        entity_id: result.booking_id ?? null,
+        entityType: "booking",
+        entityId: result.booking_id ?? null,
+        idempotencyKey: result.booking_id ? `booking-inquiry:${result.booking_id}` : undefined,
       });
     } catch {
       console.warn("[submitInquiry] Vendor notification could not be created");

@@ -27,7 +27,7 @@ import { useRole } from "@/lib/use-role";
 import { toast } from "sonner";
 import { TimezoneSelector } from "@/components/timezone-selector";
 import { saveTimezone } from "@/lib/calendar.functions";
-import { deleteAccount } from "@/lib/account.functions";
+import { deleteAccount, getNotificationPreferences, saveNotificationPreference } from "@/lib/account.functions";
 import { signOut } from "@/lib/auth";
 import { useClerk } from "@clerk/tanstack-react-start";
 import { ProfileTypeChoices } from "@/components/profile-type-choices";
@@ -88,6 +88,8 @@ function SettingsPage() {
   const queryClient = useQueryClient();
   const saveTzFn = useServerFn(saveTimezone);
   const deleteAccountFn = useServerFn(deleteAccount);
+  const getNotificationPreferencesFn = useServerFn(getNotificationPreferences);
+  const saveNotificationPreferenceFn = useServerFn(saveNotificationPreference);
   const deleteVendorBusinessFn = useServerFn(deleteVendorBusiness);
   const changeProfileTypeFn = useServerFn(changeOwnProfileType);
   const isAdmin = role === "admin";
@@ -113,11 +115,9 @@ function SettingsPage() {
     if (authLoading || !user) return;
     (async () => {
       // Load notification prefs
-      const { data } = await supabase
-        .from("notification_preferences")
-        .select("*")
-        .eq("user_id", user.id);
-      const rows = (data ?? []) as Array<{ category: string; in_app_enabled: boolean; email_enabled: boolean }>;
+      const rows = await getNotificationPreferencesFn() as Array<{
+        category: string; in_app_enabled: boolean; email_enabled: boolean;
+      }>;
       const merged: NotifPrefs = { ...DEFAULT_PREFS };
       for (const row of rows) {
         merged[row.category] = { in_app: row.in_app_enabled ?? true, email: row.email_enabled ?? false };
@@ -149,7 +149,7 @@ function SettingsPage() {
       }
       setTzLoading(false);
     })();
-  }, [user, authLoading, saveTzFn]);
+  }, [user, authLoading, saveTzFn, getNotificationPreferencesFn]);
 
   async function handleTimezoneChange(tz: string) {
     setTimezone(tz);
@@ -197,23 +197,21 @@ function SettingsPage() {
     setSaving(true);
     const nextPrefs = { ...prefs, [category]: next };
     setPrefs(nextPrefs);
-    const { error } = await supabase
-      .from("notification_preferences")
-      .upsert(
-        {
-          user_id: user.id,
-          category,
-          channel: "all",
-          in_app_enabled: next.in_app,
-          email_enabled: next.email,
-          frequency: category === "event_updates" ? (next.email ? "weekly" : "instant") : "instant",
+    try {
+      await saveNotificationPreferenceFn({
+        data: {
+          category: category as "rsvp" | "budget" | "task_deadline" | "booking" | "calendar" | "event_updates",
+          inAppEnabled: next.in_app,
+          emailEnabled: next.email,
         },
-        // category is now part of the unique key — each category row is independent
-        { onConflict: "user_id,category,channel" },
-      );
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Preference saved");
+      });
+      toast.success("Preference saved");
+    } catch (error) {
+      setPrefs(prefs);
+      toast.error(error instanceof Error ? error.message : "Could not save preference");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function confirmProfileTypeChange() {

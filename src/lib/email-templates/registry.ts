@@ -5,6 +5,7 @@ import { GuestMessageEmail } from './guest-message'
 import { GuestMessageRsvpEmail } from './guest-message-rsvp'
 import { GuestInvitationEmail } from './guest-invitation'
 import { VendorMatchEmail } from './vendor-match'
+import { AccountNotificationEmail } from './account-notification'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -16,6 +17,17 @@ export interface TemplateEntry {
 }
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'account-notification': {
+    component: AccountNotificationEmail,
+    displayName: 'Account notification',
+    subject: (d) => d.title ?? 'You have an update on MelaBridge',
+    previewData: {
+      recipientName: 'Jordan',
+      title: 'Your weekly event update',
+      body: 'You have 2 upcoming events and 3 open planning tasks.',
+      actionUrl: '/dashboard',
+    },
+  },
   'ticket-confirmation': {
     component: TicketConfirmationEmail,
     displayName: 'Ticket confirmation',

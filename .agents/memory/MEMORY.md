@@ -44,3 +44,4 @@
 - [Deployment healthcheck host](deployment-healthcheck-canonical-host.md) — internal Replit probes must bypass canonical-host redirects or the deployment can be recycled while the app is healthy.
 - [Clerk Storage policy evaluation](clerk-storage-policy-evaluation.md) — any Storage policy using auth.uid() can break unrelated paths because Clerk subjects are not UUIDs and all operation policies may evaluate.
 - [Stripe subscription event ordering](stripe-subscription-event-ordering.md) — subscription state and admin alerts must commit atomically under one deterministic event version.
+- [Cross-user notification delivery](cross-user-notification-delivery.md) — authorize the action with the caller client, then deliver to recipients with the service client; channel failures stay independent.
