@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --exclude **/e2e/**",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "check:server-apis": "node scripts/check-deprecated-server-apis.mjs",
     "validate": "npm run check:server-apis && npm run lint && npm run test",
     "format": "prettier --write ."
