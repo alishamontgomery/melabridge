@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const FAV_KEY = "mb.marketplace.favorites.v1";
+const FAV_MIGRATION_KEY = "mb.marketplace.favorites.db-migrated.v1";
 const CMP_KEY = "mb.marketplace.compare.v1";
 const RV_KEY = "mb.marketplace.recent.v1";
 const MAX_COMPARE = 4;
@@ -24,6 +25,7 @@ function safeRead(key: string): string[] {
 function safeWrite(key: string, value: string[]) {
   if (typeof window === "undefined") return;
   try {
+    if (key === FAV_KEY) window.localStorage.removeItem(FAV_MIGRATION_KEY);
     window.localStorage.setItem(key, JSON.stringify(value));
     window.dispatchEvent(new StorageEvent("storage", { key }));
   } catch {
@@ -73,6 +75,53 @@ type VendorLike = {
   business_categories?: string[] | null;
 };
 
+export async function migrateLegacyMarketplaceFavorites(
+  userId: string,
+  vendors: VendorLike[],
+  storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
+) {
+  if (storage.getItem(FAV_MIGRATION_KEY)) return false;
+
+  const raw = storage.getItem(FAV_KEY);
+  let legacyIds: string[] = [];
+  try {
+    const parsed = raw ? JSON.parse(raw) : [];
+    legacyIds = Array.isArray(parsed)
+      ? Array.from(new Set(parsed.filter((value): value is string => typeof value === "string")))
+      : [];
+  } catch {
+    legacyIds = [];
+  }
+
+  if (legacyIds.length > 0) {
+    const rows = legacyIds.map((vendorId) => {
+      const vendor = vendors.find((candidate) => candidate.id === vendorId);
+      return {
+        user_id: userId,
+        entity_type: "vendor",
+        entity_id: vendorId,
+        title: vendor?.business_name ?? vendorId,
+        subtitle: [vendor?.business_category, ...(vendor?.business_categories ?? [])]
+          .filter(Boolean)
+          .filter((value, index, values) => values.indexOf(value) === index)
+          .join(", ") || null,
+        href: `/vendor-profile/${vendorId}`,
+      };
+    });
+    const { error } = await supabase
+      .from("search_favorites")
+      .upsert(rows, {
+        onConflict: "user_id,entity_type,entity_id",
+        ignoreDuplicates: true,
+      });
+    if (error) throw error;
+  }
+
+  storage.removeItem(FAV_KEY);
+  storage.setItem(FAV_MIGRATION_KEY, "1");
+  return true;
+}
+
 /**
  * DB-backed favorites for the Marketplace page.
  * - Authenticated users: reads/writes to the `search_favorites` table (persists across devices).
@@ -87,7 +136,7 @@ export function useMarketplaceFavorites(
   vendors: VendorLike[],
 ) {
   const qc = useQueryClient();
-  const QUERY_KEY = ["marketplace-favorites", userId];
+  const QUERY_KEY = useMemo(() => ["marketplace-favorites", userId], [userId]);
 
   // ── DB path (authenticated) ─────────────────────────────────────────────────
   const { data: dbIds = [], isLoading: dbLoading } = useQuery({
@@ -159,6 +208,28 @@ export function useMarketplaceFavorites(
 
   // ── localStorage path (unauthenticated) ────────────────────────────────────
   const [localList, setLocalList] = useLocalList(FAV_KEY);
+
+  useEffect(() => {
+    if (!userId || typeof window === "undefined") return;
+
+    let cancelled = false;
+
+    const migrateLegacyFavorites = async () => {
+      const migrated = await migrateLegacyMarketplaceFavorites(userId, vendors, window.localStorage);
+      if (cancelled) return;
+      if (!migrated) return;
+      setLocalList([]);
+      await qc.invalidateQueries({ queryKey: QUERY_KEY });
+    };
+
+    void migrateLegacyFavorites().catch(() => {
+      // Keep the legacy entries so a later marketplace visit can retry.
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, vendors, qc, QUERY_KEY, setLocalList]);
 
   // ── Unified interface ───────────────────────────────────────────────────────
   const list = userId ? dbIds : localList;
