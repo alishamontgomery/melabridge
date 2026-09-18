@@ -993,7 +993,14 @@ function MarketplacePage() {
                   <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
                   <TabsTrigger value="favorites" className="text-xs">
                     <Heart className="mr-1 h-3.5 w-3.5" />
-                    {favorites.list.length || ""}
+                    {favorites.isLoading ? (
+                      <Skeleton
+                        className="h-3.5 w-4 rounded-sm"
+                        aria-label="Loading favorites count"
+                      />
+                    ) : (
+                      favorites.list.length || ""
+                    )}
                   </TabsTrigger>
                   <TabsTrigger value="recent" className="text-xs">Recent</TabsTrigger>
                 </TabsList>
